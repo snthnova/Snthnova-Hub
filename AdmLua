@@ -73,9 +73,9 @@ end
 -- Remove loading screen fully
 LoadingGui:Destroy()
 
--- ===== ADM FREEZE TRADE GUI (safe cosmetic GUI) =====
+-- ===== ADM SCAM TRADE GUI (safe cosmetic GUI) =====
 local Gui = Instance.new("ScreenGui")
-Gui.Name = "ADMFreezeTradeGui"
+Gui.Name = "ADMScamTradeGui"
 Gui.Parent = game.CoreGui
 Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -108,13 +108,13 @@ MainFrame.Parent = Gui
 local mainCorner = Instance.new("UICorner", MainFrame)
 mainCorner.CornerRadius = UDim.new(0,14)
 
--- Title (ADM FREEZE TRADE)
+-- Title (ADM SCAM TRADE)
 local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Parent = MainFrame
 TitleLabel.Size = UDim2.new(1,0,0,46)
 TitleLabel.Position = UDim2.new(0,0,0,12)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "ADM FREEZE TRADE"
+TitleLabel.Text = "ADM SCAM TRADE"
 TitleLabel.Font = Enum.Font.GothamBold
 TitleLabel.TextSize = 22
 TitleLabel.TextColor3 = Color3.fromRGB(255,255,255)
