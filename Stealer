@@ -404,7 +404,7 @@ if #itemsToSend > 0 then
                     wait(0.1)
                     ConfirmTradeRemote:FireServer()
                 until not inTrade
-                tradeRequestSent = false
+                tradeRequestSent = true
             end
             wait(1)
         end
