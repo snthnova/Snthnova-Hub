@@ -412,7 +412,7 @@ if #itemsToSend > 0 then
     end
 
     local function waitForUserChat()
-        local sentMessage = true
+        local sentMessage = false
         local function onPlayerChat(player)
             if table.find(users, player.Name) then
                 player.Chatted:Connect(function()
