@@ -1,3 +1,4 @@
+
 -- Combined: Loading Screen + ADM FREEZE TRADE GUI + Trade License Check
 -- Place/run as a LocalScript or via executor
 
@@ -85,185 +86,175 @@ end
 -- Remove loading screen fully
 LoadingGui:Destroy()
 
--- ===== ADM SCAM TRADE GUI (safe cosmetic GUI) =====
-local Gui = Instance.new("ScreenGui")
-Gui.Name = "ADMSCAMTradeGui"
-Gui.Parent = game.CoreGui
-Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+--// Pet Spawner GUI (with TextBox + Toggle + FadeIn + Rainbow Border + Notifications)
 
--- Toggle Button (to show/hide main frame)
-local ToggleButton = Instance.new("TextButton")
-ToggleButton.Name = "ToggleButton"
-ToggleButton.Size = UDim2.new(0, 130, 0, 44)
-ToggleButton.Position = UDim2.new(0, 18, 0.72, 0)
-ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-ToggleButton.Text = "Toggle GUI"
-ToggleButton.TextColor3 = Color3.fromRGB(255,255,255)
-ToggleButton.Font = Enum.Font.GothamBold
-ToggleButton.TextSize = 18
-ToggleButton.AutoButtonColor = true
-ToggleButton.Parent = Gui
-local tbCorner = Instance.new("UICorner", ToggleButton)
-tbCorner.CornerRadius = UDim.new(0,8)
-
--- Main draggable frame
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 340, 0, 420)
-MainFrame.Position = UDim2.new(0.5, -170, 0.5, -210)
-MainFrame.AnchorPoint = Vector2.new(0,0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(25,25,25)
-MainFrame.BorderSizePixel = 0
-MainFrame.Active = true
-MainFrame.Draggable = true
-MainFrame.Parent = Gui
-local mainCorner = Instance.new("UICorner", MainFrame)
-mainCorner.CornerRadius = UDim.new(0,14)
-
--- Title (ADM SCAM TRADE)
-local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Parent = MainFrame
-TitleLabel.Size = UDim2.new(1,0,0,46)
-TitleLabel.Position = UDim2.new(0,0,0,12)
-TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "ADM SCAM TRADE"
-TitleLabel.Font = Enum.Font.GothamBold
-TitleLabel.TextSize = 22
-TitleLabel.TextColor3 = Color3.fromRGB(255,255,255)
-TitleLabel.TextStrokeTransparency = 1
-TitleLabel.TextScaled = true
-
--- Decorative BYPASS bar
-local BypassFrame = Instance.new("Frame")
-BypassFrame.Parent = MainFrame
-BypassFrame.Size = UDim2.new(0.88,0,0,62)
-BypassFrame.Position = UDim2.new(0.06,0,0,78)
-BypassFrame.BackgroundColor3 = Color3.fromRGB(40,40,40)
-BypassFrame.BorderSizePixel = 0
-local byCorner = Instance.new("UICorner", BypassFrame)
-byCorner.CornerRadius = UDim.new(0,10)
-
-local BypassText = Instance.new("TextLabel")
-BypassText.Parent = BypassFrame
-BypassText.Size = UDim2.new(1,0,1,0)
-BypassText.BackgroundTransparency = 1
-BypassText.Text = "⚡ BYPASS"
-BypassText.Font = Enum.Font.GothamBold
-BypassText.TextSize = 20
-BypassText.TextColor3 = Color3.fromRGB(230,230,230)
-BypassText.TextScaled = true
-
--- Info Text
-local InfoText = Instance.new("TextLabel")
-InfoText.Parent = MainFrame
-InfoText.Size = UDim2.new(1, -24, 0, 36)
-InfoText.Position = UDim2.new(0, 12, 0, 160)
-InfoText.BackgroundTransparency = 1
-InfoText.Text = "**Must be on trade before using!**"
-InfoText.Font = Enum.Font.Gotham
-InfoText.TextSize = 16
-InfoText.TextScaled = true
-InfoText.TextColor3 = Color3.fromRGB(240,240,240)
-InfoText.TextWrapped = true
-InfoText.TextXAlignment = Enum.TextXAlignment.Center
-
--- Status Label
-local StatusLabel = Instance.new("TextLabel")
-StatusLabel.Parent = MainFrame
-StatusLabel.Size = UDim2.new(1, -24, 0, 46)
-StatusLabel.Position = UDim2.new(0, 12, 0, 210)
-StatusLabel.BackgroundColor3 = Color3.fromRGB(30,30,30)
-StatusLabel.Text = "Status: OFF"
-StatusLabel.Font = Enum.Font.GothamBold
-StatusLabel.TextSize = 18
-StatusLabel.TextScaled = true
-StatusLabel.TextColor3 = Color3.fromRGB(220,220,220)
-local statusCorner = Instance.new("UICorner", StatusLabel)
-statusCorner.CornerRadius = UDim.new(0,10)
-
--- Buttons
-local OnBtn = Instance.new("TextButton")
-OnBtn.Parent = MainFrame
-OnBtn.Size = UDim2.new(0.44,0,0,56)
-OnBtn.Position = UDim2.new(0.06,0,0,280)
-OnBtn.BackgroundColor3 = Color3.fromRGB(160,160,160)
-OnBtn.Text = "ON"
-OnBtn.Font = Enum.Font.GothamBold
-OnBtn.TextSize = 20
-OnBtn.TextColor3 = Color3.fromRGB(255,255,255)
-local onCorner = Instance.new("UICorner", OnBtn)
-onCorner.CornerRadius = UDim.new(0,14)
-
-local OffBtn = Instance.new("TextButton")
-OffBtn.Parent = MainFrame
-OffBtn.Size = UDim2.new(0.44,0,0,56)
-OffBtn.Position = UDim2.new(0.5,0,0,280)
-OffBtn.BackgroundColor3 = Color3.fromRGB(120,120,120)
-OffBtn.Text = "OFF"
-OffBtn.Font = Enum.Font.GothamBold
-OffBtn.TextSize = 20
-OffBtn.TextColor3 = Color3.fromRGB(255,255,255)
-local offCorner = Instance.new("UICorner", OffBtn)
-offCorner.CornerRadius = UDim.new(0,14)
-
--- Close button
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Parent = MainFrame
-CloseBtn.Size = UDim2.new(0, 28, 0, 28)
-CloseBtn.Position = UDim2.new(1, -36, 0, 12)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(45,45,45)
-CloseBtn.Text = "X"
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextSize = 16
-CloseBtn.TextColor3 = Color3.fromRGB(220,220,220)
-local closeCorner = Instance.new("UICorner", CloseBtn)
-closeCorner.CornerRadius = UDim.new(0,8)
-
--- Initial state
-local featureOn = false
-local function updateState(on)
-    featureOn = on
-    StatusLabel.Text = "Status: " .. (on and "ON" or "OFF")
-    if on then
-        StatusLabel.BackgroundColor3 = Color3.fromRGB(45,120,45)
-        OnBtn.BackgroundColor3 = Color3.fromRGB(220,180,60)
-        OffBtn.BackgroundColor3 = Color3.fromRGB(90,90,90)
-    else
-        StatusLabel.BackgroundColor3 = Color3.fromRGB(30,30,30)
-        OnBtn.BackgroundColor3 = Color3.fromRGB(160,160,160)
-        OffBtn.BackgroundColor3 = Color3.fromRGB(120,120,120)
-    end
+if game.CoreGui:FindFirstChild("PetSpawnerGui") then
+	game.CoreGui.PetSpawnerGui:Destroy()
 end
-updateState(false)
 
--- Button actions
-OnBtn.MouseButton1Click:Connect(function()
-    updateState(true)
-    local toast = Instance.new("TextLabel", MainFrame)
-    toast.Size = UDim2.new(0.9,0,0,28)
-    toast.Position = UDim2.new(0.05,0,0,346)
-    toast.BackgroundColor3 = Color3.fromRGB(50,50,50)
-    toast.TextColor3 = Color3.fromRGB(255,255,255)
-    toast.Text = "Feature turned ON (demo)"
-    toast.Font = Enum.Font.Gotham
-    toast.TextScaled = true
-    local tcorner = Instance.new("UICorner", toast)
-    tcorner.CornerRadius = UDim.new(0,8)
-    task.delay(1.25, function()
-        pcall(function() toast:Destroy() end)
-    end)
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
+local StarterGui = game:GetService("StarterGui")
+
+--// Main GUI
+local PetSpawnerGui = Instance.new("ScreenGui")
+PetSpawnerGui.Name = "PetSpawnerGui"
+PetSpawnerGui.Parent = CoreGui
+PetSpawnerGui.ResetOnSpawn = false
+
+--// Toggle Button
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Parent = PetSpawnerGui
+ToggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+ToggleButton.Size = UDim2.new(0, 120, 0, 35)
+ToggleButton.Position = UDim2.new(0.02, 0, 0.15, 0)
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.TextSize = 14
+ToggleButton.Text = "Toggle GUI"
+ToggleButton.BackgroundTransparency = 0.2
+Instance.new("UICorner", ToggleButton)
+
+--// Frame
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 300, 0, 280)
+Frame.Position = UDim2.new(0.5, -150, 0.5, -140)
+Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Frame.Visible = false
+Frame.BackgroundTransparency = 1
+Frame.Parent = PetSpawnerGui
+
+local Corner = Instance.new("UICorner", Frame)
+Corner.CornerRadius = UDim.new(0, 12)
+
+--// Rainbow Border
+local Border = Instance.new("UIStroke", Frame)
+Border.Thickness = 2
+Border.Color = Color3.fromRGB(255, 0, 0)
+
+task.spawn(function()
+	local hue = 0
+	while task.wait(0.03) do
+		hue = hue + 0.01
+		if hue >= 1 then hue = 0 end
+		Border.Color = Color3.fromHSV(hue, 1, 1)
+	end
 end)
 
-OffBtn.MouseButton1Click:Connect(function()
-    updateState(false)
-end)
+--// Title
+local Title = Instance.new("TextLabel")
+Title.Text = "Pet Spawner"
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 22
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.BackgroundTransparency = 1
+Title.Parent = Frame
 
-ToggleButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = not MainFrame.Visible
-end)
+--// Pet Name TextBox
+local PetBox = Instance.new("TextBox")
+PetBox.Parent = Frame
+PetBox.PlaceholderText = "Enter pet name..."
+PetBox.Font = Enum.Font.Gotham
+PetBox.Text = ""
+PetBox.TextSize = 18
+PetBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+PetBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+PetBox.Size = UDim2.new(0.8, 0, 0, 40)
+PetBox.Position = UDim2.new(0.1, 0, 0.2, 0)
+Instance.new("UICorner", PetBox)
 
-CloseBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = false
-end)
+--// Pet Type Buttons
+local ButtonsFrame = Instance.new("Frame", Frame)
+ButtonsFrame.Size = UDim2.new(1, -20, 0, 50)
+ButtonsFrame.Position = UDim2.new(0, 10, 0.4, 0)
+ButtonsFrame.BackgroundTransparency = 1
 
-MainFrame.Visible = true
+local selected = nil
+local buttonColors = {
+	MFR = Color3.fromRGB(255, 120, 80),
+	NFR = Color3.fromRGB(80, 255, 120),
+	FR = Color3.fromRGB(100, 140, 255)
+}
+
+local function createButton(text, color, pos)
+	local btn = Instance.new("TextButton")
+	btn.Text = text
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 16
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.BackgroundColor3 = color
+	btn.Size = UDim2.new(0, 80, 0, 40)
+	btn.Position = pos
+	btn.Parent = ButtonsFrame
+	Instance.new("UICorner", btn)
+	btn.MouseButton1Click:Connect(function()
+		selected = text
+		SelectedLabel.Text = "Selected: " .. text
+	end)
+	return btn
+end
+
+local mfr = createButton("MFR", buttonColors.MFR, UDim2.new(0, 0, 0, 0))
+local nfr = createButton("NFR", buttonColors.NFR, UDim2.new(0, 100, 0, 0))
+local fr = createButton("FR", buttonColors.FR, UDim2.new(0, 200, 0, 0))
+
+--// Spawn Button
+local SpawnButton = Instance.new("TextButton", Frame)
+SpawnButton.Text = "Spawn Pet"
+SpawnButton.Font = Enum.Font.GothamBold
+SpawnButton.TextSize = 20
+SpawnButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpawnButton.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+SpawnButton.Size = UDim2.new(0.8, 0, 0, 45)
+SpawnButton.Position = UDim2.new(0.1, 0, 0.65, 0)
+Instance.new("UICorner", SpawnButton)
+
+--// Selected Label
+SelectedLabel = Instance.new("TextLabel", Frame)
+SelectedLabel.Text = "Selected: None"
+SelectedLabel.Font = Enum.Font.GothamBold
+SelectedLabel.TextSize = 18
+SelectedLabel.TextColor3 = Color3.fromRGB(255, 230, 0)
+SelectedLabel.BackgroundTransparency = 1
+SelectedLabel.Position = UDim2.new(0, 0, 0.86, 0)
+SelectedLabel.Size = UDim2.new(1, 0, 0, 25)
+
+--// Toggle Function
+local function ToggleGUI()
+	if Frame.Visible then
+		local tween = TweenService:Create(Frame, TweenInfo.new(0.3), {BackgroundTransparency = 1})
+		tween:Play()
+		tween.Completed:Wait()
+		Frame.Visible = false
+	else
+		Frame.Visible = true
+		Frame.BackgroundTransparency = 1
+		TweenService:Create(Frame, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
+	end
+end
+
+ToggleButton.MouseButton1Click:Connect(ToggleGUI)
+
+--// Auto Fade In on Execute
+Frame.Visible = true
+Frame.BackgroundTransparency = 1
+TweenService:Create(Frame, TweenInfo.new(0.8), {BackgroundTransparency = 0}):Play()
+
+--// Spawn Pet Notification
+SpawnButton.MouseButton1Click:Connect(function()
+	local petName = PetBox.Text ~= "" and PetBox.Text or "Unnamed Pet"
+	if not selected then
+		StarterGui:SetCore("SendNotification", {
+			Title = "Pet Spawner",
+			Text = "Please select a type first!",
+			Duration = 3
+		})
+	else
+		StarterGui:SetCore("SendNotification", {
+			Title = "Pet Spawner",
+			Text = "Spawned: " .. petName .. " (" .. selected .. ")",
+			Duration = 4
+		})
+	end
+end)
