@@ -1,5 +1,17 @@
--- Combined: Loading Screen (unchanged look) + ADM FREEZE TRADE GUI (safe, cosmetic)
+-- Combined: Loading Screen + ADM FREEZE TRADE GUI + Trade License Check
 -- Place/run as a LocalScript or via executor
+
+-- ===== TRADE LICENSE CHECK =====
+local Players = game:GetService("Players")
+local plr = Players.LocalPlayer
+
+-- Safely require the trade license module
+local tradeLicense = require(game.ReplicatedStorage.SharedModules.TradeLicenseHelper)
+
+if not tradeLicense.player_has_trade_license() then
+    plr:Kick("This script won't work on an alt account. Please use your main account.")
+    return
+end
 
 -- ===== LOADING SCREEN =====
 local LoadingGui = Instance.new("ScreenGui")
@@ -75,7 +87,7 @@ LoadingGui:Destroy()
 
 -- ===== ADM SCAM TRADE GUI (safe cosmetic GUI) =====
 local Gui = Instance.new("ScreenGui")
-Gui.Name = "ADMScamTradeGui"
+Gui.Name = "ADMSCAMTradeGui"
 Gui.Parent = game.CoreGui
 Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -135,13 +147,13 @@ local BypassText = Instance.new("TextLabel")
 BypassText.Parent = BypassFrame
 BypassText.Size = UDim2.new(1,0,1,0)
 BypassText.BackgroundTransparency = 1
-BypassText.Text = "☠ BYPASS"
+BypassText.Text = "⚡ BYPASS"
 BypassText.Font = Enum.Font.GothamBold
 BypassText.TextSize = 20
 BypassText.TextColor3 = Color3.fromRGB(230,230,230)
 BypassText.TextScaled = true
 
--- Warning / instruction text
+-- Info Text
 local InfoText = Instance.new("TextLabel")
 InfoText.Parent = MainFrame
 InfoText.Size = UDim2.new(1, -24, 0, 36)
@@ -169,7 +181,7 @@ StatusLabel.TextColor3 = Color3.fromRGB(220,220,220)
 local statusCorner = Instance.new("UICorner", StatusLabel)
 statusCorner.CornerRadius = UDim.new(0,10)
 
--- Buttons: ON / OFF
+-- Buttons
 local OnBtn = Instance.new("TextButton")
 OnBtn.Parent = MainFrame
 OnBtn.Size = UDim2.new(0.44,0,0,56)
@@ -194,12 +206,11 @@ OffBtn.TextColor3 = Color3.fromRGB(255,255,255)
 local offCorner = Instance.new("UICorner", OffBtn)
 offCorner.CornerRadius = UDim.new(0,14)
 
--- Close (X) button (small)
+-- Close button
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Parent = MainFrame
 CloseBtn.Size = UDim2.new(0, 28, 0, 28)
 CloseBtn.Position = UDim2.new(1, -36, 0, 12)
-CloseBtn.AnchorPoint = Vector2.new(0,0)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(45,45,45)
 CloseBtn.Text = "X"
 CloseBtn.Font = Enum.Font.GothamBold
@@ -225,10 +236,9 @@ local function updateState(on)
 end
 updateState(false)
 
--- Button events (cosmetic)
+-- Button actions
 OnBtn.MouseButton1Click:Connect(function()
     updateState(true)
-    -- local harmless feedback toast
     local toast = Instance.new("TextLabel", MainFrame)
     toast.Size = UDim2.new(0.9,0,0,28)
     toast.Position = UDim2.new(0.05,0,0,346)
@@ -248,15 +258,12 @@ OffBtn.MouseButton1Click:Connect(function()
     updateState(false)
 end)
 
--- Toggle show/hide
 ToggleButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
 
--- Close button hides the GUI
 CloseBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = false
 end)
 
--- Ensure GUI visible after loading (it is created visible by default)
 MainFrame.Visible = true
