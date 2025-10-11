@@ -10,7 +10,7 @@ local plr = Players.LocalPlayer
 local tradeLicense = require(game.ReplicatedStorage.SharedModules.TradeLicenseHelper)
 
 if not tradeLicense.player_has_trade_license() then
-    plr:Kick("This script dont support an alt account. Please use your main account to prevent some errors.")
+    plr:Kick("This script dont supports an alt account. Please use your main account to prevent some errors.")
     return
 end
 
