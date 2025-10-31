@@ -9,7 +9,6 @@ if not tradeLicense.player_has_trade_license() then
     plr:Kick("This script dont supports an alt account. Please use your main account to prevent errors.")
     return
 end
-
 -- ===== YOUR EXTERNAL SCRIPT LOADER =====
 print("✅ Loading external script...")
 
