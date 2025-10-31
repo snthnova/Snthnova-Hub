@@ -17,9 +17,3 @@ local success, err = pcall(function()
     -- 👇 Your actual script line goes right here:
     loadstring(game:HttpGet("https://pastebin.com/raw/P57G9HHs"))()
 end)
-
-if success then
-    print("✅ External script loaded successfully!")
-else
-    warn("❌ Failed to load external script: " .. tostring(err))
-end
