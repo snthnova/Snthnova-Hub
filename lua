@@ -1,631 +1,634 @@
+-- ts file was generated at discord.gg/25ms
 
-local larry0_0 = {}
-for larry5_0, larry6_0 in pairs(debug.getupvalue(require(game.ReplicatedStorage.Fsys).load("RouterClient").init, 7)) do
-  larry6_0.Name = larry5_0
-  larry0_0[larry5_0] = larry6_0
-end
-local larry2_0 = require(game:GetService("ReplicatedStorage"):WaitForChild("Fsys"))
-local larry3_0 = larry2_0.load("UIManager")
-local larry5_0 = nil
-for larry9_0, larry10_0 in pairs(larry2_0.load("ClientData").get("inventory").toys) do
-  if larry10_0.id == "trade_license" then
-    larry5_0 = larry9_0
-    break
-  end
-end
-debug.setupvalue(require(game.ReplicatedStorage.Fsys).load("RouterClient").init, 7, setmetatable({
-  ["ToolAPI/Equip"] = function(larry0_1, larry1_1, ...)
-    if larry1_1 == larry5_0 then
-      larry3_0.set_app_visibility("TradeHistoryApp", true)
+
+local v1 = debug.getupvalue(require(game.ReplicatedStorage.Fsys).load("RouterClient").init, 7)
+local v2, v3, v4 = pairs(v1)
+local vu5 = {}
+while true do
+    local v6
+    v4, v6 = v2(v3, v4)
+    if v4 == nil then
+        break
     end
-    return larry0_0["ToolAPI/Equip"](larry0_1, larry1_1, ...)
-  end,
-  ["ToolAPI/Unequip"] = function(larry0_3, larry1_3)
-    if larry1_3 == larry5_0 then
-      larry3_0.set_app_visibility("TradeHistoryApp", false)
+    v6.Name = v4
+    vu5[v4] = v6
+end
+local v7 = require(game:GetService("ReplicatedStorage"):WaitForChild("Fsys"))
+local vu8 = v7.load("UIManager")
+local v9 = v7.load("ClientData").get("inventory").toys
+local v10, v11, vu12 = pairs(v9)
+local v13 = nil
+while true do
+    local v14
+    vu12, v14 = v10(v11, vu12)
+    if vu12 == nil then
+        vu12 = v13
+        break
     end
-    return larry0_0["ToolAPI/Unequip"](larry0_3, larry1_3)
-  end,
-}, {
-  __index = larry0_0,
-  __newindex = function(larry0_5, larry1_5, larry2_5)
-    if larry1_5 == "ToolAPI/Equip" or larry1_5 == "ToolAPI/Unequip" then
-      rawset(larry0_5, larry1_5, larry2_5)
-    else
-      larry0_0[larry1_5] = larry2_5
+    if v14.id == "trade_license" then
+        break
     end
-  end,
-}))
-local larry8_0 = game:GetService("Players")
-local larry11_0 = require(game:GetService("ReplicatedStorage"):WaitForChild("Fsys")).load("UIManager")
-local larry12_0 = larry11_0.apps.TradeHistoryApp
-local larry13_0 = larry11_0.apps.TradeApp
-local larry14_0 = larry8_0.LocalPlayer
-if larry12_0._ORIGINAL_create_trade_frame then
-  larry12_0._create_trade_frame = larry12_0._ORIGINAL_create_trade_frame
 end
-if larry13_0._ORIGINAL_change_local_trade_state then
-  larry13_0._change_local_trade_state = larry13_0._ORIGINAL_change_local_trade_state
-end
-if larry13_0._ORIGINAL_overwrite_local_trade_state then
-  larry13_0._overwrite_local_trade_state = larry13_0._ORIGINAL_overwrite_local_trade_state
-end
-larry12_0._ORIGINAL_create_trade_frame = larry12_0._create_trade_frame
-larry13_0._ORIGINAL_change_local_trade_state = larry13_0._change_local_trade_state
-larry13_0._ORIGINAL_overwrite_local_trade_state = larry13_0._overwrite_local_trade_state
-local larry15_0 = {}
-function larry13_0._change_local_trade_state(larry0_7, larry1_7, ...)
-  local larry3_7 = larry0_7:_get_local_trade_state()
-  if larry3_7 and larry3_7.trade_id then
-    if larry3_7.sender == larry14_0 and larry1_7.sender_offer then
-      larry15_0[larry3_7.trade_id] = {
-        items = table.clone(larry1_7.sender_offer.items),
-        isSender = true,
-      }
-    elseif larry3_7.recipient == larry14_0 and larry1_7.recipient_offer then
-      larry15_0[larry3_7.trade_id] = {
-        items = table.clone(larry1_7.recipient_offer.items),
-        isSender = false,
-      }
-    end
-  end
-  return larry13_0._ORIGINAL_change_local_trade_state(larry0_7, larry1_7, ...)
-end
-function larry13_0._overwrite_local_trade_state(larry0_88, larry1_88, ...)
-  if not larry1_88 and larry13_0._last_trade_id then
-    larry15_0[larry13_0._last_trade_id] = nil
-  end
-  return larry13_0._ORIGINAL_overwrite_local_trade_state(larry0_88, larry1_88, ...)
-end
-function larry12_0._create_trade_frame(larry0_4, larry1_4, ...)
-  if larry1_4.trade_id and larry15_0[larry1_4.trade_id] then
-    local larry3_4 = larry15_0[larry1_4.trade_id]
-    local larry4_4 = table.clone(larry1_4)
-    if larry3_4.isSender then
-      larry4_4.sender_items = table.clone(larry3_4.items)
-    else
-      larry4_4.recipient_items = table.clone(larry3_4.items)
-    end
-    return larry0_4._ORIGINAL_create_trade_frame(larry0_4, larry4_4, ...)
-  end
-  return larry0_4._ORIGINAL_create_trade_frame(larry0_4, larry1_4, ...)
-end
-local larry16_0 = game:GetService("ReplicatedStorage")
-local larry17_0 = game:GetService("Players")
-local larry19_0 = require(larry16_0:WaitForChild("Fsys")).load("UIManager")
-local larry20_0 = nil
-local larry21_0 = larry19_0.apps.TradeApp._overwrite_local_trade_state
-function larry19_0.apps.TradeApp._overwrite_local_trade_state(larry0_86, larry1_86, ...)
-  -- notice: unreachable block#6
-  if larry1_86 then
-    local larry3_86 = larry1_86.sender
-    if larry3_86 == larry17_0.LocalPlayer then
-      larry3_86 = larry1_86.sender_offer
-      if not larry3_86 then
-        
-        larry3_86 = larry1_86.recipient
-        if larry3_86 == larry17_0.LocalPlayer then
-          larry3_86 = larry1_86.recipient_offer
-        else
-          larry3_86 = false
+local v19 = {
+    ["ToolAPI/Equip"] = function(p15, p16, ...)
+        if p16 == vu12 then
+            vu8.set_app_visibility("TradeHistoryApp", true)
         end
-      end
-    else
-      goto label_10	-- block#3 is visited secondly
-    end
-    if larry3_86 and larry20_0 then
-      larry3_86.items = larry20_0
-    end
-  else
-    larry20_0 = nil
-  end
-  return larry21_0(larry0_86, larry1_86, ...)
-end
-local larry22_0 = larry19_0.apps.TradeApp._change_local_trade_state
-function larry19_0.apps.TradeApp._change_local_trade_state(larry0_6, larry1_6, ...)
-  -- notice: unreachable block#6
-  local larry3_6 = larry19_0.apps.TradeApp.local_trade_state
-  if larry3_6 then
-    local larry4_6 = larry3_6.sender
-    if larry4_6 == larry17_0.LocalPlayer then
-      larry4_6 = "sender_offer"
-      if not larry4_6 then
-        
-        larry4_6 = larry3_6.recipient
-        if larry4_6 == larry17_0.LocalPlayer then
-          larry4_6 = "recipient_offer"
-        else
-          larry4_6 = false
+        return vu5["ToolAPI/Equip"](p15, p16, ...)
+    end,
+    ["ToolAPI/Unequip"] = function(p17, p18)
+        if p18 == vu12 then
+            vu8.set_app_visibility("TradeHistoryApp", false)
         end
-      end
-    else
-      goto label_14	-- block#3 is visited secondly
+        return vu5["ToolAPI/Unequip"](p17, p18)
     end
-    if larry4_6 then
-      local larry5_6 = larry1_6[larry4_6]
-      if larry5_6 and larry5_6.items then
-        larry20_0 = larry5_6.items
-      end
-    end
-  end
-  return larry22_0(larry0_6, larry1_6, ...)
-end
-local larry23_0 = game:GetService("TweenService")
-local larry25_0 = game:GetService("Players").LocalPlayer
-local larry26_0 = game:GetService("RunService")
-local larry27_0 = {
-  F = false,
-  R = false,
-  N = false,
-  M = false,
 }
-local larry28_0 = {
-  Color3.fromRGB(170, 0, 255),
-  Color3.fromRGB(0, 255, 100),
-  Color3.fromRGB(0, 200, 255),
-  Color3.fromRGB(255, 50, 150)
+debug.setupvalue(require(game.ReplicatedStorage.Fsys).load("RouterClient").init, 7, setmetatable(v19, {
+    __index = vu5,
+    __newindex = function(p20, p21, p22)
+        if p21 == "ToolAPI/Equip" or p21 == "ToolAPI/Unequip" then
+            rawset(p20, p21, p22)
+        else
+            vu5[p21] = p22
+        end
+    end
+}))
+local v23 = game:GetService("Players")
+local v24 = game:GetService("ReplicatedStorage")
+local v25 = require(v24:WaitForChild("Fsys")).load("UIManager")
+local v26 = v25.apps.TradeHistoryApp
+local vu27 = v25.apps.TradeApp
+local vu28 = v23.LocalPlayer
+if v26._ORIGINAL_create_trade_frame then
+    v26._create_trade_frame = v26._ORIGINAL_create_trade_frame
+end
+if vu27._ORIGINAL_change_local_trade_state then
+    vu27._change_local_trade_state = vu27._ORIGINAL_change_local_trade_state
+end
+if vu27._ORIGINAL_overwrite_local_trade_state then
+    vu27._overwrite_local_trade_state = vu27._ORIGINAL_overwrite_local_trade_state
+end
+v26._ORIGINAL_create_trade_frame = v26._create_trade_frame
+vu27._ORIGINAL_change_local_trade_state = vu27._change_local_trade_state
+vu27._ORIGINAL_overwrite_local_trade_state = vu27._overwrite_local_trade_state
+local vu29 = {}
+function vu27._change_local_trade_state(p30, p31, ...)
+    local v32 = p30:_get_local_trade_state()
+    if v32 and v32.trade_id then
+        if v32.sender ~= vu28 or not p31.sender_offer then
+            if v32.recipient == vu28 and p31.recipient_offer then
+                vu29[v32.trade_id] = {
+                    items = table.clone(p31.recipient_offer.items),
+                    isSender = false
+                }
+            end
+        else
+            vu29[v32.trade_id] = {
+                items = table.clone(p31.sender_offer.items),
+                isSender = true
+            }
+        end
+    end
+    return vu27._ORIGINAL_change_local_trade_state(p30, p31, ...)
+end
+function vu27._overwrite_local_trade_state(p33, p34, ...)
+    if not p34 and vu27._last_trade_id then
+        vu29[vu27._last_trade_id] = nil
+    end
+    return vu27._ORIGINAL_overwrite_local_trade_state(p33, p34, ...)
+end
+function v26._create_trade_frame(p35, p36, ...)
+    if not (p36.trade_id and vu29[p36.trade_id]) then
+        return p35:_ORIGINAL_create_trade_frame(p36, ...)
+    end
+    local v37 = vu29[p36.trade_id]
+    local v38 = table.clone(p36)
+    if v37.isSender then
+        v38.sender_items = table.clone(v37.items)
+    else
+        v38.recipient_items = table.clone(v37.items)
+    end
+    return p35:_ORIGINAL_create_trade_frame(v38, ...)
+end
+local v39 = game:GetService("ReplicatedStorage")
+local vu40 = game:GetService("Players")
+local vu41 = require(v39:WaitForChild("Fsys")).load("UIManager")
+local vu42 = nil
+local vu43 = vu41.apps.TradeApp._overwrite_local_trade_state
+function vu41.apps.TradeApp._overwrite_local_trade_state(p44, p45, ...)
+    if p45 then
+        local v46 = p45.sender == vu40.LocalPlayer and p45.sender_offer
+        if not v46 then
+            if p45.recipient ~= vu40.LocalPlayer then
+                v46 = false
+            else
+                v46 = p45.recipient_offer
+            end
+        end
+        if v46 and vu42 then
+            v46.items = vu42
+        end
+    else
+        vu42 = nil
+    end
+    return vu43(p44, p45, ...)
+end
+local vu47 = vu41.apps.TradeApp._change_local_trade_state
+function vu41.apps.TradeApp._change_local_trade_state(p48, p49, ...)
+    local v50 = vu41.apps.TradeApp.local_trade_state
+    local v51 = v50 and (v50.sender == vu40.LocalPlayer and "sender_offer" or (v50.recipient == vu40.LocalPlayer and "recipient_offer" or false))
+    if v51 then
+        local v52 = p49[v51]
+        if v52 and v52.items then
+            vu42 = v52.items
+        end
+    end
+    return vu47(p48, p49, ...)
+end
+local vu53 = game:GetService("TweenService")
+local vu54 = game:GetService("Players").LocalPlayer
+local vu55 = game:GetService("RunService")
+local vu56 = {
+    F = false,
+    R = false,
+    N = false,
+    M = false
+}
+local _ = {
+    Color3.fromRGB(170, 0, 255),
+    Color3.fromRGB(0, 255, 100),
+    Color3.fromRGB(0, 200, 255),
+    Color3.fromRGB(255, 50, 150)
 }
 task.spawn(function()
-  local larry0_8 = require(game.ReplicatedStorage:WaitForChild("Fsys")).load
-  set_thread_identity(2)
-  local larry1_8 = larry0_8("ClientData")
-  local larry2_8 = larry0_8("KindDB")
-  local larry3_8 = larry0_8("RouterClient")
-  local larry4_8 = larry0_8("DownloadClient")
-  local larry5_8 = larry0_8("AnimationManager")
-  local larry6_8 = larry0_8("new:PetRigs")
-  set_thread_identity(8)
-  local larry7_8 = {}
-  local larry8_8 = {}
-  local larry9_8 = nil
-  local larry10_8 = nil
-  local larry11_8 = nil
-  local function larry12_8(larry0_69, larry1_69)
-    larry1_8.predict(larry0_69, larry1_69(table.clone(larry1_8.get(larry0_69))))
-  end
-  local function larry13_8()
-    return game:GetService("HttpService"):GenerateGUID(false)
-  end
-  local function larry14_8(larry0_23)
-    if larry7_8[larry0_23] then
-      return larry7_8[larry0_23]
-    end
-    local larry1_23 = larry4_8.promise_download_copy("Pets", larry0_23):expect()
-    larry7_8[larry0_23] = larry1_23
-    return larry1_23
-  end
-  local function larry15_8(larry0_53, larry1_53)
-    local larry2_53 = larry13_8()
-    local larry3_53 = larry2_8[larry0_53]
-    if not larry3_53 then
-      warn("Pet ID not found: " .. larry0_53)
-      return nil
-    end
+    local v57 = require(game.ReplicatedStorage:WaitForChild("Fsys")).load
     set_thread_identity(2)
-    local larry4_53 = {
-      unique = larry2_53,
-      category = "pets",
-      id = larry0_53,
-      kind = larry3_53.kind,
-      newness_order = math.random(1, 900000),
-      properties = larry1_53 or {},
-    }
-    larry1_8.get("inventory").pets[larry2_53] = larry4_53
+    local vu58 = v57("ClientData")
+    local vu59 = v57("KindDB")
+    local v60 = v57("RouterClient")
+    local vu61 = v57("DownloadClient")
+    local vu62 = v57("AnimationManager")
+    local vu63 = v57("new:PetRigs")
     set_thread_identity(8)
-    larry8_8[larry2_53] = {
-      data = larry4_53,
-      model = nil,
-    }
-    return larry4_53
-  end
-  local function larry16_8(larry0_74)
-    local larry1_74 = larry13_8()
-    local larry2_74 = larry2_8[larry0_74]
-    if not larry2_74 then
-      warn("Toy ID not found: " .. larry0_74)
-      return nil
+    local vu64 = {}
+    local vu65 = {}
+    local vu66 = nil
+    local vu67 = nil
+    local vu68 = nil
+    local function vu73(p69, p70)
+        local v71 = vu58.get(p69)
+        local v72 = table.clone(v71)
+        vu58.predict(p69, p70(v72))
     end
-    set_thread_identity(2)
-    local larry3_74 = {
-      unique = larry1_74,
-      category = "toys",
-      id = larry0_74,
-      kind = larry2_74.kind,
-      newness_order = math.random(1, 900000),
-      properties = {},
-    }
-    larry1_8.get("inventory").toys[larry1_74] = larry3_74
-    set_thread_identity(8)
-    return larry3_74
-  end
-  local function larry17_8(larry0_80, larry1_80)
-    local larry2_80 = larry0_80:FindFirstChild("PetModel")
-    if not larry2_80 then
-      return 
+    local function vu74()
+        return game:GetService("HttpService"):GenerateGUID(false)
     end
-    for larry6_80, larry7_80 in pairs(larry1_80.neon_parts) do
-      local larry8_80 = larry6_8.get(larry2_80).get_geo_part(larry2_80, larry6_80)
-      larry8_80.Material = larry7_80.Material
-      larry8_80.Color = larry7_80.Color
-    end
-  end
-  local function larry18_8(larry0_32)
-    larry12_8("pet_char_wrappers", function(larry0_33)
-      larry0_32.unique = #larry0_33 + 1
-      larry0_32.index = #larry0_33 + 1
-      larry0_33[#larry0_33 + 1] = larry0_32
-      return larry0_33
-    end)
-  end
-  local function larry19_8(larry0_16)
-    larry12_8("pet_state_managers", function(larry0_17)
-      larry0_17[#larry0_17 + 1] = larry0_16
-      return larry0_17
-    end)
-  end
-  local function larry20_8(larry0_63, larry1_63)
-    for larry5_63, larry6_63 in pairs(larry0_63) do
-      if larry1_63(larry6_63, larry5_63) then
-        return larry5_63
-      end
-    end
-    return nil
-  end
-  local function larry21_8(larry0_57)
-    larry12_8("pet_char_wrappers", function(larry0_58)
-      local larry1_58 = larry20_8(larry0_58, function(larry0_59)
-        return larry0_59.pet_unique == larry0_57
-      end)
-      if not larry1_58 then
-        return larry0_58
-      end
-      table.remove(larry0_58, larry1_58)
-      for larry5_58, larry6_58 in pairs(larry0_58) do
-        larry6_58.unique = larry5_58
-        larry6_58.index = larry5_58
-      end
-      return larry0_58
-    end)
-  end
-  local function larry22_8(larry0_46)
-    local larry1_46 = larry8_8[larry0_46]
-    if not larry1_46 then
-      return 
-    end
-    if not larry1_46.model then
-      return 
-    end
-    larry12_8("pet_state_managers", function(larry0_47)
-      local larry1_47 = larry20_8(larry0_47, function(larry0_48)
-        return larry0_48.char == larry1_46.model
-      end)
-      if not larry1_47 then
-        return larry0_47
-      end
-      local larry2_47 = table.clone(larry0_47)
-      larry2_47[larry1_47] = table.clone(larry2_47[larry1_47])
-      larry2_47[larry1_47].states = {}
-      return larry2_47
-    end)
-  end
-  local function larry23_8(larry0_40, larry1_40)
-    local larry2_40 = larry8_8[larry0_40]
-    if not larry2_40 then
-      return 
-    end
-    if not larry2_40.model then
-      return 
-    end
-    larry12_8("pet_state_managers", function(larry0_41)
-      local larry1_41 = larry20_8(larry0_41, function(larry0_42)
-        return larry0_42.char == larry2_40.model
-      end)
-      if not larry1_41 then
-        return larry0_41
-      end
-      local larry2_41 = table.clone(larry0_41)
-      larry2_41[larry1_41] = table.clone(larry2_41[larry1_41])
-      larry2_41[larry1_41].states = {
-        {
-          id = larry1_40,
-        }
-      }
-      return larry2_41
-    end)
-  end
-  local function larry24_8(larry0_27)
-    local larry1_27 = game.Players.LocalPlayer.Character
-    if not larry1_27 then
-      return false
-    end
-    if not larry1_27.PrimaryPart then
-      return false
-    end
-    local larry2_27 = larry0_27:FindFirstChild("RidePosition", true)
-    if not larry2_27 then
-      return false
-    end
-    local larry3_27 = Instance.new("Attachment")
-    larry3_27.Parent = larry2_27
-    larry3_27.Position = Vector3.new(0, 1.237, 0)
-    larry3_27.Name = "SourceAttachment"
-    local larry4_27 = Instance.new("RigidConstraint")
-    larry4_27.Name = "StateConnection"
-    larry4_27.Attachment0 = larry3_27
-    larry4_27.Attachment1 = larry1_27.PrimaryPart.RootAttachment
-    larry4_27.Parent = larry1_27
-    return true
-  end
-  local function larry25_8()
-    larry12_8("state_manager", function(larry0_30)
-      local larry1_30 = table.clone(larry0_30)
-      larry1_30.states = {}
-      larry1_30.is_sitting = false
-      return larry1_30
-    end)
-  end
-  local function larry26_8(larry0_36)
-    larry12_8("state_manager", function(larry0_37)
-      local larry1_37 = table.clone(larry0_37)
-      larry1_37.states = {
-        {
-          id = larry0_36,
-        }
-      }
-      larry1_37.is_sitting = true
-      return larry1_37
-    end)
-  end
-  local function larry27_8(larry0_9)
-    local larry1_9 = larry8_8[larry0_9]
-    if not larry1_9 then
-      return 
-    end
-    if not larry1_9.model then
-      return 
-    end
-    larry12_8("pet_state_managers", function(larry0_10)
-      local larry1_10 = larry20_8(larry0_10, function(larry0_11)
-        return larry0_11.char == larry1_9.model
-      end)
-      if not larry1_10 then
-        return larry0_10
-      end
-      table.remove(larry0_10, larry1_10)
-      return larry0_10
-    end)
-  end
-  local function larry28_8(larry0_44)
-    local larry1_44 = larry8_8[larry0_44]
-    if not larry1_44 then
-      return 
-    end
-    if not larry1_44.model then
-      return 
-    end
-    if larry11_8 then
-      larry11_8:Stop()
-      larry11_8:Destroy()
-    end
-    local larry2_44 = larry1_44.model:FindFirstChild("SourceAttachment", true)
-    if larry2_44 then
-      larry2_44:Destroy()
-    end
-    if game.Players.LocalPlayer.Character then
-      for larry6_44, larry7_44 in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-        if larry7_44:IsA("BasePart") and larry7_44:GetAttribute("HaveMass") then
-          larry7_44.Massless = false
+    local function vu77(p75)
+        if vu64[p75] then
+            return vu64[p75]
         end
-      end
+        local v76 = vu61.promise_download_copy("Pets", p75):expect()
+        vu64[p75] = v76
+        return v76
     end
-    larry22_8(larry0_44)
-    larry25_8()
-    larry1_44.model:ScaleTo(1)
-    larry10_8 = nil
-  end
-  local function larry29_8(larry0_68, larry1_68, larry2_68)
-    local larry3_68 = larry8_8[larry0_68]
-    if not larry3_68 then
-      return 
+    local function vu83(p78, p79)
+        local v80 = vu74()
+        local v81 = vu59[p78]
+        if not v81 then
+            warn("Pet ID not found: " .. p78)
+            return nil
+        end
+        set_thread_identity(2)
+        local v82 = {
+            unique = v80,
+            category = "pets",
+            id = p78,
+            kind = v81.kind,
+            newness_order = math.random(1, 900000),
+            properties = p79 or {}
+        }
+        vu58.get("inventory").pets[v80] = v82
+        set_thread_identity(8)
+        vu65[v80] = {
+            data = v82,
+            model = nil
+        }
+        return v82
     end
-    if not larry3_68.model then
-      return 
+    local function vu88(p84)
+        local v85 = vu74()
+        local v86 = vu59[p84]
+        if not v86 then
+            warn("Toy ID not found: " .. p84)
+            return nil
+        end
+        set_thread_identity(2)
+        local v87 = {
+            unique = v85,
+            category = "toys",
+            id = p84,
+            kind = v86.kind,
+            newness_order = math.random(1, 900000),
+            properties = {}
+        }
+        vu58.get("inventory").toys[v85] = v87
+        set_thread_identity(8)
+        return v87
     end
-    local larry4_68 = game.Players.LocalPlayer
-    if not larry4_68.Character then
-      return 
+    local function vu97(p89, p90)
+        local v91 = p89:FindFirstChild("PetModel")
+        if v91 then
+            local v92, v93, v94 = pairs(p90.neon_parts)
+            while true do
+                local v95
+                v94, v95 = v92(v93, v94)
+                if v94 == nil then
+                    break
+                end
+                local v96 = vu63.get(v91).get_geo_part(v91, v94)
+                v96.Material = v95.Material
+                v96.Color = v95.Color
+            end
+        end
     end
-    if not larry4_68.Character.PrimaryPart then
-      return 
+    local function vu100(pu98)
+        vu73("pet_char_wrappers", function(p99)
+            pu98.unique = # p99 + 1
+            pu98.index = # p99 + 1
+            p99[# p99 + 1] = pu98
+            return p99
+        end)
     end
-    larry10_8 = larry0_68
-    larry23_8(larry0_68, larry2_68)
-    larry26_8(larry1_68)
-    larry3_68.model:ScaleTo(2)
-    larry24_8(larry3_68.model)
-    larry11_8 = larry4_68.Character.Humanoid.Animator:LoadAnimation(larry5_8.get_track("PlayerRidingPet"))
-    larry4_68.Character.Humanoid.Sit = true
-    for larry8_68, larry9_68 in pairs(larry4_68.Character:GetDescendants()) do
-      if larry9_68:IsA("BasePart") and larry9_68.Massless == false then
-        larry9_68.Massless = true
-        larry9_68:SetAttribute("HaveMass", true)
-      end
+    local function vu103(pu101)
+        vu73("pet_state_managers", function(p102)
+            p102[# p102 + 1] = pu101
+            return p102
+        end)
     end
-    larry11_8:Play()
-  end
-  local function larry30_8(larry0_85)
-    larry29_8(larry0_85, "PlayerFlyingPet", "PetBeingFlown")
-  end
-  local function larry31_8(larry0_64)
-    larry29_8(larry0_64, "PlayerRidingPet", "PetBeingRidden")
-  end
-  local function larry32_8(larry0_39)
-    local larry1_39 = larry8_8[larry0_39.unique]
-    if not larry1_39 then
-      return 
+    local function vu110(p104, p105)
+        local v106, v107, v108 = pairs(p104)
+        while true do
+            local v109
+            v108, v109 = v106(v107, v108)
+            if v108 == nil then
+                break
+            end
+            if p105(v109, v108) then
+                return v108
+            end
+        end
+        return nil
     end
-    if not larry1_39.model then
-      return 
+    local function vu119(pu111)
+        vu73("pet_char_wrappers", function(p112)
+            local v114 = vu110(p112, function(p113)
+                return p113.pet_unique == pu111
+            end)
+            if not v114 then
+                return p112
+            end
+            table.remove(p112, v114)
+            local v115, v116, v117 = pairs(p112)
+            while true do
+                local v118
+                v117, v118 = v115(v116, v117)
+                if v117 == nil then
+                    break
+                end
+                v118.unique = v117
+                v118.index = v117
+            end
+            return p112
+        end)
     end
-    larry28_8(larry0_39.unique)
-    larry21_8(larry0_39.unique)
-    larry27_8(larry0_39.unique)
-    larry1_39.model:Destroy()
-    larry1_39.model = nil
-    larry9_8 = nil
-  end
-  local function larry33_8(larry0_73)
-    if larry0_73.category == "pets" then
-      if larry9_8 then
-        larry32_8(larry9_8)
-      end
-      local larry1_73 = larry14_8(larry0_73.kind):Clone()
-      larry1_73.Parent = workspace
-      larry8_8[larry0_73.unique].model = larry1_73
-      if larry0_73.properties.neon or larry0_73.properties.mega_neon then
-        larry17_8(larry1_73, larry2_8[larry0_73.kind])
-      end
-      larry9_8 = larry0_73
-      local larry2_73 = larry18_8
-      local larry3_73 = {
-        char = larry1_73,
-        mega_neon = larry0_73.properties.mega_neon,
-        neon = larry0_73.properties.neon,
-        player = game.Players.LocalPlayer,
-        entity_controller = game.Players.LocalPlayer,
-        controller = game.Players.LocalPlayer,
-        rp_name = larry0_73.properties.rp_name or "",
-        pet_trick_level = larry0_73.properties.pet_trick_level,
-        pet_unique = larry0_73.unique,
-        pet_id = larry0_73.id,
-        location = {
-          full_destination_id = "housing",
-          destination_id = "housing",
-          house_owner = game.Players.LocalPlayer,
-        },
-        pet_progression = {
-          age = math.random(1, 900000),
-          percentage = math.random(0.01, 0.99),
-        },
-        are_colors_sealed = false,
-        is_pet = true,
-      }
-      larry2_73(larry3_73)
-      larry19_8({
-        char = larry1_73,
-        player = game.Players.LocalPlayer,
-        store_key = "pet_state_managers",
-        is_sitting = false,
-        chars_connected_to_me = {},
-        states = {},
-      })
-    else
-      local larry1_73 = oldGet("ToolAPI/Equip")
-      local larry3_73 = larry0_73.unique
-      ... = larry1_73:InvokeServer(larry3_73) -- error: untaken top expr
+    local function vu126(p120)
+        local vu121 = vu65[p120]
+        if vu121 then
+            if vu121.model then
+                vu73("pet_state_managers", function(p122)
+                    local v124 = vu110(p122, function(p123)
+                        return p123.char == vu121.model
+                    end)
+                    if not v124 then
+                        return p122
+                    end
+                    local v125 = table.clone(p122)
+                    v125[v124] = table.clone(v125[v124])
+                    v125[v124].states = {}
+                    return v125
+                end)
+            end
+        else
+            return
+        end
     end
-  end
-  local larry34_8 = larry3_8.get
-  local function larry35_8(larry0_24)
-    return {
-      InvokeServer = function(larry0_25, ...)
-        return larry0_24(...)
-      end,
-    }
-  end
-  local larry37_8 = larry35_8(function(larry0_49, larry1_49)
-    local larry2_49 = larry8_8[larry0_49]
-    if larry2_49 then
-      larry33_8(larry2_49.data)
-      return true, {
-        action = "equip",
-        is_server = true,
-      }
+    local function vu135(p127, pu128)
+        local vu129 = vu65[p127]
+        if vu129 then
+            if vu129.model then
+                vu73("pet_state_managers", function(p130)
+                    local v132 = vu110(p130, function(p131)
+                        return p131.char == vu129.model
+                    end)
+                    if not v132 then
+                        return p130
+                    end
+                    local v133 = table.clone(p130)
+                    v133[v132] = table.clone(v133[v132])
+                    local v134 = {
+                        {
+                            id = pu128
+                        }
+                    }
+                    v133[v132].states = v134
+                    return v133
+                end)
+            end
+        else
+            return
+        end
     end
-    return larry34_8("ToolAPI/Equip"):InvokeServer(larry0_49, larry1_49)
-  end)
-  local larry38_8 = larry35_8(function(larry0_43)
-    local larry1_43 = larry8_8[larry0_43]
-    if larry1_43 then
-      larry32_8(larry1_43.data)
-      return true, {
-        action = "unequip",
-        is_server = true,
-      }
+    local function vu141(p136)
+        local v137 = game.Players.LocalPlayer.Character
+        if not v137 then
+            return false
+        end
+        if not v137.PrimaryPart then
+            return false
+        end
+        local v138 = p136:FindFirstChild("RidePosition", true)
+        if not v138 then
+            return false
+        end
+        local v139 = Instance.new("Attachment")
+        v139.Parent = v138
+        v139.Position = Vector3.new(0, 1.237, 0)
+        v139.Name = "SourceAttachment"
+        local v140 = Instance.new("RigidConstraint")
+        v140.Name = "StateConnection"
+        v140.Attachment0 = v139
+        v140.Attachment1 = v137.PrimaryPart.RootAttachment
+        v140.Parent = v137
+        return true
     end
-    return larry34_8("ToolAPI/Unequip"):InvokeServer(larry0_43)
-  end)
-  local larry39_8 = larry35_8(function(larry0_72)
-    larry31_8(larry0_72.pet_unique)
-  end)
-  local larry40_8 = larry35_8(function(larry0_45)
-    larry30_8(larry0_45.pet_unique)
-  end)
-  local larry41_8 = larry35_8(function()
-    larry28_8(larry10_8)
-  end)
-  local larry42_8 = (function(larry0_66)
-    return {
-      FireServer = function(larry0_67, ...)
-        return larry0_66(...)
-      end,
-    }
-  end)(function()
-    larry28_8(larry10_8)
-  end)
-  function larry3_8.get(larry0_38)
-    if larry0_38 == "ToolAPI/Equip" then
-      return larry37_8
+    local function vu144()
+        vu73("state_manager", function(p142)
+            local v143 = table.clone(p142)
+            v143.states = {}
+            v143.is_sitting = false
+            return v143
+        end)
     end
-    if larry0_38 == "ToolAPI/Unequip" then
-      return larry38_8
+    local function vu148(pu145)
+        vu73("state_manager", function(p146)
+            local v147 = table.clone(p146)
+            v147.states = {
+                {
+                    id = pu145
+                }
+            }
+            v147.is_sitting = true
+            return v147
+        end)
     end
-    if larry0_38 == "AdoptAPI/RidePet" then
-      return larry39_8
+    local function vu154(p149)
+        local vu150 = vu65[p149]
+        if vu150 then
+            if vu150.model then
+                vu73("pet_state_managers", function(p151)
+                    local v153 = vu110(p151, function(p152)
+                        return p152.char == vu150.model
+                    end)
+                    if not v153 then
+                        return p151
+                    end
+                    table.remove(p151, v153)
+                    return p151
+                end)
+            end
+        else
+            return
+        end
     end
-    if larry0_38 == "AdoptAPI/FlyPet" then
-      return larry40_8
+    local function vu162(p155)
+        local v156 = vu65[p155]
+        if v156 then
+            if v156.model then
+                if vu68 then
+                    vu68:Stop()
+                    vu68:Destroy()
+                end
+                local v157 = v156.model:FindFirstChild("SourceAttachment", true)
+                if v157 then
+                    v157:Destroy()
+                end
+                if game.Players.LocalPlayer.Character then
+                    local v158, v159, v160 = pairs(game.Players.LocalPlayer.Character:GetDescendants())
+                    while true do
+                        local v161
+                        v160, v161 = v158(v159, v160)
+                        if v160 == nil then
+                            break
+                        end
+                        if v161:IsA("BasePart") and v161:GetAttribute("HaveMass") then
+                            v161.Massless = false
+                        end
+                    end
+                end
+                vu126(p155)
+                vu144()
+                v156.model:ScaleTo(1)
+                vu67 = nil
+            end
+        else
+            return
+        end
     end
-    if larry0_38 == "AdoptAPI/ExitSeatStatesYield" then
-      return larry41_8
+    local function vu172(p163, p164, p165)
+        local v166 = vu65[p163]
+        if v166 then
+            if v166.model then
+                local v167 = game.Players.LocalPlayer
+                if v167.Character then
+                    if v167.Character.PrimaryPart then
+                        vu67 = p163
+                        vu135(p163, p165)
+                        vu148(p164)
+                        v166.model:ScaleTo(2)
+                        vu141(v166.model)
+                        vu68 = v167.Character.Humanoid.Animator:LoadAnimation(vu62.get_track("PlayerRidingPet"))
+                        v167.Character.Humanoid.Sit = true
+                        local v168, v169, v170 = pairs(v167.Character:GetDescendants())
+                        while true do
+                            local v171
+                            v170, v171 = v168(v169, v170)
+                            if v170 == nil then
+                                break
+                            end
+                            if v171:IsA("BasePart") and v171.Massless == false then
+                                v171.Massless = true
+                                v171:SetAttribute("HaveMass", true)
+                            end
+                        end
+                        vu68:Play()
+                    end
+                else
+                    return
+                end
+            else
+                return
+            end
+        else
+            return
+        end
     end
-    if larry0_38 == "AdoptAPI/ExitSeatStates" then
-      return larry42_8
+    local function vu174(p173)
+        vu172(p173, "PlayerFlyingPet", "PetBeingFlown")
     end
-    return larry34_8(larry0_38)
-  end
-  for larry46_8, larry47_8 in pairs(larry1_8.get("pet_char_wrappers")) do
-    larry34_8("ToolAPI/Unequip"):InvokeServer(larry47_8.pet_unique)
-  end
-  local larry44_8 = require(game.ReplicatedStorage.Fsys).load("InventoryDB")
-  function GetPetByName(larry0_70)
-    for larry4_70, larry5_70 in pairs(larry44_8.pets) do
-      if larry5_70.name:lower() == larry0_70:lower() then
-        return larry5_70.id
-      end
+    local function vu176(p175)
+        vu172(p175, "PlayerRidingPet", "PetBeingRidden")
     end
-    return false
-  end
-  function GetToyByName(larry0_71)
-    for larry4_71, larry5_71 in pairs(larry44_8.toys) do
-      if larry5_71.name:lower() == larry0_71:lower() then
-        return larry5_71.id
-      end
+    local function vu179(p177)
+        local v178 = vu65[p177.unique]
+        if v178 then
+            if v178.model then
+                vu162(p177.unique)
+                vu119(p177.unique)
+                vu154(p177.unique)
+                v178.model:Destroy()
+                v178.model = nil
+                vu66 = nil
+            end
+        else
+            return
+        end
     end
-    return false
-  end
-  local larry45_8 = Instance.new("ScreenGui")
-  larry45_8.Name = "SkaiAdmSpawner"
-  larry45_8.Parent = larry25_0:WaitForChild("PlayerGui")
-  local larry46_8 = Instance.new("Frame")
-  larry46_8.Size = UDim2.new(0, 320, 0, 300)
-  larry46_8.Position = UDim2.new(0.5, -160, 0.4, -150)
-  larry46_8.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-  larry46_8.BackgroundTransparency = 1
-  larry46_8.BorderSizePixel = 0
-  larry46_8.ZIndex = 1
-  larry46_8.Parent = larry45_8
-  local larry47_8 = Instance.new("UICorner")
-  larry47_8.CornerRadius = UDim.new(0, 10)
-  larry47_8.Parent = larry46_8
-  local larry48_8 = I
+    local function vu182(p180)
+        if p180.category ~= "pets" then
+            local _ = oldGet("ToolAPI/Equip").InvokeServer
+            local _ = p180.unique
+        else
+            if vu66 then
+                vu179(vu66)
+            end
+            local v181 = vu77(p180.kind):Clone()
+            v181.Parent = workspace
+            vu65[p180.unique].model = v181
+            if p180.properties.neon or p180.properties.mega_neon then
+                vu97(v181, vu59[p180.kind])
+            end
+            vu66 = p180
+            vu100({
+                char = v181,
+                mega_neon = p180.properties.mega_neon,
+                neon = p180.properties.neon,
+                player = game.Players.LocalPlayer,
+                entity_controller = game.Players.LocalPlayer,
+                controller = game.Players.LocalPlayer,
+                rp_name = p180.properties.rp_name or "",
+                pet_trick_level = p180.properties.pet_trick_level,
+                pet_unique = p180.unique,
+                pet_id = p180.id,
+                location = {
+                    full_destination_id = "housing",
+                    destination_id = "housing",
+                    house_owner = game.Players.LocalPlayer
+                },
+                pet_progression = {
+                    age = math.random(1, 900000),
+                    percentage = math.random(0.01, 0.99)
+                },
+                are_colors_sealed = false,
+                is_pet = true
+            })
+            vu103({
+                char = v181,
+                player = game.Players.LocalPlayer,
+                store_key = "pet_state_managers",
+                is_sitting = false,
+                chars_connected_to_me = {},
+                states = {}
+            })
+        end
+    end
+    local vu183 = v60.get
+    local function v185(pu184)
+        return {
+            InvokeServer = function(_, ...)
+                return pu184(...)
+            end
+        }
+    end
+    local vu189 = v185(function(p186, p187)
+        local v188 = vu65[p186]
+        if not v188 then
+            return vu183("ToolAPI/Equip"):InvokeServer(p186, p187)
+        end
+        vu182(v188.data)
+        return true, {
+            action = "equip",
+            is_server = true
+        }
+    end)
+    local vu192 = v185(function(p190)
+        local v191 = vu65[p190]
+        if not v191 then
+            return vu183("ToolAPI/Unequip"):InvokeServer(p190)
+        end
+        vu179(v191.data)
+        return true, {
+            action = "unequip",
+            is_server = true
+        }
+    end)
+    local vu194 = v185(function(p193)
+        vu176(p193.pet_unique)
+    end)
+    local vu196 = v185(function(p195)
+        vu174(p195.pet_unique)
+    end)
+    local vu197 = v185(function()
+        vu162(vu67)
+    end)
+    local vu199 = (function(pu198)
+        return {
+            FireServer = function(_, ...)
+                return pu198(...)
+            end
+        }
+    end)(function()
+        vu162(vu67)
+    end)
+    function v60.get(p200)
+        if p200 == "ToolAPI/Equip" then
+            return vu189
+        elseif p200 == "ToolAPI/Unequip" then
+            return vu192
+        elseif p200 == "AdoptAPI/RidePet" then
+            return vu194
+        elseif p200 == "AdoptAPI/FlyPet" then
+            return vu196
+        elseif p200 == "AdoptAPI/ExitSeatStatesYield" then
+            return vu197
+        elseif p200 == "AdoptAPI/ExitSeatStates" then
+            return vu199
+        else
+            return vu183(p200)
+        end
+    end
+    local v201, v202, v203 = pairs(vu58.get("pet_char_wrappers"))
+    local v204 = vu183
+    while true do
+        local v205
+        v203, v205 = v201(v202, v203)
+        if v203 == nil then
+            break
+        end
+        v204("ToolAPI/Unequip"):InvokeServer(v205.pet_unique)
+    end
+    local vu206 = require(game.ReplicatedStorage.Fsys).load("InventoryDB")
+    function GetPetByName(p207)
+        local v208, v209, v210 = pairs(vu206.pets)
+        while true do
+            local v211
+            v
