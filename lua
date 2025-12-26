@@ -400,7 +400,7 @@ local petType = "FR"
 local PetsTab = Window:CreateTab("❤️ Pets", 4483362458)
 PetsTab:CreateParagraph({
     Title = "🐾 Pet Spawner",
-    Content = "Note: To spawn correctly you must type the pet name like this (Frost Dragon)"
+    Content = "Note: If you’re having problem spawning pet, make sure to type the pet’s name exactly like this (Frost Dragon) only with a one space."
 })
 
 PetsTab:CreateInput({
