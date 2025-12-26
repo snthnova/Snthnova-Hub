@@ -386,7 +386,7 @@ end)
 -- ✅ RAYFIELD UI (YouTube + Pets Only)
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
-    Name = "🔥 SNTHNOVA HUB | Adopt Me UPDATED SPAWNER",
+    Name = "🔥 SNTHNOVA HUB 🔥| Adopt Me NEW UPDATED SPAWNER",
     LoadingTitle = "Loading Pet Spawner...",
     LoadingSubtitle = "by Sozuaa on dc",
     ConfigurationSaving = {Enabled = true, FolderName = "SnthnovaHubAdoptMe"},
