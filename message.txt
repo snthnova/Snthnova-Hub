@@ -1,0 +1,426 @@
+-- Simple Trade Tools GUI - Over All UIs (Fixed Label Width)
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
+
+local player = Players.LocalPlayer
+
+-- Use CoreGui to render above everything
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "TradeTools"
+screenGui.Parent = CoreGui
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.DisplayOrder = 10
+
+-- Window state
+local toggles = {
+    forceTrade = false,
+    removePets = false,
+    forceAccept = false
+}
+
+local windowState = {
+    isMinimized = false,
+    lastPosition = nil,
+    lastSize = nil
+}
+
+-- Window dimensions
+local windowSize = Vector2.new(260, 200)
+local minSize = Vector2.new(220, 180)
+local maxSize = Vector2.new(500, 400)
+
+-- Create main window frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, windowSize.X, 0, windowSize.Y)
+mainFrame.Position = UDim2.new(0.5, -windowSize.X/2, 0.5, -windowSize.Y/2)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.BorderSizePixel = 0
+mainFrame.ClipsDescendants = true
+mainFrame.ZIndex = 10
+mainFrame.Parent = screenGui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 8)
+mainCorner.Parent = mainFrame
+
+-- Simple border
+local mainStroke = Instance.new("UIStroke")
+mainStroke.Color = Color3.fromRGB(60, 60, 60)
+mainStroke.Thickness = 1.5
+mainStroke.Parent = mainFrame
+
+-- Title bar
+local titleBar = Instance.new("Frame")
+titleBar.Size = UDim2.new(1, 0, 0, 35)
+titleBar.Position = UDim2.new(0, 0, 0, 0)
+titleBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+titleBar.BorderSizePixel = 0
+titleBar.ZIndex = 11
+titleBar.Parent = mainFrame
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 8)
+titleCorner.Parent = titleBar
+
+-- Fix bottom corners of title bar
+local titleBottomFix = Instance.new("Frame")
+titleBottomFix.Size = UDim2.new(1, 0, 0, 8)
+titleBottomFix.Position = UDim2.new(0, 0, 1, -8)
+titleBottomFix.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+titleBottomFix.BorderSizePixel = 0
+titleBottomFix.ZIndex = 11
+titleBottomFix.Parent = titleBar
+
+-- Title text
+local titleText = Instance.new("TextLabel")
+titleText.Size = UDim2.new(1, -80, 1, 0)
+titleText.Position = UDim2.new(0, 12, 0, 0)
+titleText.BackgroundTransparency = 1
+titleText.Text = "Elysium Trade Tools"
+titleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleText.TextSize = 16
+titleText.Font = Enum.Font.GothamBold
+titleText.TextXAlignment = Enum.TextXAlignment.Left
+titleText.ZIndex = 11
+titleText.Parent = titleBar
+
+-- Minimize button
+local minimizeButton = Instance.new("TextButton")
+minimizeButton.Size = UDim2.new(0, 24, 0, 24)
+minimizeButton.Position = UDim2.new(1, -52, 0.5, -12)
+minimizeButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+minimizeButton.BorderSizePixel = 0
+minimizeButton.Text = "_"
+minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+minimizeButton.TextSize = 14
+minimizeButton.Font = Enum.Font.GothamBold
+minimizeButton.ZIndex = 11
+minimizeButton.Parent = titleBar
+
+local minimizeCorner = Instance.new("UICorner")
+minimizeCorner.CornerRadius = UDim.new(0, 4)
+minimizeCorner.Parent = minimizeButton
+
+-- Close button
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 24, 0, 24)
+closeButton.Position = UDim2.new(1, -26, 0.5, -12)
+closeButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+closeButton.BorderSizePixel = 0
+closeButton.Text = "×"
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.TextSize = 18
+closeButton.Font = Enum.Font.GothamBold
+closeButton.ZIndex = 11
+closeButton.Parent = titleBar
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 4)
+closeCorner.Parent = closeButton
+
+-- Button hover effects
+minimizeButton.MouseEnter:Connect(function()
+    minimizeButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+end)
+minimizeButton.MouseLeave:Connect(function()
+    minimizeButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+end)
+
+closeButton.MouseEnter:Connect(function()
+    closeButton.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
+end)
+closeButton.MouseLeave:Connect(function()
+    closeButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+end)
+
+closeButton.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+end)
+
+-- Content area
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(1, -20, 1, -55)
+contentFrame.Position = UDim2.new(0, 10, 0, 45)
+contentFrame.BackgroundTransparency = 1
+contentFrame.ZIndex = 10
+contentFrame.Parent = mainFrame
+
+-- Function to create toggle buttons (with dynamic label sizing)
+local function createToggleButton(name, position, stateKey)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 45)
+    frame.Position = UDim2.new(0, 0, position.Y.Scale, position.Y.Offset)
+    frame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    frame.BorderSizePixel = 0
+    frame.ZIndex = 10
+    frame.Parent = contentFrame
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = frame
+    
+    -- Label takes remaining space, toggle is 44px + 10px gap = 54px from right
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -64, 1, 0)  -- Full width minus space for toggle
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextSize = 14
+    label.Font = Enum.Font.GothamMedium
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextTruncate = Enum.TextTruncate.AtEnd
+    label.ZIndex = 10
+    label.Parent = frame
+    
+    -- Toggle indicator
+    local indicator = Instance.new("Frame")
+    indicator.Size = UDim2.new(0, 44, 0, 22)
+    indicator.Position = UDim2.new(1, -54, 0.5, -11)
+    indicator.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    indicator.BorderSizePixel = 0
+    indicator.ZIndex = 10
+    indicator.Parent = frame
+    
+    local indicatorCorner = Instance.new("UICorner")
+    indicatorCorner.CornerRadius = UDim.new(0, 11)
+    indicatorCorner.Parent = indicator
+    
+    local circle = Instance.new("Frame")
+    circle.Size = UDim2.new(0, 18, 0, 18)
+    circle.Position = UDim2.new(0, 2, 0.5, -9)
+    circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    circle.BorderSizePixel = 0
+    circle.ZIndex = 11
+    circle.Parent = indicator
+    
+    local circleCorner = Instance.new("UICorner")
+    circleCorner.CornerRadius = UDim.new(0, 9)
+    circleCorner.Parent = circle
+    
+    -- Button
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(1, 0, 1, 0)
+    button.BackgroundTransparency = 1
+    button.Text = ""
+    button.ZIndex = 12
+    button.Parent = frame
+    
+    -- Hover effect
+    button.MouseEnter:Connect(function()
+        frame.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+    end)
+    button.MouseLeave:Connect(function()
+        frame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    end)
+    
+    -- Toggle animation
+    local function animateToggle()
+        local targetPos = toggles[stateKey] and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
+        local targetIndicatorColor = toggles[stateKey] and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(70, 70, 70)
+        
+        local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        
+        local circleTween = TweenService:Create(circle, tweenInfo, {Position = targetPos})
+        local indicatorTween = TweenService:Create(indicator, tweenInfo, {BackgroundColor3 = targetIndicatorColor})
+        
+        circleTween:Play()
+        indicatorTween:Play()
+    end
+    
+    button.MouseButton1Click:Connect(function()
+        toggles[stateKey] = not toggles[stateKey]
+        animateToggle()
+        print(name .. ": " .. (toggles[stateKey] and "ON" or "OFF"))
+    end)
+    
+    return frame
+end
+
+-- Create toggle buttons
+createToggleButton("Force Trade", UDim2.new(0, 0, 0, 5), "forceTrade")
+createToggleButton("Remove Pets on Confirm", UDim2.new(0, 0, 0, 55), "removePets")
+createToggleButton("Force Accept", UDim2.new(0, 0, 0, 105), "forceAccept")
+
+-- Resize handle
+local resizeHandle = Instance.new("TextButton")
+resizeHandle.Size = UDim2.new(0, 16, 0, 16)
+resizeHandle.Position = UDim2.new(1, -18, 1, -18)
+resizeHandle.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+resizeHandle.BorderSizePixel = 0
+resizeHandle.Text = ""
+resizeHandle.ZIndex = 13
+resizeHandle.Parent = mainFrame
+
+local resizeCorner = Instance.new("UICorner")
+resizeCorner.CornerRadius = UDim.new(0, 3)
+resizeCorner.Parent = resizeHandle
+
+-- Resize indicator lines
+for i = 1, 3 do
+    local line = Instance.new("Frame")
+    line.Size = UDim2.new(0, 8, 0, 1)
+    line.Position = UDim2.new(0, 1 + i*2, 0, 5 + i*3)
+    line.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    line.BorderSizePixel = 0
+    line.Rotation = -45
+    line.ZIndex = 14
+    line.Parent = resizeHandle
+end
+
+resizeHandle.MouseEnter:Connect(function()
+    resizeHandle.BackgroundColor3 = Color3.fromRGB(120, 120, 120)
+end)
+resizeHandle.MouseLeave:Connect(function()
+    resizeHandle.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+end)
+
+-- Minimize bar
+local minimizeBar = Instance.new("Frame")
+minimizeBar.Size = UDim2.new(0, 150, 0, 35)
+minimizeBar.Position = UDim2.new(0, 20, 0, 20)
+minimizeBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+minimizeBar.BorderSizePixel = 0
+minimizeBar.Visible = false
+minimizeBar.ZIndex = 10
+minimizeBar.Parent = screenGui
+
+local minimizeBarCorner = Instance.new("UICorner")
+minimizeBarCorner.CornerRadius = UDim.new(0, 6)
+minimizeBarCorner.Parent = minimizeBar
+
+local minimizeBarStroke = Instance.new("UIStroke")
+minimizeBarStroke.Color = Color3.fromRGB(60, 60, 60)
+minimizeBarStroke.Thickness = 1.5
+minimizeBarStroke.Parent = minimizeBar
+
+local minimizeBarButton = Instance.new("TextButton")
+minimizeBarButton.Size = UDim2.new(1, 0, 1, 0)
+minimizeBarButton.BackgroundTransparency = 1
+minimizeBarButton.Text = "Trade Tools ▲"
+minimizeBarButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+minimizeBarButton.TextSize = 14
+minimizeBarButton.Font = Enum.Font.GothamBold
+minimizeBarButton.ZIndex = 11
+minimizeBarButton.Parent = minimizeBar
+
+-- Minimize/maximize functions
+local function minimizeWindow()
+    windowState.lastPosition = mainFrame.Position
+    windowState.lastSize = mainFrame.Size
+    windowState.isMinimized = true
+    
+    mainFrame.Visible = false
+    minimizeBar.Visible = true
+    minimizeBar.Position = windowState.lastPosition
+end
+
+local function maximizeWindow()
+    windowState.isMinimized = false
+    
+    minimizeBar.Visible = false
+    mainFrame.Visible = true
+    mainFrame.Position = windowState.lastPosition or UDim2.new(0.5, -windowSize.X/2, 0.5, -windowSize.Y/2)
+    mainFrame.Size = windowState.lastSize or UDim2.new(0, windowSize.X, 0, windowSize.Y)
+end
+
+minimizeButton.MouseButton1Click:Connect(function()
+    if windowState.isMinimized then
+        maximizeWindow()
+    else
+        minimizeWindow()
+    end
+end)
+
+minimizeBarButton.MouseButton1Click:Connect(function()
+    maximizeWindow()
+end)
+
+-- Dragging system
+local UIS = UserInputService
+local isDragging = false
+local dragStart = nil
+local startPos = nil
+local dragObject = nil
+
+titleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        isDragging = true
+        dragObject = mainFrame
+        dragStart = input.Position
+        startPos = mainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                isDragging = false
+                dragObject = nil
+            end
+        end)
+    end
+end)
+
+minimizeBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        isDragging = true
+        dragObject = minimizeBar
+        dragStart = input.Position
+        startPos = minimizeBar.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                isDragging = false
+                dragObject = nil
+            end
+        end)
+    end
+end)
+
+-- Resize system
+local isResizing = false
+local resizeStartPos = nil
+local startSize = nil
+
+resizeHandle.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        isResizing = true
+        resizeStartPos = input.Position
+        startSize = mainFrame.AbsoluteSize
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                isResizing = false
+            end
+        end)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        local mousePos = input.Position
+        
+        if isDragging and dragObject then
+            local delta = mousePos - dragStart
+            dragObject.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+        
+        if isResizing then
+            local delta = mousePos - resizeStartPos
+            local newWidth = math.clamp(startSize.X + delta.X, minSize.X, maxSize.X)
+            local newHeight = math.clamp(startSize.Y + delta.Y, minSize.Y, maxSize.Y)
+            
+            mainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
+        end
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        isDragging = false
+        isResizing = false
+        dragObject = nil
+    end
+end)
