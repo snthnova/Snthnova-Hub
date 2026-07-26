@@ -161,7 +161,7 @@ if not getgenv().ImmortalHub then
 
     print('Loaded [MM2]')
 
-    DevelopingLog = '\r\nThis script was created by Fashn\r\nfor Immortal Hub Project\r\n'
+    DevelopingLog = '\r\nThis script was created by frnazy\r\nfor Snthnova Hub Project\r\n'
 
     _LocalPlayer.Idled:connect(function()
         _VirtualUser:ClickButton2(Vector2.new())
