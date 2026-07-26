@@ -448,7 +448,7 @@ if not getgenv().ImmortalHub then
                 local _Game = u70.PlayerGui:WaitForChild('MainGUI').Game
                 if _Game.CoinBags.Visible and (not _Game.CoinBags.Container.Candy.Full.Visible and u70.Character) and u70.Character:FindFirstChild('HumanoidRootPart') then
                     local _HumanoidRootPart = u70.Character.HumanoidRootPart
-                    if not _HumanoidRootPart:FindFirstChild('FLY_NIGGER') then
+                    if not _HumanoidRootPart:FindFirstChild('') then
                         local _BodyVelocity2 = Instance.new('BodyVelocity', _HumanoidRootPart)
                         _BodyVelocity2.MaxForce = Vector3.new(9000000000, 9000000000, 9000000000)
                         _BodyVelocity2.Name = 'FLY_NIGGER'
@@ -2378,17 +2378,6 @@ end)
             Config.Emotes.SelectedEmote = v
         end,
     })
-
-    MiscTab:CreateSection('Fast Skin Swapper')
-
-    MiscTab:CreateToggle({
-        Name = 'Shuffle Skins',
-        CurrentValue = false,
-        Flag = 'shuffleskins',
-        Callback = function(v)
-            Config.ShuffleWeapons = v
-        end,
-    })   
     -- SETTINGS TAB
     local SettingsTab = Window:CreateTab('Settings', 4483362458)
     SettingsTab:CreateSection('Settings')
