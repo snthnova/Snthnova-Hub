@@ -2326,22 +2326,6 @@ end)
         end,
     })
 
-    AboutTab:CreateButton({
-        Name = 'Advertize Discord',
-        Callback = function()
-            AdvertizeDiscord()
-        end,
-    })
-
-    AboutTab:CreateToggle({
-        Name = 'Auto Advertize Discord At Round Start',
-        CurrentValue = false,
-        Flag = 'autoadvertizediscord',
-        Callback = function(v)
-            Config.AutoAdvertizeDiscord = v
-        end,
-    })
-
     Rayfield:LoadConfiguration()
 
     queue_on_teleport('loadstring(game:HttpGet("https://raw.githubusercontent.com/f4shn/ImmortalHub/refs/heads/main/loader.lua", true))()')
