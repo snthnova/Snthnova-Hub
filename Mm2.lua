@@ -857,7 +857,7 @@ if not getgenv().ImmortalHub then
             local v198
             v197, v198 = v195(v196, v197)
             if v197 == nil then break end
-            v198:SendAsync('Immortal hub\r\n        gg PwTPex2g6T')
+            v198:SendAsync('Snthnova Hub')
         end
     end
 
@@ -1287,90 +1287,6 @@ if not getgenv().ImmortalHub then
             end
         end
     end)
-
-    guns = {
-        Gingerscope = {
-            MeshId = 'rbxassetid://15374602183',
-            Offset = Vector3.zero,
-            Scale = Vector3.new(0.084, 0.084, 0.084),
-            TextureId = 'rbxassetid://15409041564',
-            VertexColor = Vector3.new(1, 1, 1),
-            CFrame = CFrame.new(0.129999995, 0, 0.075000003, 1, 0, 0, 0, 0.707388222, 0.706825197, 0, -0.706825197, 0.707388222),
-            Grip = CFrame.new(0, -0.400000006, 0.899999976, 1, 0, 0, 0, 1, 0, 0, 0, 1),
-            Image = 'http://www.roblox.com/Thumbs/Asset.ashx?format=png&width=250&height=250&assetId=15666596216',
-            GuiColor = Color3.new(0.39215686274509803, 0.0392156862745098, 1),
-        },
-    }
-    chosengun = 'Gingerscope'
-
-    function equipgun(p271)
-        if __EQUIPPED == false then return end
-        disconect()
-        ch = _LocalPlayer2.Character
-        repeat task.wait() until ch:FindFirstChild('HumanoidRootPart')
-        local v272, v273, v274 = pairs(workspace.WeaponDisplays:GetChildren())
-        local gun = nil
-        local knife = nil
-        while true do
-            local v275
-            v274, v275 = v272(v273, v274)
-            if v274 == nil then break end
-            local a = v275.RigidConstraint.Attachment0
-            local b = v275.RigidConstraint.Attachment0
-            if a == ch:FindFirstChild('GunBelt', true) then gun = v275 end
-            if b == ch:FindFirstChild('KnifeBack', true) then knife = v275 end
-        end
-        task.wait(0.1)
-        if gun and knife then
-            repeat task.wait() until gun:FindFirstChild('Attachment')
-            gun.Attachment.CFrame = guns[p271].CFrame
-            local v276, v277, v278 = pairs(guns[p271])
-            while true do
-                local v279
-                v278, v279 = v276(v277, v278)
-                if v278 == nil then break end
-                if v278 ~= 'CFrame' and (v278 ~= 'Grip' and (v278 ~= 'Image' and v278 ~= 'GuiColor')) then
-                    gun.Mesh[v278] = v279
-                end
-            end
-            backpackImageConnection = _LocalPlayer2.Backpack.DescendantAdded:Connect(function(_)
-                if guns[p271] then
-                    local v280, v281, v282 = pairs(game:GetService('CoreGui').RobloxGui.Backpack.Hotbar:GetChildren())
-                    while true do
-                        local v283
-                        v282, v283 = v280(v281, v282)
-                        if v282 == nil then break end
-                        if v283.Icon.Image ~= '' and u162() == _LocalPlayer2 then
-                            v283.Icon.Image = guns[p271].Image
-                        end
-                    end
-                end
-            end)
-            GunVisual = _LocalPlayer2.Backpack.DescendantAdded:Connect(function(p284)
-                if tostring(p284) == 'Gun' then
-                    task.wait()
-                    USABLEGUN = _LocalPlayer2.Backpack.Gun.Handle
-                    local v285, v286, v287 = pairs(guns[p271])
-                    while true do
-                        local v288
-                        v287, v288 = v285(v286, v287)
-                        if v287 == nil then break end
-                        if v287 ~= 'CFrame' and (v287 ~= 'Grip' and (v287 ~= 'Image' and v287 ~= 'GuiColor')) then
-                            USABLEGUN.Mesh[v287] = v288
-                        end
-                    end
-                    USABLEGUN.Parent.Grip = guns[p271].Grip
-                end
-            end)
-            return
-        end
-    end
-
-    function disconect()
-        if backpackImageConnection then backpackImageConnection:Disconnect(); backpackImageConnection = nil end
-        if GunVisual then GunVisual:Disconnect(); GunVisual = nil end
-        if autoEquipGun then autoEquipGun:Disconnect(); autoEquipGun = nil end
-    end
 
     function RevealRoles()
         local v289 = game:GetService('TextChatService'):WaitForChild('TextChannels'):GetChildren()
@@ -2008,15 +1924,6 @@ end)
         end,
     })
 
-    ESPTab:CreateSection('Spoof Username')
-
-    ESPTab:CreateButton({
-        Name = 'Spoof Username',
-        Callback = function()
-            loadstring(game:HttpGet('https://pastebin.com/raw/rf0PbX6z'))()
-        end,
-    })
-
     -- AUTOFARM TAB
     local AutofarmTab = Window:CreateTab('Autofarm', 4483362458)
     AutofarmTab:CreateSection('Autofarm Features')
@@ -2334,18 +2241,6 @@ end)
         end,
     })
 
-    MiscTab:CreateSection('Inventory Stuff')
-
-    MiscTab:CreateToggle({
-        Name = 'Spawn Gingerscope',
-        CurrentValue = false,
-        Flag = 'visualgun',
-        Callback = function(v)
-            Config.VisualGun = v
-            if v then spawnitem() end
-        end,
-    })
-
     MiscTab:CreateSection('Spam Random Emotes')
 
     MiscTab:CreateToggle({
@@ -2391,77 +2286,6 @@ end)
         end,
     })
 
-    MiscTab:CreateSection('Fast Skin Swapper')
-
-    MiscTab:CreateToggle({
-        Name = 'Shuffle Skins',
-        CurrentValue = false,
-        Flag = 'shuffleskins',
-        Callback = function(v)
-            Config.ShuffleWeapons = v
-        end,
-    })
-
-    MiscTab:CreateSection('Crate Spawner')
-
-    local WeaponsList = MiscTab:CreateDropdown({
-        Name = 'Pick A Weapon',
-        Options = {'please filter weapons'},
-        CurrentOption = {'please filter weapons'},
-        MultipleOptions = false,
-        Flag = 'weapontoscroll',
-        Callback = function(v)
-            getgenv().newValue = getrawnamebyrealname(v)
-        end,
-    })
-
-    MiscTab:CreateInput({
-        Name = 'Filter Database',
-        CurrentValue = 'Harvester',
-        PlaceholderText = 'Type weapon name...',
-        RemoveTextAfterFocusLost = false,
-        Flag = 'filterdatabase',
-        Callback = function(v)
-            local eee = gettable(v)
-            wait(1)
-            WeaponsList:Set(eee[1] or 'No results')
-        end,
-    })
-
-    MiscTab:CreateButton({
-        Name = 'Open Crate',
-        Callback = function()
-            opencrate(getgenv().newValue, false)
-        end,
-    })
-
-    MiscTab:CreateSlider({
-        Name = 'Crate Spawn Chance',
-        Range = {1, 100},
-        Increment = 1,
-        Suffix = '',
-        CurrentValue = 1,
-        Flag = 'cratespawnchance',
-        Callback = function(v)
-            getgenv().spawnamount = v
-        end,
-    })
-
-    MiscTab:CreateButton({
-        Name = 'Just Spawn Item',
-        Callback = function()
-            if getgenv().newValue ~= nil then
-                opencrate(getgenv().newValue, true)
-            else
-                game:GetService('StarterGui'):SetCore('SendNotification', {
-                    Title = 'No weapon selected',
-                    Text = 'Please select a weapon',
-                    Duration = 5,
-                })
-            end
-        end,
-    })
-
     -- SETTINGS TAB
     local SettingsTab = Window:CreateTab('Settings', 4483362458)
     SettingsTab:CreateSection('Settings')
@@ -2499,22 +2323,6 @@ end)
                 Text = 'If you rejoin you will have default settings.',
                 Duration = 5,
             })
-        end,
-    })
-
-    -- ABOUT TAB
-    local AboutTab = Window:CreateTab('About Script', 4483362458)
-    AboutTab:CreateSection('About')
-
-    AboutTab:CreateLabel(DevelopingLog)
-    AboutTab:CreateLabel('Version: 1.5 | Last Changes: New Coin Farm 3!')
-
-    AboutTab:CreateSection('Discord')
-
-    AboutTab:CreateButton({
-        Name = 'Join Discord (copy link)',
-        Callback = function()
-            setclipboard('https://discord.gg/PwTPex2g6T')
         end,
     })
 
