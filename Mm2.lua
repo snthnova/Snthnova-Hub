@@ -2514,7 +2514,7 @@ end)
     AboutTab:CreateButton({
         Name = 'Join Discord (copy link)',
         Callback = function()
-            setclipboard('https://discord.gg/PwTPex2g6T')
+            setclipboard('')
         end,
     })
 
