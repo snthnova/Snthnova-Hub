@@ -1643,15 +1643,15 @@ end)
     local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
     local Window = Rayfield:CreateWindow({
-        Name = 'Immortal Hub  .gg/PwTPex2g6T',
-        LoadingTitle = 'Immortal Hub',
-        LoadingSubtitle = 'by Fashn',
+        Name = 'Snthnova Hub',
+        LoadingTitle = 'Snthnova Hub',
+        LoadingSubtitle = 'by Frnazy',
         Theme = 'Default',
         DisableRayfieldPrompts = false,
         DisableBuildWarnings = false,
         ConfigurationSaving = {
             Enabled = true,
-            FolderName = 'ImmortalHub',
+            FolderName = 'SnthnovaHub',
             FileName = 'mm2',
         },
         Discord = {
@@ -2334,18 +2334,6 @@ end)
         end,
     })
 
-    MiscTab:CreateSection('Inventory Stuff')
-
-    MiscTab:CreateToggle({
-        Name = 'Spawn Gingerscope',
-        CurrentValue = false,
-        Flag = 'visualgun',
-        Callback = function(v)
-            Config.VisualGun = v
-            if v then spawnitem() end
-        end,
-    })
-
     MiscTab:CreateSection('Spam Random Emotes')
 
     MiscTab:CreateToggle({
@@ -2400,68 +2388,7 @@ end)
         Callback = function(v)
             Config.ShuffleWeapons = v
         end,
-    })
-
-    MiscTab:CreateSection('Crate Spawner')
-
-    local WeaponsList = MiscTab:CreateDropdown({
-        Name = 'Pick A Weapon',
-        Options = {'please filter weapons'},
-        CurrentOption = {'please filter weapons'},
-        MultipleOptions = false,
-        Flag = 'weapontoscroll',
-        Callback = function(v)
-            getgenv().newValue = getrawnamebyrealname(v)
-        end,
-    })
-
-    MiscTab:CreateInput({
-        Name = 'Filter Database',
-        CurrentValue = 'Harvester',
-        PlaceholderText = 'Type weapon name...',
-        RemoveTextAfterFocusLost = false,
-        Flag = 'filterdatabase',
-        Callback = function(v)
-            local eee = gettable(v)
-            wait(1)
-            WeaponsList:Set(eee[1] or 'No results')
-        end,
-    })
-
-    MiscTab:CreateButton({
-        Name = 'Open Crate',
-        Callback = function()
-            opencrate(getgenv().newValue, false)
-        end,
-    })
-
-    MiscTab:CreateSlider({
-        Name = 'Crate Spawn Chance',
-        Range = {1, 100},
-        Increment = 1,
-        Suffix = '',
-        CurrentValue = 1,
-        Flag = 'cratespawnchance',
-        Callback = function(v)
-            getgenv().spawnamount = v
-        end,
-    })
-
-    MiscTab:CreateButton({
-        Name = 'Just Spawn Item',
-        Callback = function()
-            if getgenv().newValue ~= nil then
-                opencrate(getgenv().newValue, true)
-            else
-                game:GetService('StarterGui'):SetCore('SendNotification', {
-                    Title = 'No weapon selected',
-                    Text = 'Please select a weapon',
-                    Duration = 5,
-                })
-            end
-        end,
-    })
-
+    })   
     -- SETTINGS TAB
     local SettingsTab = Window:CreateTab('Settings', 4483362458)
     SettingsTab:CreateSection('Settings')
