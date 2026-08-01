@@ -2102,8 +2102,8 @@ end)
             if not v then
                 local _HumanoidRootPart6 = u70.Character.HumanoidRootPart
                 _HumanoidRootPart6.Anchored = false
-                if _HumanoidRootPart6:FindFirstChild('FLY_NIGGER') then
-                    _HumanoidRootPart6.FLY_NIGGER:Destroy()
+                if _HumanoidRootPart6:FindFirstChild('') then
+                    _HumanoidRootPart6.FLY_BOY:Destroy()
                 end
             end
         end,
