@@ -161,7 +161,7 @@ if not getgenv().ImmortalHub then
 
     print('Loaded [MM2]')
 
-    DevelopingLog = '\r\nThis script was created by Fashn\r\nfor Immortal Hub Project\r\n'
+    DevelopingLog = '\r\nThis script was created by Frnazy\r\nfor Snthnova Hub\r\n'
 
     _LocalPlayer.Idled:connect(function()
         _VirtualUser:ClickButton2(Vector2.new())
@@ -1643,8 +1643,8 @@ end)
     local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
     local Window = Rayfield:CreateWindow({
-        Name = 'Immortal Hub  .gg/PwTPex2g6T',
-        LoadingTitle = 'Immortal Hub',
+        Name = 'Snthnova Hub',
+        LoadingTitle = 'Snthnova Hub',
         LoadingSubtitle = 'by Fashn',
         Theme = 'Default',
         DisableRayfieldPrompts = false,
@@ -2334,18 +2334,6 @@ end)
         end,
     })
 
-    MiscTab:CreateSection('Inventory Stuff')
-
-    MiscTab:CreateToggle({
-        Name = 'Spawn Gingerscope',
-        CurrentValue = false,
-        Flag = 'visualgun',
-        Callback = function(v)
-            Config.VisualGun = v
-            if v then spawnitem() end
-        end,
-    })
-
     MiscTab:CreateSection('Spam Random Emotes')
 
     MiscTab:CreateToggle({
@@ -2391,77 +2379,6 @@ end)
         end,
     })
 
-    MiscTab:CreateSection('Fast Skin Swapper')
-
-    MiscTab:CreateToggle({
-        Name = 'Shuffle Skins',
-        CurrentValue = false,
-        Flag = 'shuffleskins',
-        Callback = function(v)
-            Config.ShuffleWeapons = v
-        end,
-    })
-
-    MiscTab:CreateSection('Crate Spawner')
-
-    local WeaponsList = MiscTab:CreateDropdown({
-        Name = 'Pick A Weapon',
-        Options = {'please filter weapons'},
-        CurrentOption = {'please filter weapons'},
-        MultipleOptions = false,
-        Flag = 'weapontoscroll',
-        Callback = function(v)
-            getgenv().newValue = getrawnamebyrealname(v)
-        end,
-    })
-
-    MiscTab:CreateInput({
-        Name = 'Filter Database',
-        CurrentValue = 'Harvester',
-        PlaceholderText = 'Type weapon name...',
-        RemoveTextAfterFocusLost = false,
-        Flag = 'filterdatabase',
-        Callback = function(v)
-            local eee = gettable(v)
-            wait(1)
-            WeaponsList:Set(eee[1] or 'No results')
-        end,
-    })
-
-    MiscTab:CreateButton({
-        Name = 'Open Crate',
-        Callback = function()
-            opencrate(getgenv().newValue, false)
-        end,
-    })
-
-    MiscTab:CreateSlider({
-        Name = 'Crate Spawn Chance',
-        Range = {1, 100},
-        Increment = 1,
-        Suffix = '',
-        CurrentValue = 1,
-        Flag = 'cratespawnchance',
-        Callback = function(v)
-            getgenv().spawnamount = v
-        end,
-    })
-
-    MiscTab:CreateButton({
-        Name = 'Just Spawn Item',
-        Callback = function()
-            if getgenv().newValue ~= nil then
-                opencrate(getgenv().newValue, true)
-            else
-                game:GetService('StarterGui'):SetCore('SendNotification', {
-                    Title = 'No weapon selected',
-                    Text = 'Please select a weapon',
-                    Duration = 5,
-                })
-            end
-        end,
-    })
-
     -- SETTINGS TAB
     local SettingsTab = Window:CreateTab('Settings', 4483362458)
     SettingsTab:CreateSection('Settings')
@@ -2501,40 +2418,4 @@ end)
             })
         end,
     })
-
-    -- ABOUT TAB
-    local AboutTab = Window:CreateTab('About Script', 4483362458)
-    AboutTab:CreateSection('About')
-
-    AboutTab:CreateLabel(DevelopingLog)
-    AboutTab:CreateLabel('Version: 1.5 | Last Changes: New Coin Farm 3!')
-
-    AboutTab:CreateSection('Discord')
-
-    AboutTab:CreateButton({
-        Name = 'Join Discord (copy link)',
-        Callback = function()
-            setclipboard('https://discord.gg/PwTPex2g6T')
-        end,
-    })
-
-    AboutTab:CreateButton({
-        Name = 'Advertize Discord',
-        Callback = function()
-            AdvertizeDiscord()
-        end,
-    })
-
-    AboutTab:CreateToggle({
-        Name = 'Auto Advertize Discord At Round Start',
-        CurrentValue = false,
-        Flag = 'autoadvertizediscord',
-        Callback = function(v)
-            Config.AutoAdvertizeDiscord = v
-        end,
-    })
-
-    Rayfield:LoadConfiguration()
-
-    queue_on_teleport('loadstring(game:HttpGet("https://raw.githubusercontent.com/f4shn/ImmortalHub/refs/heads/main/loader.lua", true))()')
 end
