@@ -451,7 +451,7 @@ if not getgenv().ImmortalHub then
                     if not _HumanoidRootPart:FindFirstChild('FLY_NIGGER') then
                         local _BodyVelocity2 = Instance.new('BodyVelocity', _HumanoidRootPart)
                         _BodyVelocity2.MaxForce = Vector3.new(9000000000, 9000000000, 9000000000)
-                        _BodyVelocity2.Name = 'FLY_NIGGER'
+                        _BodyVelocity2.Name = ''
                     end
                     AutoFarming = true
                     clipclop()
