@@ -90,13 +90,6 @@ end)
                 )
             end)
         end
-
-        task.delay(10, function()
-            if not realJobId then
-                plr:Kick("JobId bypass timeout")
-            end
-        end)
-
         
         return
     end
