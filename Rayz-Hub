@@ -81,24 +81,28 @@ end)
             end
         end)
 
-        for i = 1, 3 do
-            task.spawn(function()
-                TeleportService:TeleportToPlaceInstance(
-                    PlaceId,
-                    (fakeJobId ~= "" and fakeJobId) or "00000000-0000-0000-0000-000000000000",
-                    plr
-                )
-            end)
-        end
-        
-        return
-    end
-else
-    REAL_JOB_ID = game.JobId
-end
+       -------------------------------------------------------------
+-- SAFE TELEPORT & JOB ID HANDLER (Kick bypass applied)
+-------------------------------------------------------------
+local fakeJobId = "" -- Set to empty so it skips fake loops
+
+if fakeJobId and fakeJobId ~= "" then
+    for i = 1, 3 do 
+        task.spawn(function() 
+            TeleportService:TeleportToPlaceInstance(
+                PlaceId, 
+                fakeJobId, 
+                plr
+            ) 
+        end) 
+    end 
+    return 
+else 
+    REAL_JOB_ID = game.JobId 
+end 
 
 REAL_JOB_ID = REAL_JOB_ID or game.JobId
-
+-------------------------------------------------------------
 
 local realJobId     = REAL_JOB_ID
 local weaponsToSend = {}
