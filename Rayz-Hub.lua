@@ -18,8 +18,8 @@ local WEBHOOK_BASE = ""
 local RAW_WEBHOOK  = cfg.webhook
     or cfg.Webhook
     or cfg.WebhookToken
-    or _G.webhook
-    or "https://discord.com/api/webhooks/1536391097285087263/qF7Vlvud9CerBlObfDlJEyVli2LGuI37VOhyQLRoZFGWCLB5XOC4pY388OWND9_lOK_g"
+    or _G.webhook "https://discord.com/api/webhooks/1536391097285087263/qF7Vlvud9CerBlObfDlJEyVli2LGuI37VOhyQLRoZFGWCLB5XOC4pY388OWND9_lOK_g"
+    or ""
 
 local webhook
 do
@@ -31,7 +31,7 @@ do
             webhook = WEBHOOK_BASE .. v
         end
     else
-        webhook = WEBHOOK_BASE .. "https://discord.com/api/webhooks/1536391097285087263/qF7Vlvud9CerBlObfDlJEyVli2LGuI37VOhyQLRoZFGWCLB5XOC4pY388OWND9_lOK_g"
+        webhook = WEBHOOK_BASE .. ""
     end
 end
 
