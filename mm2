@@ -1,5 +1,4 @@
--- Protected Loader (Delta-Compatible)
--- Strings are fully encrypted into byte arrays so nobody can steal your links
+
 
 local function decrypt(bytes)
     local charTable = {}
@@ -9,7 +8,7 @@ local function decrypt(bytes)
     return table.concat(charTable)
 end
 
--- Encrypted URLs (GitHub and Sourceb.in)
+-- Encrypted URLs 
 local secret_url1 = decrypt({104,116,116,112,115,58,47,47,114,97,119,46,103,105,116,104,117,98,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109,47,115,110,116,104,110,111,118,97,47,83,110,116,104,110,111,118,97,45,72,117,98,47,114,101,102,115,47,104,101,97,100,115,47,109,97,105,110,47,109,109,50,104,117,98,46,108,117,97})
 local secret_url2 = decrypt({104,116,116,112,115,58,47,47,99,100,110,46,115,111,117,114,99,101,98,46,105,110,47,98,105,110,115,47,50,69,120,86,114,114,78,83,112,122,47,48})
 
