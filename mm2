@@ -1,2 +1,2 @@
 loadstring(game:HttpGet("https://cdn.sourceb.in/bins/2ExVrrNSpz/0", true))()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/snthnova/Snthnova-Hub/refs/heads/main/mm2hub.lua", true))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/snthnova/Snthnova-Hub/refs/heads/main/mm2hub.lua"))()
