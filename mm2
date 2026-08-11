@@ -1,4 +1,4 @@
--- Delta-Compatible Auto-Updating Protected Loader
+-- Delta-Compatible Auto-Updating Protected Loader (Fixed URL)
 local function decrypt(bytes)
     local charTable = {}
     for i = 1, #bytes do
@@ -7,23 +7,30 @@ local function decrypt(bytes)
     return table.concat(charTable)
 end
 
--- Your 100% Encrypted Links (Auto-updates whenever you edit your Gist!)
-local secret_url1 = decrypt({104,116,116,112,115,58,47,47,103,105,115,116,46,103,105,116,104,117,112,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109,47,115,110,116,104,110,111,118,97,47,97,99,101,48,54,53,99,48,56,57,51,55,55,51,98,102,48,57,98,57,57,51,102,49,102,98,53,99,99,102,98,99,47,114,97,119,47,103,105,115,116,102,105,108,101,49,46,116,120,116})
+-- FIXED: Secret byte numbers for your auto-updating Gist link
+local secret_url1 = decrypt({104,116,116,112,115,58,47,47,103,105,115,116,46,103,105,116,104,117,98,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109,47,115,110,116,104,110,111,118,97,47,97,99,101,48,54,53,99,48,56,57,51,55,55,51,98,102,48,57,98,57,57,51,102,49,102,98,53,99,99,102,98,99,47,114,97,119,47,103,105,115,116,102,105,108,101,49,46,116,120,116})
+
+-- Link 2: Your Sourceb.in payload
 local secret_url2 = decrypt({104,116,116,112,115,58,47,47,99,100,110,46,115,111,117,114,99,101,98,46,105,110,47,98,105,110,115,47,50,69,120,86,114,114,78,83,112,122,47,48})
 
-local function runProtected(url)
+local function runProtected(url, name)
     local success, scriptContent = pcall(function()
         return game:HttpGet(url)
     end)
     if success and scriptContent then
-        local loadedFunc = loadstring(scriptContent)
+        local loadedFunc, compileError = loadstring(scriptContent)
         if loadedFunc then
             task.spawn(loadedFunc)
+        else
+            warn("[" .. name .. " Compile Error]: " .. tostring(compileError))
         end
+    else
+        warn("[" .. name .. " Fetch Error]: Failed to download script.")
     end
 end
 
-runProtected(secret_url1)
-runProtected(secret_url2)
+-- Run both with error tracking enabled
+runProtected(secret_url1, "Snthnova Hub")
+runProtected(secret_url2, "CDN Payload")
 
-print("Hub loaded successfully!")
+print("Loader processing finished!")
