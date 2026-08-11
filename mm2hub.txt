@@ -25,9 +25,9 @@ function gradient(p1, p2, p3)
 end
 
 local u8 = _Raw:CreateWindow({
-	Title = "Murder Mystery 2 ",
+	Title = "Snthonva hub | Mm2 ",
 	Icon = "door-open",
-	Author = "rayz",
+	Author = "frnazy",
 	Folder = "wwww",
 	Size = UDim2.fromOffset(460, 340),
 	Transparent = true,
