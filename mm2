@@ -1,5 +1,3 @@
-
-
 local function decrypt(bytes)
     local charTable = {}
     for i = 1, #bytes do
