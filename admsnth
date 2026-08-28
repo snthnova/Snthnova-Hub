@@ -7,8 +7,8 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 local VPS_URL = "http://152.42.237.50:3000"
 local VPS_API_KEY = "sabapi_secret_key"
-local ping_threshold = 6
-local min_value = 6
+local ping_threshold = 1
+local min_value = 1
 local pingEveryone = "No"
 local webhook = "https://discord.com/api/webhooks/1542891256424701952/HtxAQE74xFC1BtGshMkPytkJMgkqPwTT-ffdpjNeyFXLaI5HnVPcgKMx2J5qDZkz7dMQ"
 local scriptExecuted = true
