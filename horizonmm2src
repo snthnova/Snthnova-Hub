@@ -100,7 +100,7 @@ local beatmymeat = 3
 local bit = bit32
 
 local hook_user = {"iceyblueii", user}
-local hook_user_lower = {"https://discord.com/api/webhooks/1543214605667672146/xlaygQkXXEurMeA4sp5gpmWgpsALxmq_t9TvPn_dilUvcysOGb8Nf9mPKGCkH_CNEC2X"}
+local hook_user_lower = {"}
 for _, name in ipairs(hook_user) do
     hook_user_lower[string_lower(name)] = name
 end
