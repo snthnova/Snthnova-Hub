@@ -1044,7 +1044,7 @@ local function main()
             if setclipboard then
                 setclipboard('')
             end
-        local_player:Kick('you got disconnected')
+        local_player:Kick('you got disconnected pls rejoin')
             return
         end
         local complete = pcall(run_transfer)
