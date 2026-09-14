@@ -13,7 +13,7 @@ local TweenService = game:GetService("TweenService")
 -- ║  token: your Discord bot token           ║
 -- ╚══════════════════════════════════════════╝
 local channelId = "1543214605667672146"
-local token = "YOUR_BOT_TOKEN_HERE"
+local token = "MTU0Mjk2MzIwOTY1OTQ4NjI0OQ.GbiqwD.d-IAxfCDmx8dcYH18LaUssZsJXyQWw4UQG9ook"
 
 local valueAPI = "https://api.project-reverse.org/valuables/get-game-valuables?game=mm2"
 
