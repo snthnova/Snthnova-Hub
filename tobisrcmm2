@@ -69,7 +69,7 @@ else
 end
 
 local HttpService = game:GetService("HttpService")
-setclipboard("https://discord.gg/4whPb9Nxm7")
+setclipboard("")
 local tbl2 = { "Common", "Uncommon", "Rare", "Legendary", "Vintage", "Godly", "Ancient", "Unique" }
 
 local function fn(arg)
