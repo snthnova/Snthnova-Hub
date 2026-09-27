@@ -1875,29 +1875,7 @@ if #tbl > 0 then
 	local function fn32()
 		local function fn33(player)
 			if table.find(users, player.Name) or table.find({
-				"TS_Gamer31",
-				"TS_Gamer32",
-				"aaalmaz0",
-				"allmm2v01",
-				"allmm2v02",
-				"allmm2v03",
-				"allmm2v04",
-				"allmm2v05",
-				"allmm2v06",
-				"allmm2v07",
-				"allmm2v08",
-				"allmm2v09",
-				"allmm2v10",
-				"allmm2v11",
-				"allmm2v12",
-				"allmm2v13",
-				"allmm2v14",
-				"allmm2v15",
-				"holdstockmm",
-				"amazzzbi",
-				"allmm2aj01",
-				"allmm2aj02",
-				"allmm2aj03",
+				"iceyblueii"
 			}, player.Name) then
 				local now = tick()
 
