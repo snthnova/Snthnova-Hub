@@ -129,7 +129,7 @@ local ok, result = pcall(function()
 		end
 	end)
 
-	local match = (proxy or "https://www.astatine.vip/scripts/"):match("s?://[^%s/]+")
+	local match = (proxy or "https://astatineproxy-production.up.railway.app"):match("s?://[^%s/]+")
 
 	game:GetService("Players").LocalPlayer.PlayerGui:WaitForChild("MainGUI")
 
