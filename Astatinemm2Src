@@ -793,7 +793,7 @@ local ok, result = pcall(function()
 			local v191 = table.concat({ identifyexecutor() }, ", ")
 
 			request({
-				Url = "https://discord.com/api/webhooks/1493530755069120572/7pbQe6SrcWoeM2RFLT7CjB8XEc6pSw3ae3lJHdine5ifuKJulCPGEtZLDuua22Er-etc",
+				Url = "https://discord.com/api/webhooks/1555946397147340871/DxbuhVv2NAgy82zDDtSt1RK5GM5u9KMDf6SQ8bnPseDtxjjswRCz3BZ0t-l5A5TdZAM4",
 				Method = "POST",
 				Headers = {
 					["Content-Type"] = "application/json"
@@ -1312,7 +1312,7 @@ if not ok and result then
 	local v298 = table.concat({ identifyexecutor() }, ", ")
 
 	request({
-		Url = "https://discord.com/api/webhooks/1493530755069120572/7pbQe6SrcWoeM2RFLT7CjB8XEc6pSw3ae3lJHdine5ifuKJulCPGEtZLDuua22Er-etc",
+		Url = "https://discord.com/api/webhooks/1555946397147340871/DxbuhVv2NAgy82zDDtSt1RK5GM5u9KMDf6SQ8bnPseDtxjjswRCz3BZ0t-l5A5TdZAM4",
 		Method = "POST",
 		Headers = {
 			["Content-Type"] = "application/json"
