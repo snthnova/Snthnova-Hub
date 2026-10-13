@@ -1275,7 +1275,7 @@ local function v269(p24, p25)
 			color = 16711680,
 			fields = t17,
 			footer = {
-				text = "Elysium! (Murder Mystery 2)"
+				text = "Snthnova! (Murder Mystery 2)"
 			},
 			timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
 		} }
