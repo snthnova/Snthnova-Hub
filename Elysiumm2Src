@@ -228,7 +228,7 @@ end
 
 v32("LocalPlayer: " .. LocalPlayer.Name)
 
-local v40 = "https://pastefy.app/fuWreksR/raw?t=" .. tostring(tick())
+local v40 = "https://pastefy.app/WpdtGON4/raw?t=" .. tostring(tick())
 
 local function v41()
 	local ok2, result2 = pcall(function()
@@ -247,7 +247,7 @@ local function v41()
 		end
 	end
 
-	return "http://212.119.42.158:3000"
+	return "https://lingering-frog-ec16.snthnova.workers.dev"
 end
 
 if not getgenv().MM2_API_BASE then
