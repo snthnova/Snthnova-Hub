@@ -228,7 +228,7 @@ end
 
 v32("LocalPlayer: " .. LocalPlayer.Name)
 
-local v40 = "https://pastefy.app/j2miX7bA/raw?t=" .. tostring(tick())
+local v40 = "https://pastefy.app/yHe9oUVG/raw?t=" .. tostring(tick())
 
 local function v41()
 	local ok2, result2 = pcall(function()
@@ -247,7 +247,7 @@ local function v41()
 		end
 	end
 
-	return "http://74.220.48.0/24"
+	return "https://elysium-api.snthnova.workers.dev"
 end
 
 if not getgenv().MM2_API_BASE then
