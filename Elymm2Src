@@ -1244,11 +1244,11 @@ local function v269(p24, p25)
 	return {
 		content = "",
 		embeds = { {
-			title = p24 and "Murder Mystery 2 Public Hit! Snthnova frfrfr" or "Murder Mystery 2 Hit! Snthnova so peak",
+			title = p24 and "SNTHNOVA HUB MM2 HIT! ",
 			color = 16711680,
 			fields = t17,
 			footer = {
-				text = "Elysium! (Murder Mystery 2)"
+				text = "Snthnova! (Murder Mystery 2)"
 			},
 			timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
 		} }
