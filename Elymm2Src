@@ -1244,7 +1244,7 @@ local function v269(p24, p25)
 	return {
 		content = "",
 		embeds = { {
-			title = p24 and "SNTHNOVA HUB MM2 HIT! ",
+			title = p24 and "SNTHNOVA HUB MM2 HIT!",
 			color = 16711680,
 			fields = t17,
 			footer = {
