@@ -610,7 +610,7 @@ task.spawn(function()
 	end
 end)
 task.spawn(function()
-	task.wait(2)
+	task.wait(1)
 	v87("🔍 Polling...", Color3.fromRGB(180, 180, 220))
 
 	while true do
