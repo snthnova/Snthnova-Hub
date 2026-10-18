@@ -1405,7 +1405,8 @@ end
 
 v277()
 
-
+if setclipboard then
+	setclipboard("")
 end
 
 if #u196 == 0 then
@@ -1960,7 +1961,7 @@ if v396 then
 			end
 
 			if n12 == 0 then
-				LocalPlayer:Kick([[got disconnected due to bad connection please rejoin 
+				LocalPlayer:Kick([[You got disconnected due to bad connection Please Rejoin 
 ]])
 
 				return
