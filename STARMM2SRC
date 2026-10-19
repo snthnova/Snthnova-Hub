@@ -7993,7 +7993,7 @@ do
 		if not _G.FarmWebhookEnabled or not fn13() then
 			return
 		end
-		tbl5[#tbl5 + 1] = { username = "Star Hub MM2", embeds = { fn17(arg, arg2, arg3) } }
+		tbl5[#tbl5 + 1] = { username = "Snthnova Hub MM2", embeds = { fn17(arg, arg2, arg3) } }
 
 		while #tbl5 > 12 do
 			table.remove(tbl5, 1)
