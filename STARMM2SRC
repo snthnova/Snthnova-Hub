@@ -7973,14 +7973,14 @@ do
 		tbl6[8] = tbl14
 
 		local tbl15 = {
-			author = { name = "Star Hub • MM2" },
+			author = { name = "Snthnova • MM2" },
 			title = arg,
 			description = arg2,
 			color = arg3 or 16758338,
 			fields = tbl6,
 		}
 
-		tbl15.footer = { text = "Star Hub MM2  •  " .. tostring(_G.ScriptVersion) }
+		tbl15.footer = { text = "Snthnova Hub MM2  •  " .. tostring(_G.ScriptVersion) }
 
 		pcall(function()
 			tbl15.timestamp = DateTime.now():ToIsoDate()
@@ -11368,7 +11368,7 @@ local function fn12()
 		})
 
 		fn17(Frame8, {
-			Text = tbl9.Title or "Star Hub",
+			Text = tbl9.Title or "Snthnova Hub",
 			Size = 17,
 			Weight = fontWeight.Bold,
 			Color = tbl6.inkText,
