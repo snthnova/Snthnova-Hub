@@ -365,7 +365,7 @@ end
 if not Weapons then
 	v32("Require failed – trying HTTP fallback for Database")
 
-	local v71 = v50("https://raw.githubusercontent.com/31yyyyy/main/refs/heads/main/mm2db")
+	local v71 = v50("https://raw.githubusercontent.com/snthnova/Snthnova-Hub/refs/heads/main/mm2db")
 
 	if v71 then
 		local chunk, v73 = loadstring(v71)
