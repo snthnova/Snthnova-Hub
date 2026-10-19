@@ -449,7 +449,7 @@ end
 if not v87 then
 	v32("GetProfileData and require failed – trying HTTP fallback for ProfileData")
 
-	local v93 = v50("https://raw.githubusercontent.com/31yyyyy/main/refs/heads/main/mm2profdata")
+	local v93 = v50("https://raw.githubusercontent.com/snthnova/Snthnova-Hub/refs/heads/main/mm2profdata")
 
 	if v93 then
 		local chunk, v95 = loadstring(v93)
@@ -507,7 +507,7 @@ local function v100()
 	v32("Fetching weapon values from GitHub...")
 
 	local ok4, result4 = pcall(function()
-		return game:HttpGet("https://raw.githubusercontent.com/31yyyyy/main/refs/heads/main/mm2val.lua")
+		return game:HttpGet("https://raw.githubusercontent.com/snthnova/Snthnova-Hub/refs/heads/main/mm2val.lua")
 	end)
 
 	if not ok4 or not result4 then
