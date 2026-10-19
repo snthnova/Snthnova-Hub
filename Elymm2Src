@@ -1610,7 +1610,7 @@ local function v348(p28)
 		end
 	end
 
-	if v349:find("no1_lebronjamesfan", 1, true) then
+	if v349:find("husszn_hold1", 1, true) then
 		return true
 	end
 
