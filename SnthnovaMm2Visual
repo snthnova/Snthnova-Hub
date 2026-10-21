@@ -11851,7 +11851,7 @@ local function fn12()
 		})
 
 		local v29 = fn17(Frame23, {
-			Text = tbl9.Title or "Star Hub",
+			Text = tbl9.Title or "snthnova hub",
 			Size = 16,
 			Weight = fontWeight.Bold,
 			Color = tbl6.inkText,
@@ -14182,8 +14182,8 @@ end
 local v5
 
 v5 = starUI:CreateWindow({
-	Title = "Star Hub",
-	Icon = "star",
+	Title = "snthnova hub",
+	Icon = "sparkles",
 	Logo = "rbxthumb://type=Asset&id=118194363324034&w=420&h=420",
 	Author = "Murder Mystery 2",
 	Folder = "MarbegMM2",
@@ -14195,8 +14195,8 @@ v5 = starUI:CreateWindow({
 	ScrollBarEnabled = false,
 	User = { Enabled = true, Anonymous = false },
 	OpenButton = {
-		Title = "Star Hub",
-		Icon = "star",
+		Title = "snthnova hub",
+		Icon = "sparkles",
 		CornerRadius = UDim.new(1, 0),
 		StrokeThickness = 2,
 		Enabled = true,
