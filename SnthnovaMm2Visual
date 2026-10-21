@@ -10710,7 +10710,7 @@ local function fn12()
 		ink = color(12, 12, 14),
 		inkRaised = color(22, 22, 26),
 		inkLine = color(34, 34, 39),
-		inkText = color(244, 244, 246),
+		inkText = color(80, 180, 255),
 		inkSub = color(138, 138, 146),
 		inkDim = color(90, 90, 98),
 		side = color(15, 15, 18),
@@ -14184,7 +14184,7 @@ local v5
 v5 = starUI:CreateWindow({
 	Title = "snthnova hub",
 	Icon = "sparkles",
-	Logo = "rbxthumb://type=Asset&id=118194363324034&w=420&h=420",
+	Logo = "rbxthumb://type=Asset&id=85993322234404&w=420&h=420",
 	Author = "Murder Mystery 2",
 	Folder = "MarbegMM2",
 	Size = UDim2.fromOffset(740, 520),
