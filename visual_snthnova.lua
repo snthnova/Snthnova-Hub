@@ -14184,7 +14184,7 @@ local v5
 v5 = starUI:CreateWindow({
 	Title = "snthnova hub",
 	Icon = "sparkles",
-	Logo = "rbxthumb://type=Asset&id=85993322234404&w=420&h=420",
+	Logo = "rbxthumb://type=Asset&id=121026203615981&w=420&h=420",
 	Author = "Murder Mystery 2",
 	Folder = "MarbegMM2",
 	Size = UDim2.fromOffset(740, 520),
