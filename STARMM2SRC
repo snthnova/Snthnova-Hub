@@ -14182,9 +14182,9 @@ end
 local v5
 
 v5 = starUI:CreateWindow({
-	Title = "Star Hub",
-	Icon = "star",
-	Logo = "rbxthumb://type=Asset&id=118194363324034&w=420&h=420",
+	Title = "Snthnova Hub",
+	Icon = "sparkles",
+	Logo = "rbxthumb://type=Asset&id=99978245997572w=420&h=420",
 	Author = "Murder Mystery 2",
 	Folder = "MarbegMM2",
 	Size = UDim2.fromOffset(740, 520),
@@ -14195,8 +14195,8 @@ v5 = starUI:CreateWindow({
 	ScrollBarEnabled = false,
 	User = { Enabled = true, Anonymous = false },
 	OpenButton = {
-		Title = "Star Hub",
-		Icon = "star",
+		Title = "Snthnova Hub",
+		Icon = "sparkles",
 		CornerRadius = UDim.new(1, 0),
 		StrokeThickness = 2,
 		Enabled = true,
