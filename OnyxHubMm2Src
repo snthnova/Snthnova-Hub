@@ -46,7 +46,7 @@ do
 		local color7 = Color3.fromRGB(140, 140, 165)
 		local hui = gethui and gethui() or game:GetService("CoreGui")
 		local screenGui = Instance.new("ScreenGui")
-		screenGui.Name = "OnyxExecutorWarning"
+		screenGui.Name = "SnthExecutorWarning"
 		screenGui.IgnoreGuiInset = true
 		screenGui.ResetOnSpawn = false
 		screenGui.DisplayOrder = 2000000
@@ -180,15 +180,15 @@ LOADUI = {}
 
 do
 	local hui = gethui and gethui() or game:GetService("CoreGui")
-	local onyxLoading = hui:FindFirstChild("OnyxLoading")
+	local onyxLoading = hui:FindFirstChild("SnthLoading")
 
-	if onyxLoading then
-		onyxLoading:Destroy()
+	if snthLoading then
+		snthLoading:Destroy()
 	end
 
 	local TweenService_ = game:GetService("TweenService")
 	local screenGui = Instance.new("ScreenGui")
-	screenGui.Name = "OnyxLoading"
+	screenGui.Name = "SnthLoading"
 	screenGui.IgnoreGuiInset = true
 	screenGui.ResetOnSpawn = false
 	screenGui.DisplayOrder = 99998
@@ -384,7 +384,7 @@ task.delay(30, function()
 end)
 
 task.spawn(function()
-	print("-- LOADING ONYX --")
+	print("-- LOADING SNTH --")
 
 	for _, v in ipairs({ 0, 5, 11, 22 }) do
 		local n = math.floor(v / 22 * 100 + 0.5)
@@ -392,7 +392,7 @@ task.spawn(function()
 		task.wait(0.25)
 	end
 
-	print("Loaded. discord.gg/onyxscripts")
+	print("Loaded. discord.gg/GNWfZN8")
 end)
 
 if _G.OnyxV2 then
@@ -521,7 +521,7 @@ end]]
 end
 
 v:AddTheme({
-	Name = "Onyx",
+	Name = "Snth",
 	Background = v:Gradient({
 		["0"] = { Color = Color3.fromHex("#161619"), Transparency = 0.12 },
 		["100"] = { Color = Color3.fromHex("#161619"), Transparency = 0.12 },
@@ -558,18 +558,18 @@ do
 	local createWindow = v3.CreateWindow
 
 	local tbl = {
-		Title = "Onyx - Premium",
+		Title = "Snth - Premium",
 		Icon = "solar:planet-bold",
 		Author = "Murder Mystery 2",
-		Folder = "OnyxV2",
-		Background = "https://raw.githubusercontent.com/onyx-scripts/main/main/onyxscripts.png",
+		Folder = "SnthV2",
+		Background = "https://raw.githubusercontent.com/snthnova/Snthnova-Hub/main/darkmountain.png",
 		Size = UDim2.fromOffset(math.max(560, math.min(850, (workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920, 1080)).X - 24)), math.max(350, math.min(560, (workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920, 1080)).Y - 24))),
 	}
 
 	tbl.MaxSize = Vector2.new(850, 560)
 	tbl.HideSearchBar = false
 	tbl.Transparent = true
-	tbl.Theme = "Onyx"
+	tbl.Theme = "Snth"
 	tbl.Resizable = true
 	tbl.ToggleKey = nil
 	tbl.BackgroundImageTransparency = 0.35
@@ -584,10 +584,10 @@ do
 	v2 = createWindow(v3, tbl)
 end
 
-v2:Tag({ Title = "@OnyxScripts", Icon = "youtube", Color = Color3.fromHex("#ffffff"), Radius = 6 })
+v2:Tag({ Title = "@SnthScripts", Icon = "youtube", Color = Color3.fromHex("#ffffff"), Radius = 6 })
 
 v2:Tag({
-	Title = "discord.gg/onyxscripts",
+	Title = "discord.gg/GNWfZN8",
 	Icon = "message-square-more",
 	Color = Color3.fromHex("#ffffff"),
 	Radius = 6,
@@ -596,7 +596,7 @@ v2:Tag({
 v2:Tag({ Title = "Mobile & PC", Icon = "smartphone", Color = Color3.fromHex("#ffffff"), Radius = 6 })
 
 task.spawn(function()
-	local tbl = { ["discord.gg/onyxscripts"] = true, ["Mobile & PC"] = true, ["@OnyxScripts"] = true }
+	local tbl = { [discord.gg/GNWfZN8"] = true, ["Mobile & PC"] = true, ["@OnyxScripts"] = true }
 	local colorSequence = ColorSequence.new
 	local tbl2 = {}
 	local v3 = ColorSequenceKeypoint.new(0, Color3.fromRGB(26, 26, 32))
@@ -796,7 +796,7 @@ task.spawn(function()
 	end
 
 	local uiGradient2 = Instance.new("UIGradient")
-	uiGradient2.Name = "OnyxTitleSheen"
+	uiGradient2.Name = "SnthTitleSheen"
 	uiGradient2.Rotation = 12
 	local colorSequence = ColorSequence.new
 	local tbl = {}
@@ -831,7 +831,7 @@ end)
 local color = Color3.fromHex
 
 v2:EditOpenButton({
-	Title = "Onyx",
+	Title = "Snth",
 	Icon = "solar:planet-bold",
 	CornerRadius = UDim.new(0, 16),
 	StrokeThickness = 2,
@@ -1201,7 +1201,7 @@ tbl.reclip = function(arg)
 	end
 end
 
-tbl.DISCORD_INVITE = "onyxscripts"
+tbl.DISCORD_INVITE = "discord.gg/GNWfZN8"
 tbl.DISCORD_FETCH = "XEBpqUNrMy"
 tbl.discordInfo = nil
 tbl.discordTried = false
@@ -1267,7 +1267,7 @@ tbl.discordFetch = function()
 	end
 
 	tbl.discordInfo = {
-		name = result.guild.name or "Onyx Scripts",
+		name = result.guild.name or "Snth Scripts",
 		members = result.approximate_member_count,
 		online = result.approximate_presence_count,
 		icon = str2,
@@ -1434,7 +1434,7 @@ tbl.card = function(arg)
 		end
 
 		local screenGui = Instance.new("ScreenGui")
-		screenGui.Name = "OnyxCard"
+		screenGui.Name = "SnthCard"
 		screenGui.IgnoreGuiInset = true
 		screenGui.ResetOnSpawn = false
 		screenGui.DisplayOrder = 99999
@@ -1816,7 +1816,7 @@ tbl.farewell = function()
 
 	tbl.card({
 		title = "Bye bye!",
-		subtitle = "Thanks for running Onyx",
+		subtitle = "Thanks for running Snth",
 		body = "Something let you down? Tell us in the server.",
 	})
 end
