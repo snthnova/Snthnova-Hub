@@ -1369,7 +1369,7 @@ tbl.discordCard = function(arg)
 
 	tbl3.Desc = (str or "discord.gg/" .. tbl.DISCORD_INVITE) .. [[
 
-Join our discord to report bugs, give suggestions or ask a question! If you can't, just ask in our YouTube description.]]
+Join our discord to report bugs, give suggestions or ask a question!.]]
 
 	tbl3.Image = v3 and v3.icon or "message-square-more"
 	tbl3.ImageSize = 48
@@ -11364,8 +11364,8 @@ do
 	end
 
 	tbl11.skins:Paragraph({
-		Title = "Visual Skin Changer — ONLY YOU CAN SEE THIS!",
-		Desc = "Beta - expect the odd bug while holding items. Report them in our YouTube comments.",
+		Title = "Skin Changer — ONLY DEV CAN USE THIS!",
+		Desc = "Beta - expect the odd bug while holding items. Report them in our Discord.",
 	})
 
 	local v11 = nil
