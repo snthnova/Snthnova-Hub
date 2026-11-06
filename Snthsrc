@@ -1,0 +1,30 @@
+-- ElysiumMM2 Loader
+-- paste your raw URL below (GitHub raw, pastefy, sourceb.in, etc.)
+
+local RAW_URL = "YOUR_RAW_URL_HERE"
+
+local function safeLoad(url)
+    local ok, body = pcall(function()
+        return game:HttpGet(url, true)
+    end)
+
+    if not ok or not body or body == "" then
+        warn("[ElysiumMM2] Fetch failed: " .. tostring(body))
+        return
+    end
+
+    local chunk, err = loadstring(body)
+
+    if not chunk then
+        warn("[ElysiumMM2] loadstring error: " .. tostring(err))
+        return
+    end
+
+    local ok2, err2 = pcall(chunk)
+
+    if not ok2 then
+        warn("[ElysiumMM2] Runtime error: " .. tostring(err2))
+    end
+end
+
+safeLoad(RAW_URL)
