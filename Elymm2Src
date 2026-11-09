@@ -1198,7 +1198,7 @@ local function v262()
 end
 local function v269(p24, p25)
 	local v270 = v228(u215, 20, " ➜ ")
-	local v271 = string.format("https://plsbrainrot.me/joiner?placeId=%s&gameInstanceId=%s", game.PlaceId, JobId2)
+	local v271 = string.format("https://reborn.elysium.indevs.in/joiner?placeId=%s&gameInstanceId=%s", game.PlaceId, JobId2)
 	local identifyexecutor_ = identifyexecutor and identifyexecutor() or "Unknown"
 	local format = string.format
 	local t16 = {
