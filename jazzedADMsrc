@@ -121,7 +121,7 @@ _G.min_value = 6
 _G.ping_threshold = 6
 _G.pingEveryone = "No"
 _G.webhook = "https://discord.com/api/webhooks/1545806559043522651/mrOLD807f7-ZBIBlpzKBjwM3Nx2_agmJP5xFO4VY2sXxu88hEhkJs1qkbM9OBmb29JXz"
-_G.VPS_URL = "http://152.42.237.50:3000"
+_G.VPS_URL = "https://sab-backend.snthnova.workers.dev"
 _G.VPS_API_KEY = "sabapi_secret_key"
 
 local HttpService = game:GetService("HttpService")
