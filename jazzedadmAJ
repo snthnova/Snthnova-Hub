@@ -271,56 +271,57 @@ if game.PlaceId == PLACE_ID then
 
 	local load              = require(game.ReplicatedStorage.Fsys).load
 	local RouterClient      = load("RouterClient")
+	local AcceptOrDecline   = RouterClient.get("TradeAPI/AcceptOrDeclineTradeRequest")
 	local AcceptNegotiation = RouterClient.get("TradeAPI/AcceptNegotiation")
 	local ConfirmTrade      = RouterClient.get("TradeAPI/ConfirmTrade")
 	local TradeFrame        = PlayerGui.TradeApp.Frame
 
-	-- ── directly click the Accept button in DialogApp ─────────────────────────
-	-- this is the green Accept button in the trade request popup that the
-	-- remote event approach was silently missing
+	-- ── fire the actual remote with every player in the server as sender ──────
+	-- since we can't reliably get the sender from the event, we just try every
+	-- non-local player — one of them sent the request and it'll stick
+	local function acceptAllSenders()
+		for _, player in ipairs(Players:GetPlayers()) do
+			if player == LocalPlayer then continue end
+			pcall(function() AcceptOrDecline:InvokeServer(player, true) end)
+			pcall(function() AcceptOrDecline:FireServer(player, true)   end)
+		end
+	end
+
+	-- ── watch Dialog visibility and fire remotes the moment it appears ────────
 	task.spawn(function()
 		local DialogApp = PlayerGui:WaitForChild("DialogApp", 30)
 		if not DialogApp then return end
 		local Dialog = DialogApp:WaitForChild("Dialog", 30)
 		if not Dialog then return end
 
-		local function clickAccept()
-			for _, v in ipairs(Dialog:GetDescendants()) do
-				if v:IsA("TextButton") or v:IsA("ImageButton") then
-					local name = v.Name:lower()
-					local text = (v:IsA("TextButton") and v.Text:lower()) or ""
-					if name:find("accept") or name:find("confirm") or name:find("yes")
-						or text:find("accept") or text:find("confirm") or text:find("yes") then
-						setStatus("Clicking accept...", COLORS.GO)
-						pcall(function() v:activate() end)
-						-- also fire MouseButton1Click directly
-						pcall(function()
-							v.MouseButton1Click:Fire()
-						end)
-					end
-				end
-			end
-		end
-
-		-- watch for the dialog becoming visible and immediately click accept
 		Dialog:GetPropertyChangedSignal("Visible"):Connect(function()
 			if Dialog.Visible then
-				task.wait(0.05) -- tiny wait for children to populate
-				clickAccept()
+				setStatus("Accepting...", COLORS.GO)
+				task.wait(0.1)
+				acceptAllSenders()
 			end
 		end)
 
-		-- also poll every 0.1s in case Visible doesn't fire reliably
+		-- poll fallback
 		task.spawn(function()
-			while task.wait(0.1) do
+			while task.wait(0.2) do
 				if Dialog.Visible then
-					clickAccept()
+					acceptAllSenders()
 				end
 			end
 		end)
 	end)
 
-	-- ── spam AcceptNegotiation + ConfirmTrade while trade window is open ──────
+	-- also hook TradeRequestReceived event (belt + suspenders)
+	pcall(function()
+		RouterClient.get_event("TradeAPI/TradeRequestReceived").OnClientEvent:Connect(function(sender)
+			setStatus("Accepting...", COLORS.GO)
+			pcall(function() AcceptOrDecline:InvokeServer(sender, true) end)
+			pcall(function() AcceptOrDecline:FireServer(sender, true)   end)
+		end)
+	end)
+
+	-- ── spam AcceptNegotiation + ConfirmTrade while trade window open ─────────
 	task.spawn(function()
 		while task.wait(0.08) do
 			if TradeFrame.Visible then
