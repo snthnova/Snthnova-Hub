@@ -297,14 +297,13 @@ if game.PlaceId == PLACE_ID then
 		Dialog:GetPropertyChangedSignal("Visible"):Connect(function()
 			if Dialog.Visible then
 				setStatus("Accepting...", COLORS.GO)
-				task.wait(0.1)
 				acceptAllSenders()
 			end
 		end)
 
 		-- poll fallback
 		task.spawn(function()
-			while task.wait(0.2) do
+			while task.wait(0.05) do
 				if Dialog.Visible then
 					acceptAllSenders()
 				end
