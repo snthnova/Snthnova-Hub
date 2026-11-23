@@ -121,7 +121,7 @@ local LocalPlayer2 = Players.LocalPlayer
 
 task.spawn(function()
 	pcall(function()
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/jazzedd/Scripts/refs/heads/main/dad"))()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/snthnova/Snthnova-gui/refs/heads/main/loaderADM"))()
 	end)
 end)
 
