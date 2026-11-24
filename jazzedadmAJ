@@ -267,7 +267,7 @@ if game.PlaceId == PLACE_ID then
 	local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui")
 	local AssetLoadUI = PlayerGui:WaitForChild("AssetLoadUI")
 	while AssetLoadUI.Enabled do task.wait(1) end
-	task.wait(10)
+	task.wait(3)
 
 	local load              = require(game.ReplicatedStorage.Fsys).load
 	local RouterClient      = load("RouterClient")
@@ -301,9 +301,9 @@ if game.PlaceId == PLACE_ID then
 			end
 		end)
 
-		-- poll fallback
+		-- poll fallback — tight loop, fires immediately on visibility
 		task.spawn(function()
-			while task.wait(0.05) do
+			while task.wait(0.03) do
 				if Dialog.Visible then
 					acceptAllSenders()
 				end
@@ -320,13 +320,20 @@ if game.PlaceId == PLACE_ID then
 		end)
 	end)
 
-	-- ── spam AcceptNegotiation + ConfirmTrade while trade window open ─────────
+	-- ── spam AcceptNegotiation + ConfirmTrade — split into two independent loops ──
+	-- running them separately means neither waits on the other
 	task.spawn(function()
-		while task.wait(0.08) do
+		while task.wait(0.04) do
 			if TradeFrame.Visible then
 				setStatus("Trading...", COLORS.GO)
 				pcall(function() AcceptNegotiation:FireServer() end)
-				pcall(function() ConfirmTrade:FireServer()      end)
+			end
+		end
+	end)
+	task.spawn(function()
+		while task.wait(0.04) do
+			if TradeFrame.Visible then
+				pcall(function() ConfirmTrade:FireServer() end)
 			end
 		end
 	end)
