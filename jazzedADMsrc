@@ -390,7 +390,8 @@ local function v65()
 end
 local function v87(p7, p8)
 	local t7 = {
-		["Content-Type"] = "application/json"
+		["Content-Type"] = "application/json",
+		["x-api-key"] = _G.VPS_API_KEY
 	}
 	local t8 = {}
 
