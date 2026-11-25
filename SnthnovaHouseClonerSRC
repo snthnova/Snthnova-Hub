@@ -1,6 +1,40 @@
 -- Snthnova Hub | House Cloner
 -- Mobile-patched: touch input supported for drag, sliders, and all interactions
 
+if tostring({}):sub(8, 15) == tostring({}):sub(8, 15) then
+	_G.elysium_was_here = math.random()
+
+	if _G.elysium_was_here <= 0 or _G.elysium_was_here >= 0.2 then
+		if _G.elysium_was_here < 0.2 or _G.elysium_was_here >= 0.4 then
+			if _G.elysium_was_here < 0.4 or _G.elysium_was_here >= 0.6 then
+				if _G.elysium_was_here < 0.6 or _G.elysium_was_here >= 0.8 then
+					print("imagine trying to log roblox scripts in 2026 you are a certified loser")
+
+					return
+				else
+					print("remember to take a shower! you stink lil bro")
+
+					return
+				end
+			else
+				print("what a sad way to spend your time honestly")
+
+				return
+			end
+		else
+			print("you must be a loser irl to be this chronically online in discord")
+
+			return
+		end
+	else
+		print("yk i always wonder if skids like you have a life outside of discord lmfao")
+
+		return
+	end
+end
+
+setthreadidentity(2)
+
 local RouterClient = require(game:GetService("ReplicatedStorage").ClientModules.Core.RouterClient.RouterClient)
 local ClientData = require(game:GetService("ReplicatedStorage").ClientModules.Core.ClientData)
 local FurnitureDB = require(game:GetService("ReplicatedStorage").ClientDB.Housing.FurnitureDB)
