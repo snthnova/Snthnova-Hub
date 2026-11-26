@@ -28,6 +28,10 @@ local pasteTextures  = true
 local selectedPlayer = nil
 local houseNameValue = ""
 local MAX_RETRIES    = 40
+local uiReady        = false
+local EMPTY_LABEL    = "--"
+
+local statState = { count = 0, fCost = 0, tCost = 0, prog = 0 }
 
 ------------------------------------------------------------------------
 -- Guards
@@ -95,7 +99,10 @@ local function addToggle(tab, label, default, fn)
             Title    = label,
             Value    = default,
             Default  = default,
-            Callback = guard(label, fn),
+            Callback = guard(label, function(v)
+                if not uiReady then return end
+                fn(v)
+            end),
         })
     end)
 end
@@ -110,7 +117,10 @@ local function addSlider(tab, label, min, max, default, fn)
             Max      = max,
             Default  = default,
             Rounding = 0,
-            Callback = guard(label, fn),
+            Callback = guard(label, function(v)
+                if not uiReady then return end
+                fn(v)
+            end),
         })
     end)
 end
@@ -128,38 +138,50 @@ local function addInput(tab, label, placeholder, fn)
     end)
 end
 
+local function listOrEmpty(values)
+    if #values == 0 then return { EMPTY_LABEL } end
+    return values
+end
+
+-- Dropdown callbacks are ignored until the whole UI is built, WindUI fires them at construction.
 local function addDropdown(tab, label, values, fn)
-    local first = values[1]
+    local shown = listOrEmpty(values)
     local element = build("dropdown " .. label, function()
         return tab:Dropdown({
             Title     = label,
-            Values    = values,
-            Value     = first,
-            Default   = first,
+            Values    = shown,
+            Value     = shown[1],
+            Default   = shown[1],
             Multi     = false,
             AllowNone = true,
-            Callback  = guard(label, fn),
+            Callback  = guard(label, function(val)
+                if not uiReady then return end
+                if type(val) == "table" then val = val[1] end
+                if val == nil or val == EMPTY_LABEL then val = nil end
+                fn(val)
+            end),
         })
     end)
     local handle = {}
     function handle:SetValues(newValues)
         if not element then return end
+        local list = listOrEmpty(newValues)
         pcall(function()
-            if element.Refresh then element:Refresh(newValues)
-            elseif element.SetValues then element:SetValues(newValues) end
+            if element.Refresh then element:Refresh(list)
+            elseif element.SetValues then element:SetValues(list) end
         end)
     end
     function handle:Set(value)
-        if not element or value == nil then return end
+        if not element then return end
+        local target = value or EMPTY_LABEL
         pcall(function()
-            if element.Select then element:Select(value)
-            elseif element.Set then element:Set(value) end
+            if element.Select then element:Select(target)
+            elseif element.Set then element:Set(target) end
         end)
     end
     return handle
 end
 
--- Stats line: Paragraph if the build has it, otherwise a callback-less Button.
 local function addStats(tab, title, content)
     local element = build("stats", function()
         return tab:Paragraph({ Title = title, Desc = content, Content = content })
@@ -172,12 +194,13 @@ local function addStats(tab, title, content)
     local handle = {}
     function handle:Update(newTitle, newContent)
         if not element then return end
-        pcall(function()
-            if element.SetTitle then element:SetTitle(newTitle) end
-            if element.SetDesc then element:SetDesc(newContent)
-            elseif element.SetContent then element:SetContent(newContent)
-            elseif element.Set then element:Set({ Title = newTitle, Content = newContent, Desc = newContent }) end
-        end)
+        local done = false
+        if element.SetTitle then done = pcall(element.SetTitle, element, newTitle) or done end
+        if element.SetDesc then done = pcall(element.SetDesc, element, newContent) or done end
+        if not done and element.SetContent then done = pcall(element.SetContent, element, newContent) or done end
+        if not done and element.Set then
+            pcall(element.Set, element, { Title = newTitle, Content = newContent, Desc = newContent })
+        end
     end
     return handle
 end
@@ -345,7 +368,7 @@ end
 
 local function calcCosts(data)
     local fCount, fCost, tCost = 0, 0, 0
-    if data.furniture then
+    if type(data.furniture) == "table" then
         for _, v in pairs(data.furniture) do
             fCount = fCount + 1
             if FurnitureDB[v.id] and FurnitureDB[v.id].cost then
@@ -353,7 +376,7 @@ local function calcCosts(data)
             end
         end
     end
-    if data.textures then
+    if type(data.textures) == "table" then
         for _, tex in pairs(data.textures) do
             if tex.walls and TexturesDB.walls[tex.walls] then
                 tCost = tCost + (TexturesDB.walls[tex.walls].cost or 0)
@@ -410,17 +433,33 @@ local TabOthers   = makeTab("Others",      "wrench")
 local TabSettings = makeTab("Settings",    "settings")
 
 ------------------------------------------------------------------------
--- MAIN: stats
+-- MAIN: stats (single state table, progress never wipes the totals)
 ------------------------------------------------------------------------
 
-local stats = addStats(TabMain, "House Stats",
-    "Furnitures: 0 | Furn. Cost: 0 | Tex. Cost: 0 | Progress: 0%")
-
-local function updateStats(count, fCost, tCost, prog)
-    stats:Update("House Stats", string.format(
+local function statsText()
+    return string.format(
         "Furnitures: %d | Furn. Cost: %d | Tex. Cost: %d | Progress: %d%%",
-        count or 0, fCost or 0, tCost or 0, prog or 0
-    ))
+        statState.count, statState.fCost, statState.tCost, statState.prog
+    )
+end
+
+local stats = addStats(TabMain, "House Stats", statsText())
+
+local function refreshStats()
+    stats:Update("House Stats", statsText())
+end
+
+local function setTotals(count, fCost, tCost)
+    statState.count = count or 0
+    statState.fCost = fCost or 0
+    statState.tCost = tCost or 0
+    statState.prog  = 0
+    refreshStats()
+end
+
+local function setProgress(prog)
+    statState.prog = prog or 0
+    refreshStats()
 end
 
 ------------------------------------------------------------------------
@@ -435,8 +474,7 @@ local selectedFile = currentFiles[1]
 local fileDropdown
 
 local typeDropdown = addDropdown(TabMain, "House Type", houseTypes, function(val)
-    if type(val) == "table" then val = val[1] end
-    if not val then return end
+    if not val or not fileDropdown then return end
     currentType  = val
     currentFiles = getFilesForType(currentType)
     selectedFile = currentFiles[1]
@@ -445,16 +483,21 @@ local typeDropdown = addDropdown(TabMain, "House Type", houseTypes, function(val
 end)
 
 fileDropdown = addDropdown(TabMain, "Select House File", currentFiles, function(val)
-    if type(val) == "table" then val = val[1] end
     selectedFile = val
 end)
 
-addButton(TabMain, "Refresh Files", nil, function()
+local function refreshFiles()
     currentFiles = getFilesForType(currentType)
-    selectedFile = currentFiles[1]
+    if not (selectedFile and table.find(currentFiles, selectedFile)) then
+        selectedFile = currentFiles[1]
+    end
     fileDropdown:SetValues(currentFiles)
     fileDropdown:Set(selectedFile)
-    Notify("Files Refreshed", "Updated for: " .. tostring(currentType), 3)
+end
+
+addButton(TabMain, "Refresh Files", nil, function()
+    refreshFiles()
+    Notify("Files Refreshed", "Updated for: " .. tostring(currentType) .. " (" .. #currentFiles .. " files)", 3)
 end)
 
 addSection(TabMain, "File Operations")
@@ -465,17 +508,15 @@ addButton(TabMain, "Save House to File", nil, function()
     if data.player == nil then
         return Notify("Error", "You need to enter a house to copy", 3)
     end
+    if not selectedFile or selectedFile == "" then
+        return Notify("Error", "No file selected. Create one in the Create File tab.", 3)
+    end
     for _, v in pairs(data.furniture) do
         if v.creator then v.creator = nil end
     end
     data.player = nil
-    if not selectedFile or selectedFile == "" then
-        return Notify("Error", "No file selected", 3)
-    end
     writefile(selectedFile, "return " .. lib(data))
-    currentFiles = getFilesForType(currentType)
-    fileDropdown:SetValues(currentFiles)
-    fileDropdown:Set(selectedFile)
+    refreshFiles()
     Notify("Success", "Saved house to file", 3)
 end)
 
@@ -498,8 +539,8 @@ addButton(TabMain, "Load House from File", nil, function()
     end
     loadedHouse = result
     local fCount, fCost, tCost = calcCosts(loadedHouse)
-    updateStats(fCount, fCost, tCost, 0)
-    Notify("Success", "Successfully loaded house from file", 3)
+    setTotals(fCount, fCost, tCost)
+    Notify("Loaded", string.format("%d furnitures | furn. cost %d | tex. cost %d", fCount, fCost, tCost), 5)
 end)
 
 addSection(TabMain, "Main Functions")
@@ -515,8 +556,13 @@ addButton(TabMain, "Scan House", nil, function()
         if v.creator then v.creator = nil end
     end
     local fCount, fCost, tCost = calcCosts(loadedHouse)
-    updateStats(fCount, fCost, tCost, 0)
-    Notify("Success", "Scanned house", 3)
+    setTotals(fCount, fCost, tCost)
+    Notify("Scanned", string.format("%d furnitures | furn. cost %d | tex. cost %d", fCount, fCost, tCost), 5)
+end)
+
+addButton(TabMain, "Show Stats", nil, function()
+    refreshStats()
+    Notify("House Stats", statsText(), 6)
 end)
 
 addButton(TabMain, "Sell All Furnitures", nil, function()
@@ -579,7 +625,7 @@ local function placeHouseFast()
             end
 
             placed = placed + 1
-            updateStats(0, 0, 0, math.floor(placed / total * 100))
+            setProgress(math.floor(placed / total * 100))
         end
 
         RouterClient.get("HousingAPI/BuyFurnitures"):InvokeServer(batch)
@@ -639,7 +685,7 @@ local function placeHouseSlow()
             end
 
             placed = placed + 1
-            updateStats(0, 0, 0, math.floor(placed / total * 100))
+            setProgress(math.floor(placed / total * 100))
         end
 
         activateSpecialFurniture()
@@ -708,8 +754,7 @@ addButton(TabCreate, "Create House File", nil, function()
         name = name .. ".lua"
     end
     writefile("Savedhouses/" .. name, "")
-    currentFiles = getFilesForType(currentType)
-    fileDropdown:SetValues(currentFiles)
+    refreshFiles()
     Notify("Success", "Created house file: " .. name, 3)
 end)
 
@@ -729,7 +774,6 @@ local playerNames = getPlayerNames()
 selectedPlayer    = playerNames[1]
 
 local playerDropdown = addDropdown(TabTeleport, "Select Player", playerNames, function(val)
-    if type(val) == "table" then val = val[1] end
     selectedPlayer = val
 end)
 
@@ -755,7 +799,10 @@ Players.PlayerRemoving:Connect(function(p)
     task.defer(refreshPlayerList)
 end)
 
-addButton(TabTeleport, "Refresh Players", nil, refreshPlayerList)
+addButton(TabTeleport, "Refresh Players", nil, function()
+    refreshPlayerList()
+    Notify("Players", "Refreshed: " .. #playerNames .. " players", 3)
+end)
 
 addButton(TabTeleport, "Enter House", nil, function()
     if not selectedPlayer or selectedPlayer == "" then
@@ -919,5 +966,9 @@ addSlider(TabSettings, "Jump Boost", 0, 100,
 ------------------------------------------------------------------------
 -- Init
 ------------------------------------------------------------------------
+
+task.delay(0.5, function()
+    uiReady = true
+end)
 
 Notify("Seraphis Hub", "Loaded. House Cloner ready.", 4)
