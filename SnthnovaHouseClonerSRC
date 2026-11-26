@@ -1,1 +1,810 @@
+------------------------------------------------------------------------
+-- SERAPHIS HUB — WindUI Mobile Port
+-- Original: discord.gg/syncrypt
+------------------------------------------------------------------------
 
+setthreadidentity(2)
+
+local RouterClient = require(game:GetService("ReplicatedStorage").ClientModules.Core.RouterClient.RouterClient)
+local ClientData   = require(game:GetService("ReplicatedStorage").ClientModules.Core.ClientData)
+local FurnitureDB  = require(game:GetService("ReplicatedStorage").ClientDB.Housing.FurnitureDB)
+local TexturesDB   = require(game:GetService("ReplicatedStorage").ClientDB.Housing.TexturesDB)
+local LocalPlayer  = game:GetService("Players").LocalPlayer
+
+setthreadidentity(8)
+
+local lib     = loadstring(game:HttpGet("https://pastefy.app/u3DDymPm/raw"))()
+local HouseDB = require(game:GetService("ReplicatedStorage").ClientDB.Housing.HouseDB)
+local WindUI  = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+
+------------------------------------------------------------------------
+-- Init filesystem
+------------------------------------------------------------------------
+
+if not isfolder("Savedhouses") then makefolder("Savedhouses") end
+
+------------------------------------------------------------------------
+-- State
+------------------------------------------------------------------------
+
+local loadedHouse    = nil
+local placedCache    = {}
+local pasteTextures  = true
+local selectedPlayer = nil
+local houseNameValue = ""
+
+------------------------------------------------------------------------
+-- Helpers
+------------------------------------------------------------------------
+
+local function Notify(title, content, duration)
+    WindUI:Notify({
+        Title   = title,
+        Content = content,
+        Duration = duration or 3,
+    })
+end
+
+local function getHouseTypes()
+    local types = {}
+    for k in pairs(HouseDB) do
+        table.insert(types, k)
+    end
+    table.sort(types)
+    return types
+end
+
+local function getFilesForType(houseType)
+    local files = {}
+    for _, path in ipairs(listfiles("Savedhouses")) do
+        local content = readfile(path)
+        if content ~= "" then
+            if content:find("building_type") then
+                local idx   = content:find("building_type") + 15
+                local comma = content:find(",", idx)
+                local bt    = content:sub(idx, (comma or 0) - 2)
+                if bt == houseType then
+                    table.insert(files, path)
+                end
+            end
+        elseif houseType == "micro_2023" then
+            table.insert(files, path)
+        end
+    end
+    return files
+end
+
+local function teleportTo(mode, useTP, target)
+    setthreadidentity(2)
+    local enter = require(game:GetService("ReplicatedStorage").Fsys).load("InteriorsM").enter
+    if mode == "interior" then
+        getgenv().teleport = useTP
+        enter(target, "", {})
+    elseif mode == "house" then
+        getgenv().teleport = useTP
+        enter("housing", "MainDoor", { house_owner = target })
+    end
+    setthreadidentity(8)
+end
+
+------------------------------------------------------------------------
+-- Furniture / Texture ownership checks
+------------------------------------------------------------------------
+
+local function furniturePlaced(id, props, key)
+    if placedCache[key] then return true end
+    for _, v in pairs(ClientData.get("house_interior").furniture) do
+        if  v.id          == id
+        and v.cframe.X    == props.cframe.X
+        and v.cframe.Y    == props.cframe.Y
+        and v.cframe.Z    == props.cframe.Z
+        and v.scale       == props.scale then
+            placedCache[key] = true
+            return true
+        end
+    end
+    return false
+end
+
+local function textureOwned(room, slot, id)
+    if id == "tile" then return true end
+    for k, tex in pairs(ClientData.get("house_interior").textures) do
+        if k == room and tex[slot] == id then return true end
+    end
+    return false
+end
+
+------------------------------------------------------------------------
+-- Buy helpers (recursive retry)
+------------------------------------------------------------------------
+
+local function buyFurniture(id, props, key)
+    RouterClient.get("HousingAPI/BuyFurnitures"):InvokeServer({{
+        kind       = id,
+        properties = props,
+    }})
+    task.wait(0.05)
+    if furniturePlaced(id, props, key) then
+        print("[DEBUG] bought furniture: " .. id)
+        return
+    end
+    warn("retrying furniture: " .. id)
+    buyFurniture(id, props, key)
+end
+
+local function buyTexture(room, slot, id)
+    RouterClient.get("HousingAPI/BuyTexture"):FireServer(room, slot, id)
+    task.wait(0.05)
+    if textureOwned(room, slot, id) then
+        print("bought texture: " .. id)
+        return
+    end
+    warn("retrying texture: " .. id)
+    buyTexture(room, slot, id)
+end
+
+------------------------------------------------------------------------
+-- Post-paste helpers
+------------------------------------------------------------------------
+
+local function activateSpecialFurniture()
+    for k, v in pairs(ClientData.get("house_interior").furniture) do
+        if v.text then
+            RouterClient.get("HousingAPI/ActivateFurniture"):InvokeServer(
+                LocalPlayer, k, "UseBlock", v.text, LocalPlayer.Character
+            )
+        elseif v.outfit_name then
+            RouterClient.get("AvatarAPI/StartEditingMannequin"):InvokeServer(v.outfit)
+            RouterClient.get("HousingAPI/ActivateFurniture"):InvokeServer(
+                LocalPlayer, k, "UseBlock",
+                { save_outfit = true, outfit_name = "Outfit" },
+                LocalPlayer.Character
+            )
+        end
+    end
+end
+
+local function applyTexturesAmbianceMusic()
+    if loadedHouse.textures and pasteTextures then
+        for k, tex in pairs(loadedHouse.textures) do
+            if tex.floors and not textureOwned(k, "floors", tex.floors) then
+                buyTexture(k, "floors", tex.floors)
+            end
+            if tex.walls and not textureOwned(k, "walls", tex.walls) then
+                buyTexture(k, "walls", tex.walls)
+            end
+            task.wait()
+        end
+    end
+    if loadedHouse.ambiance then
+        RouterClient.get("AmbianceAPI/UpdateAmbiance"):FireServer(loadedHouse.ambiance)
+    end
+    if loadedHouse.music then
+        RouterClient.get("RadioAPI/Play"):FireServer(
+            loadedHouse.music.name, loadedHouse.music.id
+        )
+        if not loadedHouse.music.playing then
+            RouterClient.get("RadioAPI/Pause"):InvokeServer()
+        end
+    end
+end
+
+------------------------------------------------------------------------
+-- Cost calculator
+------------------------------------------------------------------------
+
+local function calcCosts(data)
+    local fCount, fCost, tCost = 0, 0, 0
+    if data.furniture then
+        for _, v in pairs(data.furniture) do
+            fCount = fCount + 1
+            if FurnitureDB[v.id] and FurnitureDB[v.id].cost then
+                fCost = fCost + FurnitureDB[v.id].cost
+            end
+        end
+    end
+    if data.textures then
+        for _, tex in pairs(data.textures) do
+            if tex.walls  and TexturesDB.walls[tex.walls]   then
+                tCost = tCost + (TexturesDB.walls[tex.walls].cost   or 0)
+            end
+            if tex.floors and TexturesDB.floors[tex.floors] then
+                tCost = tCost + (TexturesDB.floors[tex.floors].cost or 0)
+            end
+        end
+    end
+    return fCount, fCost, tCost
+end
+
+------------------------------------------------------------------------
+-- WindUI Window
+------------------------------------------------------------------------
+
+local Window = WindUI:CreateWindow({
+    Title    = "Seraphis Hub",
+    SubTitle = "House Cloner",
+    Author   = "by Seraphis",
+    Size     = UDim2.fromOffset(580, 460),
+    Folder   = "SeraphisHub",
+    Acrylic  = false,
+    Theme    = "Dark",
+})
+
+local TabMain     = Window:Tab({ Title = "Main",        Icon = "home"       })
+local TabCreate   = Window:Tab({ Title = "Create File", Icon = "file-plus"  })
+local TabTeleport = Window:Tab({ Title = "Teleport",    Icon = "map-pin"    })
+local TabOthers   = Window:Tab({ Title = "Others",      Icon = "wrench"     })
+local TabSettings = Window:Tab({ Title = "Settings",    Icon = "settings"   })
+
+------------------------------------------------------------------------
+-- MAIN TAB — Stats paragraph
+------------------------------------------------------------------------
+
+local statPara = TabMain:Paragraph({
+    Title   = "House Stats",
+    Content = "Furnitures: — | Furn. Cost: — | Tex. Cost: — | Progress: —",
+})
+
+local function updateStats(count, fCost, tCost, prog)
+    statPara:Set({
+        Title   = "House Stats",
+        Content = string.format(
+            "Furnitures: %d  |  Furn. Cost: %d  |  Tex. Cost: %d  |  Progress: %d%%",
+            count or 0, fCost or 0, tCost or 0, prog or 0
+        ),
+    })
+end
+
+------------------------------------------------------------------------
+-- MAIN TAB — File selectors
+------------------------------------------------------------------------
+
+local houseTypes   = getHouseTypes()
+local currentType  = houseTypes[1] or "micro_2023"
+local currentFiles = getFilesForType(currentType)
+local selectedFile = currentFiles[1]
+
+-- forward-declare so typeDropdown callback can reference it
+local fileDropdown
+
+local typeDropdown = TabMain:Dropdown({
+    Title    = "House Type",
+    Values   = houseTypes,
+    Default  = 1,
+    Multi    = false,
+    Callback = function(val)
+        currentType  = val
+        currentFiles = getFilesForType(currentType)
+        selectedFile = currentFiles[1]
+        fileDropdown:SetValues(currentFiles)
+        if selectedFile then fileDropdown:Set(selectedFile) end
+    end,
+})
+
+fileDropdown = TabMain:Dropdown({
+    Title    = "Select House File",
+    Values   = currentFiles,
+    Default  = 1,
+    Multi    = false,
+    Callback = function(val)
+        selectedFile = val
+    end,
+})
+
+TabMain:Button({
+    Title    = "Refresh Files",
+    Callback = function()
+        currentFiles = getFilesForType(currentType)
+        selectedFile = currentFiles[1]
+        fileDropdown:SetValues(currentFiles)
+        if selectedFile then fileDropdown:Set(selectedFile) end
+        Notify("Files Refreshed", "Updated for: " .. tostring(currentType), 3)
+    end,
+})
+
+TabMain:Divider("File Operations")
+
+TabMain:Button({
+    Title    = "Save House to File",
+    Callback = function()
+        setthreadidentity(7)
+        local data = loadstring("return " .. lib(ClientData.get("house_interior")))()
+        if data.player == nil then
+            return Notify("Error", "You need to enter a house to copy", 3)
+        end
+        for _, v in pairs(data.furniture) do
+            if v.creator then v.creator = nil end
+        end
+        data.player = nil
+        if not selectedFile or selectedFile == "" then
+            return Notify("Error", "No file selected", 3)
+        end
+        writefile(selectedFile, "return " .. lib(data))
+        currentFiles = getFilesForType(currentType)
+        fileDropdown:SetValues(currentFiles)
+        Notify("Success", "Saved house to file", 3)
+    end,
+})
+
+TabMain:Button({
+    Title    = "Load House from File",
+    Callback = function()
+        setthreadidentity(7)
+        if not selectedFile then
+            return Notify("Error", "No file selected", 3)
+        end
+        local raw = readfile(selectedFile)
+        if not raw or raw == "" then
+            return Notify("Error", "The selected file is empty", 3)
+        end
+        local ok, result = pcall(loadstring(raw))
+        if not (ok and type(result) == "table") then
+            return Notify("Error", "Failed to load house data", 3)
+        end
+        loadedHouse = result
+        local fCount, fCost, tCost = calcCosts(loadedHouse)
+        updateStats(fCount, fCost, tCost, 0)
+        Notify("Success", "Successfully loaded house from file", 3)
+    end,
+})
+
+TabMain:Divider("Main Functions")
+
+TabMain:Button({
+    Title    = "Scan House",
+    Callback = function()
+        setthreadidentity(7)
+        local data = loadstring("return " .. lib(ClientData.get("house_interior")))()
+        if data.player == nil then
+            return Notify("Error", "You need to enter a house to copy", 3)
+        end
+        loadedHouse = data
+        for _, v in pairs(loadedHouse.furniture) do
+            if v.creator then v.creator = nil end
+        end
+        local fCount, fCost, tCost = calcCosts(loadedHouse)
+        updateStats(fCount, fCost, tCost, 0)
+        Notify("Success", "Scanned house", 3)
+    end,
+})
+
+TabMain:Button({
+    Title    = "Sell All Furnitures",
+    Callback = function()
+        local keys = {}
+        for k in pairs(ClientData.get("house_interior").furniture) do
+            table.insert(keys, k)
+        end
+        RouterClient.get("HousingAPI/SellFurniture"):FireServer(false, keys, "sell")
+        Notify("Success", "House cleared successfully!", 3)
+    end,
+})
+
+------------------------------------------------------------------------
+-- Place logic
+------------------------------------------------------------------------
+
+local function placeHouseFast()
+    placedCache = {}
+    local char = LocalPlayer.Character
+    local hrp  = char and char:FindFirstChild("HumanoidRootPart")
+
+    Notify("Loading", "Anchoring to prevent falling...", 5)
+    if hrp then hrp.Anchored = true end
+
+    if not (loadedHouse and loadedHouse.furniture) then
+        if hrp then hrp.Anchored = false end
+        return Notify("Error", "No house has been saved", 3)
+    end
+
+    Notify("Loading", "Pasting furnitures...", 3)
+
+    -- Build filtered table, exclude lures except normal
+    local filtered, total = {}, 0
+    for k, v in pairs(loadedHouse.furniture) do
+        if not v.id:find("lure") or v.id == "lures_2023_normal_lure" then
+            filtered[k] = v
+            total = total + 1
+        end
+    end
+
+    local batch, placed = {}, 0
+
+    for k, v in pairs(filtered) do
+        local db      = FurnitureDB[v.id]
+        local hasData = db ~= nil
+        local canBuy  = hasData and not db.off_sale and db.cost
+                        and db.cost < ClientData.get_data()[LocalPlayer.Name].money
+
+        if hasData and not canBuy then
+            if hrp then hrp.Anchored = false end
+            return Notify("Error", "Insufficient funds for furniture: " .. v.id, 3)
+        end
+
+        if canBuy or not hasData then
+            local props = { colors = v.colors, cframe = v.cframe, scale = v.scale }
+            if not furniturePlaced(v.id, props, k) then
+                table.insert(batch, { kind = v.id, properties = props })
+            end
+        end
+
+        placed = placed + 1
+        updateStats(0, 0, 0, math.floor(placed / total * 100))
+    end
+
+    RouterClient.get("HousingAPI/BuyFurnitures"):InvokeServer(batch)
+    activateSpecialFurniture()
+    Notify("Loading", "Finished furnitures! Applying walls and floors...", 3)
+    applyTexturesAmbianceMusic()
+    if hrp then hrp.Anchored = false end
+    Notify("Success", "House placed successfully!", 3)
+end
+
+local function placeHouseSlow()
+    placedCache = {}
+    local char = LocalPlayer.Character
+    local hrp  = char and char:FindFirstChild("HumanoidRootPart")
+
+    Notify("Loading", "Anchoring to prevent falling...", 5)
+    if hrp then hrp.Anchored = true end
+
+    if not (loadedHouse and loadedHouse.furniture) then
+        if hrp then hrp.Anchored = false end
+        return Notify("Error", "No house has been saved", 3)
+    end
+
+    Notify("Loading", "Pasting furnitures...", 3)
+
+    local filtered, total = {}, 0
+    for k, v in pairs(loadedHouse.furniture) do
+        if v.id ~= "lures_2023_cozy_home_lure" then
+            filtered[k] = v
+            total = total + 1
+        end
+    end
+
+    local placed = 0
+
+    for k, v in pairs(filtered) do
+        local db      = FurnitureDB[v.id]
+        local hasData = db ~= nil
+        local canBuy  = hasData and not db.off_sale and db.cost
+                        and db.cost < ClientData.get_data()[LocalPlayer.Name].money
+
+        if hasData and not canBuy then
+            if hrp then hrp.Anchored = false end
+            return Notify("Error", "Insufficient funds for furniture: " .. v.id, 3)
+        end
+
+        if canBuy or not hasData then
+            local props = { colors = v.colors, cframe = v.cframe, scale = v.scale }
+            if not furniturePlaced(v.id, props, k) then
+                buyFurniture(v.id, props, k)
+            end
+        end
+
+        placed = placed + 1
+        updateStats(0, 0, 0, math.floor(placed / total * 100))
+    end
+
+    activateSpecialFurniture()
+    Notify("Loading", "Finished furnitures! Applying walls and floors...", 3)
+    applyTexturesAmbianceMusic()
+    if hrp then hrp.Anchored = false end
+    Notify("Success", "House placed successfully!", 3)
+end
+
+local function clearAndPlace(slow)
+    setthreadidentity(8)
+    if not loadedHouse then
+        return Notify("Error", "No house has been saved", 3)
+    end
+    local interior = ClientData.get("house_interior")
+    if interior.player == nil or interior.player ~= LocalPlayer then
+        return Notify("Error", "Please enter your house to paste the house", 3)
+    end
+    Notify("Loading", "Clearing house", 3)
+    for k in pairs(interior.furniture) do
+        RouterClient.get("HousingAPI/SellFurniture"):FireServer(true, { k }, "sell")
+    end
+    task.wait(0.1)
+    if slow then
+        task.spawn(placeHouseSlow)
+    else
+        task.spawn(placeHouseFast)
+    end
+end
+
+TabMain:Toggle({
+    Title    = "Paste Textures",
+    Default  = true,
+    Callback = function(val)
+        pasteTextures = val
+    end,
+})
+
+TabMain:Button({
+    Title    = "Place House",
+    Callback = function()
+        clearAndPlace(false)
+    end,
+})
+
+TabMain:Button({
+    Title       = "Place House (Slow — Low End)",
+    Description = "Use this if you are on a low-end device",
+    Callback    = function()
+        clearAndPlace(true)
+    end,
+})
+
+------------------------------------------------------------------------
+-- CREATE FILE TAB
+------------------------------------------------------------------------
+
+TabCreate:Input({
+    Title       = "House Name",
+    Placeholder = "Type house name here",
+    Finished    = false,
+    Callback    = function(val)
+        houseNameValue = val
+    end,
+})
+
+TabCreate:Button({
+    Title    = "Create House File",
+    Callback = function()
+        local name = houseNameValue or ""
+        if name == "" then
+            return Notify("Error", "Please enter a valid house name", 3)
+        end
+        if not name:match("%.lua$") then
+            if name:find("%.") then
+                name = string.split(name, ".")[1]
+            end
+            name = name .. ".lua"
+        end
+        writefile("Savedhouses/" .. name, "")
+        currentFiles = getFilesForType(currentType)
+        fileDropdown:SetValues(currentFiles)
+        Notify("Success", "Created house file: " .. name, 3)
+    end,
+})
+
+------------------------------------------------------------------------
+-- TELEPORT TAB
+------------------------------------------------------------------------
+
+local function getPlayerNames()
+    local names = {}
+    for _, p in ipairs(game:GetService("Players"):GetPlayers()) do
+        table.insert(names, p.Name)
+    end
+    return names
+end
+
+local playerNames    = getPlayerNames()
+selectedPlayer       = playerNames[1]
+
+local playerDropdown = TabTeleport:Dropdown({
+    Title    = "Select Player",
+    Values   = playerNames,
+    Default  = 1,
+    Multi    = false,
+    Callback = function(val)
+        selectedPlayer = val
+    end,
+})
+
+local function refreshPlayerList()
+    playerNames = getPlayerNames()
+    playerDropdown:SetValues(playerNames)
+    if selectedPlayer and table.find(playerNames, selectedPlayer) then
+        playerDropdown:Set(selectedPlayer)
+    elseif #playerNames > 0 then
+        selectedPlayer = playerNames[1]
+        playerDropdown:Set(selectedPlayer)
+    else
+        selectedPlayer = nil
+    end
+end
+
+game:GetService("Players").PlayerAdded:Connect(function()
+    task.defer(refreshPlayerList)
+end)
+
+game:GetService("Players").PlayerRemoving:Connect(function(p)
+    if p.Name == selectedPlayer then selectedPlayer = nil end
+    task.defer(refreshPlayerList)
+end)
+
+TabTeleport:Button({
+    Title    = "Enter House",
+    Callback = function()
+        if not selectedPlayer or selectedPlayer == "" then
+            return Notify("Error", "No player selected", 3)
+        end
+        local target = game:GetService("Players"):FindFirstChild(selectedPlayer)
+        if target then
+            teleportTo("house", true, target)
+        else
+            Notify("Error", "Player not found: " .. selectedPlayer, 3)
+        end
+    end,
+})
+
+------------------------------------------------------------------------
+-- OTHERS TAB
+------------------------------------------------------------------------
+
+TabOthers:Divider("Useful Tools")
+
+TabOthers:Button({
+    Title    = "Get Trading License",
+    Callback = function()
+        local load = require(game.ReplicatedStorage:WaitForChild("Fsys")).load
+        local RC   = load("RouterClient")
+        RC.get("SettingsAPI/SetBooleanFlag"):FireServer("has_talked_to_trade_quest_npc", true)
+        task.wait(0.5)
+        RC.get("TradeAPI/BeginQuiz"):FireServer()
+        task.wait(1)
+        for _, q in pairs(load("ClientData").get("trade_license_quiz_manager").quiz) do
+            RC.get("TradeAPI/AnswerQuizQuestion"):FireServer(q.answer)
+            task.wait(0.1)
+        end
+        Notify("Trading License", "Successfully obtained your Trading License!", 5)
+    end,
+})
+
+TabOthers:Divider("You don't need to find it anymore")
+
+TabOthers:Button({
+    Title    = "Sell All Lurebox Furniture",
+    Callback = function()
+        Notify("Loading", "Attempting to sell all Lurebox furniture...", 4)
+        task.spawn(function()
+            pcall(function() setthreadidentity(7) end)
+            repeat task.wait() until game:IsLoaded()
+
+            local RS  = game:GetService("ReplicatedStorage")
+            local LP2 = game:GetService("Players").LocalPlayer
+            local RC2, CD2, FDB2
+
+            if not pcall(function()
+                RC2 = require(RS.ClientModules.Core.RouterClient.RouterClient)
+            end) then
+                return Notify("Error", "Failed to require RouterClient", 5)
+            end
+
+            if not pcall(function()
+                CD2 = require(RS.ClientModules.Core.ClientData)
+            end) then
+                return Notify("Error", "Failed to require ClientData", 5)
+            end
+
+            if not pcall(function()
+                FDB2 = require(RS.ClientDB.Housing.FurnitureDB)
+            end) then
+                return Notify("Error", "Failed to require FurnitureDB", 5)
+            end
+
+            local attempts = 0
+            while true do
+                task.wait(0.1)
+                attempts = attempts + 1
+                local interior = CD2.get and CD2.get("house_interior")
+
+                if (interior and interior.furniture) or attempts >= 100 then
+                    if not (interior and interior.furniture) then
+                        return Notify("Error", "No house/furniture found. Enter your house first.", 6)
+                    end
+                    if interior.player ~= LP2 then
+                        return Notify("Error", "You are not inside your own house.", 6)
+                    end
+
+                    local lureboxKeys, lureKeys = {}, {}
+                    for k, v in pairs(interior.furniture) do
+                        local id   = tostring(v.id or ""):lower()
+                        local name = (FDB2[v.id] and (FDB2[v.id].name or "") or ""):lower()
+                        if id:find("lurebox") or name:find("lurebox") then
+                            table.insert(lureboxKeys, k)
+                        elseif id:find("lure") or name:find("lure") then
+                            table.insert(lureKeys, k)
+                        end
+                    end
+
+                    local targets = #lureboxKeys > 0 and lureboxKeys or lureKeys
+
+                    if #targets == 0 then
+                        return Notify("Error", "No Lurebox furniture found.", 5)
+                    end
+
+                    -- Try batch sell
+                    local batchOk = false
+                    for _, flag in ipairs({ true, false }) do
+                        if pcall(function()
+                            RC2.get("HousingAPI/SellFurniture"):FireServer(flag, targets, "sell")
+                        end) then
+                            task.wait(0.5)
+                            batchOk = true
+                            break
+                        end
+                    end
+
+                    if batchOk then
+                        return Notify("Success", "Successfully sold all lure furniture!", 5)
+                    end
+
+                    -- Individual fallback
+                    local sold = 0
+                    for _, k in ipairs(targets) do
+                        pcall(function()
+                            RC2.get("HousingAPI/SellFurniture"):FireServer(true, { k }, "sell")
+                        end)
+                        task.wait(0.25)
+                        if CD2.get("house_interior").furniture[k] then
+                            pcall(function()
+                                RC2.get("HousingAPI/SellFurniture"):FireServer(false, { k }, "sell")
+                            end)
+                            task.wait(0.25)
+                            if not CD2.get("house_interior").furniture[k] then
+                                sold = sold + 1
+                            end
+                        else
+                            sold = sold + 1
+                        end
+                    end
+
+                    if sold <= 0 then
+                        Notify("Error", "No items sold. Possibly protected or server denied.", 6)
+                    else
+                        Notify("Success", "Finished! Sold " .. sold .. " lure items.", 6)
+                    end
+                    return
+                end
+            end
+        end)
+    end,
+})
+
+------------------------------------------------------------------------
+-- SETTINGS TAB
+------------------------------------------------------------------------
+
+TabSettings:Divider("Player Options")
+
+local char     = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local Humanoid = char:WaitForChild("Humanoid")
+
+TabSettings:Slider({
+    Title    = "Player Speed",
+    Min      = 0,
+    Max      = 100,
+    Default  = Humanoid.WalkSpeed,
+    Rounding = 0,
+    Callback = function(val)
+        Humanoid.WalkSpeed = val
+    end,
+})
+
+TabSettings:Slider({
+    Title    = "Jump Boost",
+    Min      = 0,
+    Max      = 100,
+    Default  = Humanoid.JumpPower,
+    Rounding = 0,
+    Callback = function(val)
+        Humanoid.JumpPower = val
+    end,
+})
+
+LocalPlayer.CharacterAdded:Connect(function(character)
+    task.wait(1)
+    Humanoid = character:WaitForChild("Humanoid")
+end)
+
+------------------------------------------------------------------------
+-- Init notification
+------------------------------------------------------------------------
+
+Notify("Seraphis Hub", "Loaded successfully! House Cloner ready.", 4)
