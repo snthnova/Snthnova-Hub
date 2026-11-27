@@ -1,0 +1,1046 @@
+-- This file was generated at discord.gg/syncrypt
+
+local unpack_ = unpack or table.unpack
+
+if tostring({}):sub(8, 15) ~= tostring({}):sub(8, 15) then
+	local t1 = { pcall(function()
+			return require("./src/Init")
+		end) }
+	local lib = t1[2]
+
+	if not t1[1] then
+		lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+	end
+
+	local Players = game:GetService("Players")
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	local LocalPlayer = Players.LocalPlayer
+	local color3 = Color3.fromHex("#7775F2")
+	local color32 = Color3.fromHex("#ECA201")
+
+	Color3.fromHex("#10C550")
+
+	local color33 = Color3.fromHex("#83889E")
+	local color34 = Color3.fromHex("#257AF7")
+	local color35 = Color3.fromHex("#EF4F1D")
+	local color36 = Color3.fromHex("#FF69B4")
+	local color37 = Color3.fromHex("#FF8C00")
+	local color38 = Color3.fromHex("#FFD700")
+	local v15 = lib
+	local uDimNew = UDim.new
+	local v17 = v15.CreateWindow(v15, {
+		Title = "Seraphis Script Hub",
+		Folder = "ScriptLibrary",
+		Icon = "solar:folder-2-bold-duotone",
+		NewElements = true,
+		OpenButton = {
+			Title = "Open Script Library",
+			CornerRadius = uDimNew(1, 0),
+			StrokeThickness = 3,
+			Enabled = true,
+			Draggable = true,
+			OnlyMobile = false,
+			Color = ColorSequence.new(Color3.fromHex("#30FF6A"), Color3.fromHex("#e7ff2f"))
+		},
+		Topbar = {
+			Height = 44,
+			ButtonsType = "Mac"
+		}
+	}):Section({
+		Title = "Scripts (Open Me)"
+	})
+
+	local function v18(p1, p2, p3, p4, p5, p6)
+		local t2 = {
+			Title = p2,
+			Desc = p3 or "Click to load script",
+			Icon = p4 or "play",
+			Callback = function()
+				local ok = pcall(function()
+					loadstring(game:HttpGet(p5))()
+				end)
+
+				if ok then
+					lib:Notify({
+						Title = p6 or "Script Loaded",
+						Content = p2 .. " loaded successfully!",
+						Duration = 3
+					})
+				else
+					lib:Notify({
+						Title = "Error",
+						Content = "Failed to load " .. p2,
+						Duration = 5
+					})
+				end
+			end
+		}
+
+		p1.Button(p1, t2)
+		p1:Space()
+	end
+
+	local v22 = v17:Tab({
+		Title = "Universal",
+		Icon = "solar:home-2-bold",
+		IconColor = color33,
+		IconShape = "Square"
+	})
+
+	v22:Section({
+		Title = "Universal Scripts",
+		TextSize = 18
+	})
+	v18(v22, "Infinite Yield", "Admin commands script", "terminal", "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source", "Universal")
+	v18(v22, "Dex Explorer", "Game explorer", "search", "https://raw.githubusercontent.com/infyiff/backup/main/dex.lua", "Universal")
+	v18(v22, "Universal Aimbot", "Good aimbot for fps games", "crosshair", "https://raw.githubusercontent.com/Sabscripterhahaha/Universal/refs/heads/main/Universal", "Universal")
+	v18(v22, "Hitbox expander", "Expands the hitbox of players, useful for fps games", "plane", "https://pastefy.app/vnXSigC1/raw", "Universal")
+	v18(v22, "Universal ESP", "See through walls, get others\' location", "eye", "https://pastefy.app/KMJTFNsg/raw", "Universal")
+	v18(v22, "Cryonix Hub", "Lots of scripts", "search", "https://raw.githubusercontent.com/idcgj36/CryonixHub/refs/heads/main/Main.lua", "Universal")
+	v18(v22, "Chat Bypasser", "Bypasses the chat filters", "star", "https://raw.githubusercontent.com/2EzMyBoi/Roblox-Scripts/refs/heads/main/UselessBypasser", "Universal")
+
+	local v23 = v17:Tab({
+		Title = "MM2",
+		Icon = "solar:danger-triangle-bold",
+		IconColor = color35,
+		IconShape = "Square"
+	})
+
+	v23:Section({
+		Title = "Murder Mystery 2 Scripts",
+		TextSize = 18
+	})
+
+	local function v24()
+		if LocalPlayer.PlayerGui.TradeGUI.Enabled == true or LocalPlayer.PlayerGui.TradeGUI_Phone.Enabled == true then
+			wait(1)
+			lib:Notify({
+				Title = "Trade Scam Active",
+				Content = "Items in trade are now visual only!",
+				Icon = "solar:danger-bold",
+				Duration = 5
+			})
+		else
+			lib:Notify({
+				Title = "Error",
+				Content = "You need to be in a trade!",
+				Icon = "solar:close-circle-bold",
+				Duration = 5
+			})
+		end
+	end
+
+	v18(v23, "Vertex (BEST - Keyless)", "The best complete MM2 script", "crosshair", "https://raw.smokingscripts.org/vertex.lua", "MM2")
+	v18(v23, "YARHM (Keyless)", "MM2 Scripts, Aimbot, Universal Scripts", "crosshair", "https://raw.githubusercontent.com/Joystickplays/psychic-octo-invention/main/yarhm.lua", "MM2")
+	v18(v23, "Kuni Hub (Keyless)", "ESP, Auto Farm, Character Script, Teleport & Weapon Spawner", "coins", "https://gitlab.com/rlbx-scripts/elysium/-/raw/main/mm2-visual", "MM2")
+	v18(v23, "Forge Hub (Key)", "Script Hub full of features for MM2", "zap", "https://api.luarmor.net/files/v3/loaders/d5ed1fbd4301b1d18d75153c5b47181d.lua", "MM2")
+	v18(v23, "Moon Deity (Key)", "Script Hub full of features for MM2", "eye", "https://raw.githubusercontent.com/m00ndiety/Moondiety/refs/heads/main/Loader", "MM2")
+	v18(v23, "Sorlua Hub (Key)", "Good aimbot for MM2", "zap", "https://raw.githubusercontent.com/sorlua/Projects/refs/heads/main/Roblox/loader.lua", "MM2")
+	v18(v23, "Syl Hub (Key)", "A collection of useful MM2 scripts", "zap", "https://raw.githubusercontent.com/de-ishi/syl/refs/heads/main/mainLoader", "MM2")
+	v23:Space({
+		Columns = 2
+	})
+
+	local function v25(p7, p8)
+		return p7:gsub("_G_%d%d%d%d", ""):gsub("_K_%d%d%d%d", ""):lower():find(p8:lower(), 1, true) ~= nil
+	end
+
+	v23:Section({
+		Title = "🗡️ Weapon Tools",
+		TextSize = 18
+	})
+
+	local s1 = ""
+	local n1 = 1
+	local s2 = ""
+	local Main = nil
+
+	local function v30()
+		if LocalPlayer.PlayerGui.MainGUI.Game:FindFirstChild("Inventory") then
+			Main = LocalPlayer.PlayerGui.MainGUI.Game.Inventory.Main
+		else
+			Main = LocalPlayer.PlayerGui.MainGUI.Lobby.Screens.Inventory.Main
+		end
+	end
+
+	local s3 = ""
+
+	Main = nil
+
+	local function v32()
+		wait(math.random(3, 5))
+
+		if Main then
+			local v33, v34, v35 = pairs(Main.Weapons.Items.Container:GetChildren())
+
+			while true do
+				local v36
+
+				v35, v36 = v33(v34, v35)
+
+				if not v35 then
+					break
+				end
+
+				local pairs_ = pairs
+				local Container = v36.Container
+
+				for _, child in pairs_(Container.GetChildren(Container)) do
+					if child.Name == "Christmas" or child.Name == "Halloween" then
+						local pairs_2 = pairs
+						local Container2 = child.Container
+
+						for _, child2 in pairs_2(Container2.GetChildren(Container2)) do
+							local isFrame = child2:IsA("Frame")
+
+							if isFrame then
+								isFrame = child2.ItemName.Label.Text ~= "Default Knife"
+
+								if isFrame then
+									isFrame = child2.ItemName.Label.Text ~= "Default Gun"
+								end
+							end
+
+							if isFrame then
+								local Text = child2.Container.Amount.Text
+
+								if Text == "" and true or Text == "None" then
+									child2.Container.Amount.Text = "x2"
+								else
+									local v47 = tonumber(Text:match("x(%d+)"))
+
+									if v47 then
+										local Amount = child2.Container.Amount
+										local v49 = v47 * 2
+
+										Amount.Text = "x" .. tostring(v49)
+									end
+								end
+							end
+						end
+					else
+						local isFrame = child:IsA("Frame")
+
+						if isFrame then
+							isFrame = child.ItemName.Label.Text ~= "Default Knife"
+
+							if isFrame then
+								isFrame = child.ItemName.Label.Text ~= "Default Gun"
+							end
+						end
+
+						if isFrame then
+							local Text = child.Container.Amount.Text
+
+							if Text == "" and true or Text == "None" then
+								child.Container.Amount.Text = "x2"
+							else
+								local v52 = tonumber(Text:match("x(%d+)"))
+
+								if v52 then
+									local Amount = child.Container.Amount
+									local v54 = v52 * 2
+
+									Amount.Text = "x" .. tostring(v54)
+								end
+							end
+						end
+					end
+				end
+			end
+
+			local pairs_ = pairs
+			local Container = Main.Pets.Items.Container.Current.Container
+
+			for _, child in pairs_(Container.GetChildren(Container)) do
+				if child:IsA("Frame") then
+					local Text = child.Container.Amount.Text
+
+					if Text == "" and true or Text == "None" then
+						child.Container.Amount.Text = "x2"
+					else
+						local v60 = tonumber(Text:match("x(%d+)"))
+
+						if v60 then
+							local Amount = child.Container.Amount
+							local v62 = v60 * 2
+
+							Amount.Text = "x" .. tostring(v62)
+						end
+					end
+				end
+			end
+		end
+	end
+
+	pcall(v30)
+
+	local function v63()
+		local ok, result = pcall(function()
+			return require(ReplicatedStorage.Database.Sync.MysteryBox)
+		end)
+
+		if not ok or (not result or next(result) == nil) then
+			return "StandardBox"
+		else
+			local t3 = {}
+
+			for k, _ in pairs(result) do
+				table.insert(t3, k)
+			end
+
+			return t3[math.random(1, #t3)]
+		end
+	end
+	local function v69(p9)
+		local function v70()
+			local BoxModule = require(ReplicatedStorage.Modules.BoxModule)
+			local v72 = p9
+
+			if v72 then
+				v72 = require(ReplicatedStorage.Database.Sync.Item)[p9]
+			end
+
+			if not v72 then
+				lib:Notify({
+					Title = "Error",
+					Content = "Invalid item: " .. p9,
+					Icon = "solar:close-circle-bold",
+					Duration = 3
+				})
+
+				return
+			end
+
+			BoxModule.OpenBox(v63(), p9)
+
+			local function v73()
+				getsenv(LocalPlayer.PlayerGui.MainGUI.Inventory.NewItem)._G.NewItem(p9, nil, nil, "Weapons", 1)
+			end
+
+			pcall(v73)
+
+			local v74 = lib
+
+			v74.Notify(v74, {
+				Title = "Success",
+				Content = "Spawned: " .. p9,
+				Icon = "solar:check-circle-bold",
+				Duration = 3
+			})
+		end
+
+		if pcall(v70) then
+			return
+		end
+
+		lib:Notify({
+			Title = "Error",
+			Content = "Failed to spawn weapon",
+			Icon = "solar:close-circle-bold",
+			Duration = 3
+		})
+	end
+	local function v75()
+		wait(math.random(1, 3))
+
+		if Main then
+			local pairs_ = pairs
+			local Container = Main.Weapons.Items.Container
+
+			for _, child in pairs_(Container.GetChildren(Container)) do
+				local pairs_2 = pairs
+				local Container2 = child.Container
+
+				for _, child2 in pairs_2(Container2.GetChildren(Container2)) do
+					if child2.Name == "Christmas" or child2.Name == "Halloween" then
+						local pairs_3 = pairs
+						local Container3 = child2.Container
+
+						for _, child3 in pairs_3(Container3.GetChildren(Container3)) do
+							local isFrame = child3:IsA("Frame")
+
+							if isFrame then
+								isFrame = child3.ItemName.Label.Text == s1
+							end
+
+							if isFrame then
+								local Text = child3.Container.Amount.Text
+
+								if Text == "" and true or Text == "None" then
+									child3.Container.Amount.Text = "x2"
+								else
+									local v90 = tonumber(Text:match("x(%d+)"))
+
+									if v90 then
+										local Amount = child3.Container.Amount
+										local v92 = v90 + 1
+
+										Amount.Text = "x" .. tostring(v92)
+									end
+								end
+							end
+						end
+					else
+						local isFrame = child2:IsA("Frame")
+
+						if isFrame then
+							isFrame = child2.ItemName.Label.Text == s1
+						end
+
+						if isFrame then
+							local Text = child2.Container.Amount.Text
+
+							if Text == "" and true or Text == "None" then
+								child2.Container.Amount.Text = "x2"
+							else
+								local v95 = tonumber(Text:match("x(%d+)"))
+
+								if v95 then
+									local Amount = child2.Container.Amount
+									local v97 = v95 + 1
+
+									Amount.Text = "x" .. tostring(v97)
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
+	v23:Paragraph({
+		Title = "⚔️ Weapon Spawner",
+		Desc = "Spawn any weapon by name"
+	})
+
+	local s4 = ""
+	local t4 = {
+		Flag = "MM2WeaponName",
+		Title = "Weapon Name",
+		Desc = "Enter weapon to spawn",
+		Placeholder = "e.g., CandyBlade, Raygun",
+		Callback = function(p10)
+			s4 = p10
+		end
+	}
+
+	v23.Input(v23, t4)
+
+	local t5 = {
+		Title = "Spawn Weapon",
+		Desc = "Spawn the entered weapon",
+		Icon = "solar:star-bold",
+		Color = color37,
+		Callback = function()
+			if s4 == "" then
+				lib:Notify({
+					Title = "Error",
+					Content = "Enter a weapon name!",
+					Icon = "solar:close-circle-bold",
+					Duration = 3
+				})
+			else
+				v69(s4)
+			end
+		end
+	}
+
+	v23.Button(v23, t5)
+	v23:Space()
+	v23:Paragraph({
+		Title = "📋 Weapon Duplication",
+		Desc = "Duplicate weapons (visual only)"
+	})
+
+	local t6 = {
+		Flag = "MM2DupeWeaponName",
+		Title = "Weapon to Dupe",
+		Desc = "Enter weapon name",
+		Placeholder = "e.g., Lightbringer",
+		Callback = function(p11)
+			s1 = p11
+		end
+	}
+
+	v23.Input(v23, t6)
+
+	local t7 = {
+		Flag = "MM2DupeAmount",
+		Title = "Dupe Amount",
+		Desc = "Number of times to duplicate",
+		Placeholder = "e.g., 5",
+		Value = "1",
+		Callback = function(p12)
+			n1 = tonumber(p12) or 1
+		end
+	}
+
+	v23.Input(v23, t7)
+
+	local t8 = {
+		Title = "Duplicate Weapon",
+		Desc = "Dupe the specified weapon",
+		Icon = "solar:layers-bold",
+		Color = color38,
+		Callback = function()
+			if s1 == "" then
+				lib:Notify({
+					Title = "Error",
+					Content = "Enter a weapon name!",
+					Icon = "solar:close-circle-bold",
+					Duration = 3
+				})
+			else
+				lib:Notify({
+					Title = "Duplicating",
+					Content = "Duping " .. s1 .. "...",
+					Icon = "solar:hourglass-bold",
+					Duration = 2
+				})
+
+				for _ = 1, n1 do
+					v75()
+				end
+
+				lib:Notify({
+					Title = "Complete",
+					Content = "Duped " .. s1 .. "!",
+					Icon = "solar:check-circle-bold",
+					Duration = 3
+				})
+			end
+		end
+	}
+
+	v23.Button(v23, t8)
+
+	local t9 = {
+		Title = "Dupe Entire Inventory",
+		Desc = "Duplicate all weapons & pets",
+		Icon = "solar:archive-bold",
+		Color = color3,
+		Callback = function()
+			lib:Notify({
+				Title = "Duplicating",
+				Content = "Duping inventory...",
+				Icon = "solar:hourglass-bold",
+				Duration = 2
+			})
+			v32()
+			lib:Notify({
+				Title = "Complete",
+				Content = "Inventory duplicated!",
+				Icon = "solar:check-circle-bold",
+				Duration = 3
+			})
+		end
+	}
+
+	v23.Button(v23, t9)
+	v23:Space()
+	v23:Paragraph({
+		Title = "👁️ Visual Weapons",
+		Desc = "Change weapon appearance"
+	})
+
+	local t10 = {
+		Flag = "MM2FromWeapon",
+		Title = "Weapon to Replace",
+		Desc = "Your current weapon",
+		Placeholder = "e.g., Blossom",
+		Callback = function(p13)
+			s2 = p13
+		end
+	}
+
+	v23.Input(v23, t10)
+
+	local t11 = {
+		Flag = "MM2ToWeapon",
+		Title = "Weapon to Receive",
+		Desc = "Desired appearance",
+		Placeholder = "e.g., Chroma",
+		Callback = function(p14)
+			s3 = p14
+		end
+	}
+
+	v23.Input(v23, t11)
+
+	local t12 = {
+		Title = "Change Visual",
+		Desc = "Apply weapon appearance",
+		Icon = "solar:magic-stick-bold",
+		Color = color34,
+		Callback = function()
+			if s2 == "" or s3 == "" then
+				lib:Notify({
+					Title = "Error",
+					Content = "Enter both weapon names!",
+					Icon = "solar:close-circle-bold",
+					Duration = 3
+				})
+
+				return
+			end
+
+			pcall(function()
+				local Item = require(ReplicatedStorage.Database.Sync.Item)
+				local v110, v111, v112 = pairs(Item)
+				local t13 = {}
+				local t14 = {}
+
+				while true do
+					local v115
+
+					v112, v115 = v110(v111, v112)
+
+					if not v112 then
+						break
+					end
+
+					if v25(v112, s2) then
+						table.insert(t13, v112)
+					end
+
+					if v25(v112, s3) then
+						table.insert(t14, v112)
+					end
+				end
+
+				local v116
+
+				if #t13 > 0 then
+					v116 = #t14 > 0
+				else
+					v116 = false
+				end
+
+				if v116 then
+					for _, v in ipairs(t13) do
+						for _, v2 in ipairs(t14) do
+							Item[v] = {}
+
+							for k, v3 in pairs(Item[v2]) do
+								Item[v][k] = v3
+							end
+
+							ReplicatedStorage.Remotes.Inventory.Equip:FireServer(v2)
+						end
+					end
+
+					lib:Notify({
+						Title = "Success",
+						Content = "Weapon visual changed!",
+						Icon = "solar:check-circle-bold",
+						Duration = 3
+					})
+				else
+					lib:Notify({
+						Title = "Error",
+						Content = "Weapon not found!",
+						Icon = "solar:close-circle-bold",
+						Duration = 3
+					})
+				end
+			end)
+		end
+	}
+
+	v23.Button(v23, t12)
+	v23:Space()
+	v23:Paragraph({
+		Title = "⚠️ Trade Scam",
+		Desc = "Make trade items visual only"
+	})
+
+	local u123 = false
+
+	v23:Toggle({
+		Flag = "MM2VisualTrade",
+		Title = "Enable Visual Trade",
+		Desc = "Activate visual trade mode",
+		Default = false,
+		Callback = function(p15)
+			u123 = p15
+			lib:Notify({
+				Title = "Visual Trade",
+				Content = p15 and "Enabled!" or "Disabled!",
+				Icon = p15 and "solar:shield-check-bold" or "solar:shield-cross-bold",
+				Duration = 2
+			})
+		end
+	})
+
+	local t15 = {
+		Title = "Activate Trade Scam",
+		Desc = "Start visual trade mode",
+		Icon = "solar:danger-bold",
+		Color = color35,
+		Callback = function()
+			if u123 then
+				v24()
+			else
+				lib:Notify({
+					Title = "Error",
+					Content = "Enable visual trade first!",
+					Icon = "solar:close-circle-bold",
+					Duration = 3
+				})
+			end
+		end
+	}
+
+	v23.Button(v23, t15)
+
+	local color39 = Color3.fromHex
+	local v126 = v17.Tab(v17, {
+		Title = "Steal A Brainrot",
+		Icon = "solar:ghost-bold",
+		IconColor = color39("#9D4EDD"),
+		IconShape = "Square"
+	})
+
+	v126:Section({
+		Title = "Steal a Brainrot Scripts",
+		TextSize = 18
+	})
+	v18(v126, "(UNPATCHED) Auto Moreiera 1", "Make bots full of high tier brainrots join your private server. For bots to join: Privacy Settings > Private Server > Everyone.", "eye", "https://raw.githubusercontent.com/astdoasdtiadn/visuals/refs/heads/main/auto-moreiera-2", "Steal a Brainrot")
+	v18(v126, "(UNPATCHED) Auto Moreiera 2", "Make bots full of high tier brainrots join your private server. For bots to join: Privacy Settings > Private Server > Everyone.", "eye", "https://raw.githubusercontent.com/astdoasdtiadn/visuals/refs/heads/main/auto-moreiera-1", "Steal a Brainrot")
+	v18(v126, "Trax Brainrot Spawner (KEY)", "Spawn your very own brainrots!", "", "https://gitlab.com/traxscriptss/traxscriptss/-/raw/main/visual2.lua", "Steal a Brainrot")
+	v18(v126, "Rift Hub (KEYLESS)", "OP Script hub for SAB", "", "https://rifton.top/loader.lua", "Steal a Brainrot")
+	v18(v126, "Chili Hub (KEYLESS)", "Script hub with Powerful Desync", "", "https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua", "Steal a Brainrot")
+	v18(v126, "Lemon Hub (KEYLESS)", "Good desync for SAB PvP", "", "https://api.luarmor.net/files/v3/loaders/2341c827712daf923191e93377656f67.lua", "Steal a Brainrot")
+
+	local v127 = v17:Tab({
+		Title = "ADM",
+		Icon = "solar:heart-bold",
+		IconColor = color36,
+		IconShape = "Square"
+	})
+
+	v127:Section({
+		Title = "Adopt Me Scripts",
+		TextSize = 18
+	})
+	v18(v127, "(NEW) Trade Scam / Trade Freeze", "Freeze trades and scam others by faking trades (OP) — Requires good pets", "snowflake", "https://pastefy.app/BusweVMC/raw", "ADM")
+	v18(v127, "(NEW) House Cloner", "Clone houses! (NO KEY / KEYLESS)", "copy", "https://pastefy.app/g74R3g6Y/raw", "ADM")
+	v18(v127, "(NEW) Candy Egg Auto Farm", "Auto collect candy eggs for the NEW Sugarfest Update", "egg", "https://raw.githubusercontent.com/eIysia-dev/candyegg/refs/heads/main/autofarm", "ADM")
+	v18(v127, "(NEW) Pet Duplicator", "Duplicate your high tier pets!", "copy", "https://pastefy.app/giyRS6Jw/raw", "ADM")
+	v18(v127, "Tradeable Pet Spawner", "Spawn real and tradeable pets!", "sparkles", "https://raw.githubusercontent.com/nedyxxx/adm_scripts/refs/heads/main/visual.lua", "ADM")
+	v18(v127, "Rampage Hub (Key)", "Autofarm, autominigames and much more", "zap", "https://raw.githubusercontent.com/r4mpage4/LuaCom/refs/heads/main/r4mpage.gay", "ADM")
+	v18(v127, "Ragesploit Hub (Key)", "Autofarm, autominigames and much more", "snowflake", "https://raw.githubusercontent.com/Ragesploit-x/Ragesploit/refs/heads/main/MainScript/Loader.lua", "ADM")
+
+	local v128 = v17:Tab({
+		Title = "Misc",
+		Icon = "solar:settings-bold",
+		IconColor = color32,
+		IconShape = "Square"
+	})
+
+	v128:Section({
+		Title = "Miscellaneous Utilities",
+		TextSize = 18
+	})
+	v128:Button({
+		Title = "Anti AFK",
+		Desc = "Prevent being kicked for inactivity",
+		Icon = "clock",
+		Callback = function()
+			local VirtualUser = game:GetService("VirtualUser")
+
+			game:GetService("Players").LocalPlayer.Idled:Connect(function()
+				VirtualUser:CaptureController()
+				VirtualUser:ClickButton2(Vector2.new())
+			end)
+			lib:Notify({
+				Title = "Anti AFK",
+				Content = "Anti AFK enabled! You won\'t be kicked.",
+				Duration = 3
+			})
+		end
+	})
+	v128:Space()
+	v128.Button(v128, {
+		Title = "Rejoin Server",
+		Desc = "Rejoin the current server",
+		Icon = "refresh-cw",
+		Callback = function()
+			local TeleportService = game:GetService("TeleportService")
+			local Players2 = game:GetService("Players")
+
+			TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, Players2.LocalPlayer)
+		end
+	})
+	v128:Space()
+
+	local t16 = {
+		Title = "Server Hop",
+		Desc = "Join a different server",
+		Icon = "shuffle",
+		Callback = function()
+			local TeleportService = game:GetService("TeleportService")
+			local HttpService = game:GetService("HttpService")
+			local Players2 = game:GetService("Players")
+			local PlaceId = game.PlaceId
+			local JobId = game.JobId
+			local t17 = {}
+			local s5 = ""
+
+			if s5 ~= "" then
+				local _ = #t17 >= 10
+			end
+
+			while true do
+				local ok, result = pcall(function()
+					local v143 = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100&cursor=%s", PlaceId, s5)
+
+					return HttpService:JSONDecode(unpack_({ game:HttpGet(v143) }))
+				end)
+
+				if ok and result then
+					s5 = result.nextPageCursor or ""
+
+					for _, v in pairs(result.data) do
+						local v146 = v.id ~= JobId
+
+						if v146 then
+							v146 = v.playing < v.maxPlayers
+						end
+
+						if v146 then
+							table.insert(t17, v)
+						end
+					end
+				end
+
+				if s5 == "" and true or #t17 >= 10 then
+					if #t17 > 0 then
+						TeleportService:TeleportToPlaceInstance(PlaceId, t17[math.random(1, #t17)].id, Players2.LocalPlayer)
+					else
+						lib:Notify({
+							Title = "Server Hop",
+							Content = "No available servers found!",
+							Duration = 3
+						})
+					end
+
+					return
+				end
+			end
+		end
+	}
+
+	v128.Button(v128, t16)
+	v128:Space()
+
+	local walkSpeed = 16
+	local t18 = {
+		Title = "Walk Speed",
+		Desc = "Adjust your walking speed",
+		Step = 1,
+		Value = {
+			Min = 16,
+			Max = 200,
+			Default = 16
+		},
+		Callback = function(p16)
+			walkSpeed = p16
+
+			local LocalPlayer2 = game:GetService("Players").LocalPlayer
+			local Character = LocalPlayer2.Character
+
+			if Character then
+				Character = LocalPlayer2.Character:FindFirstChild("Humanoid")
+			end
+
+			if not Character then
+				return
+			end
+
+			LocalPlayer2.Character.Humanoid.WalkSpeed = p16
+		end
+	}
+
+	v128.Slider(v128, t18)
+	game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(character)
+		wait(0.5)
+
+		if not character:FindFirstChild("Humanoid") then
+			return
+		end
+
+		character.Humanoid.WalkSpeed = walkSpeed
+	end)
+	v128.Space(v128)
+
+	local jumpPower = 50
+	local t19 = {
+		Title = "Jump Power",
+		Desc = "Adjust your jump height",
+		Step = 1,
+		Value = {
+			Min = 50,
+			Max = 300,
+			Default = 50
+		},
+		Callback = function(p17)
+			jumpPower = p17
+
+			local LocalPlayer2 = game:GetService("Players").LocalPlayer
+			local Character = LocalPlayer2.Character
+
+			if Character then
+				Character = LocalPlayer2.Character:FindFirstChild("Humanoid")
+			end
+
+			if not Character then
+				return
+			end
+
+			LocalPlayer2.Character.Humanoid.JumpPower = p17
+		end
+	}
+
+	v128.Slider(v128, t19)
+	game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(character)
+		wait(0.5)
+
+		if not character:FindFirstChild("Humanoid") then
+			return
+		end
+
+		character.Humanoid.JumpPower = jumpPower
+	end)
+	v128:Space()
+	v18(v128, "FPS Booster", "Increase game performance", "gauge", "YOUR_FPS_BOOSTER_URL_HERE", "Misc")
+
+	local v155 = v17:Tab({
+		Title = "Discord",
+		Icon = "solar:users-group-rounded-bold",
+		IconColor = color34,
+		IconShape = "Square"
+	})
+
+	v155:Section({
+		Title = "Join Our Community!",
+		TextSize = 20
+	})
+
+	local t20 = {
+		Title = "Discord Server",
+		Desc = "Join our Discord server for updates, support, and more scripts!",
+		Buttons = {
+			{
+				Title = "Copy Discord Link",
+				Icon = "link",
+				Callback = function()
+					setclipboard("https://discord.gg/XmPWYs")
+					lib:Notify({
+						Title = "Discord",
+						Content = "Discord link copied to clipboard!",
+						Duration = 3
+					})
+				end
+			}
+		}
+	}
+
+	v155.Paragraph(v155, t20)
+	v155:Space()
+
+	local Color3_ = Color3
+
+	v155.Button(v155, {
+		Title = "Join Discord",
+		Desc = "Click to copy the invite link",
+		Icon = "users",
+		Color = Color3_.fromHex("#5865F2"),
+		Justify = "Center",
+		Callback = function()
+			setclipboard("https://discord.gg/XmPhds")
+			lib:Notify({
+				Title = "Discord",
+				Content = "Discord link copied! Paste it in your browser.",
+				Duration = 5
+			})
+		end
+	})
+	v155:Space()
+	v155:Section({
+		Title = "Server Information",
+		TextSize = 16
+	})
+	v155:Paragraph({
+		Title = "Community Hub",
+		Desc = "• Get the latest script updates\n• Report bugs and issues\n• Request new features\n• Share feedback\n• Connect with other users"
+	})
+	lib:Notify({
+		Title = "Script Library Loaded",
+		Content = "Welcome! Select a category to browse scripts.",
+		Icon = "solar:check-circle-bold",
+		Duration = 5
+	})
+
+	return
+end
+
+_G.elysium_was_here = math.random()
+
+local v158 = _G.elysium_was_here > 0
+
+if v158 then
+	v158 = _G.elysium_was_here < 0.2
+end
+
+if v158 then
+	print("yk i always wonder if skids like you have a life outside of discord lmfao")
+
+	return
+end
+
+local v159 = _G.elysium_was_here >= 0.2
+
+if v159 then
+	v159 = _G.elysium_was_here < 0.4
+end
+
+if v159 then
+	print("you must be a loser irl to be this chronically online in discord")
+
+	return
+end
+
+local v160 = _G.elysium_was_here >= 0.4
+
+if v160 then
+	v160 = _G.elysium_was_here < 0.6
+end
+
+if v160 then
+	print("what a sad way to spend your time honestly")
+
+	return
+end
+
+local v161 = _G.elysium_was_here >= 0.6
+
+if not v161 then
+	if v161 then
+		print("remember to take a shower! you stink lil bro")
+	else
+		print("imagine trying to log roblox scripts in 2026 you are a certified loser")
+	end
+
+	return
+end
+
+v161 = _G.elysium_was_here < 0.8
+
+if v161 then
+	print("remember to take a shower! you stink lil bro")
+else
+	print("imagine trying to log roblox scripts in 2026 you are a certified loser")
+end
