@@ -867,7 +867,8 @@ local function addInput(page, text, placeholder)
 end
 
 -- Dropdown: expands inline. The callback fires only when the user picks an entry.
-local function addDropdown(page, text, items, initial, onSelect)
+-- onRemove (optional): each row gets an X button. First tap arms it, second tap within 3s calls onRemove(item).
+local function addDropdown(page, text, items, initial, onSelect, onRemove)
     local ROW, HEAD, MAXROWS = 30, 36, 5
     local state = { items = items or {}, selected = nil, open = false }
 
@@ -979,8 +980,44 @@ local function addDropdown(page, text, items, initial, onSelect)
                 LayoutOrder            = i,
                 Parent                 = list,
             })
-            pad(row, 0, 0, 10, 10)
+            pad(row, 0, 0, 10, onRemove and 40 or 10)
             row.Activated:Connect(function() choose(item, false) end)
+
+            if onRemove then
+                local armed = false
+                local removeBtn = create("TextButton", {
+                    Size                   = UDim2.new(0, 24, 0, 22),
+                    Position               = UDim2.new(1, 8, 0.5, -11),
+                    BackgroundColor3       = C.ERROR,
+                    BackgroundTransparency = 0.6,
+                    Text                   = "✕",
+                    TextColor3             = C.TEXT,
+                    TextSize               = 11,
+                    Font                   = Enum.Font.GothamBold,
+                    AutoButtonColor        = false,
+                    ZIndex                 = 2,
+                    Parent                 = row,
+                })
+                corner(removeBtn, 5)
+                local runRemove = guard("Delete " .. tostring(item), onRemove)
+                removeBtn.Activated:Connect(function()
+                    if not armed then
+                        armed = true
+                        removeBtn.Text = "?"
+                        removeBtn.BackgroundTransparency = 0
+                        task.delay(3, function()
+                            if removeBtn.Parent and armed then
+                                armed = false
+                                removeBtn.Text = "✕"
+                                removeBtn.BackgroundTransparency = 0.6
+                            end
+                        end)
+                    else
+                        armed = false
+                        runRemove(item)
+                    end
+                end)
+            end
         end
     end
 
@@ -1472,7 +1509,16 @@ typeDrop = addDropdown(pMain, "Select house type", houseTypes, defaultType, func
     refreshFiles()
 end)
 
-fileDrop = addDropdown(pMain, "Select house", {}, nil, nil)
+fileDrop = addDropdown(pMain, "Select house", {}, nil, nil, function(name)
+    local path = fileMap[name]
+    if not path then
+        Notify("Error", "File not found: " .. tostring(name), 3, "error")
+        return
+    end
+    delfile(path)
+    refreshFiles()
+    Notify("Deleted", name, 3, "success")
+end)
 
 addButton(pMain, "Refresh files", function()
     local count = refreshFiles()
