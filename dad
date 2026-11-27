@@ -726,11 +726,9 @@ if tostring({}):sub(8, 15) ~= tostring({}):sub(8, 15) then
 		TextSize = 18
 	})
 	v18(v127, "(NEW) Trade Scam / Trade Freeze", "Freeze trades and scam others by faking trades (OP) — Requires good pets", "snowflake", "https://pastefy.app/BusweVMC/raw", "ADM")
-	v18(v127, "(NEW) House Cloner", "Clone houses! (NO KEY / KEYLESS)", "copy", "https://pastefy.app/g74R3g6Y/raw", "ADM")
-	v18(v127, "(NEW) Candy Egg Auto Farm", "Auto collect candy eggs for the NEW Sugarfest Update", "egg", "https://raw.githubusercontent.com/eIysia-dev/candyegg/refs/heads/main/autofarm", "ADM")
-	v18(v127, "(NEW) Pet Duplicator", "Duplicate your high tier pets!", "copy", "https://pastefy.app/giyRS6Jw/raw", "ADM")
-	v18(v127, "Tradeable Pet Spawner", "Spawn real and tradeable pets!", "sparkles", "https://raw.githubusercontent.com/nedyxxx/adm_scripts/refs/heads/main/visual.lua", "ADM")
-	v18(v127, "Rampage Hub (Key)", "Autofarm, autominigames and much more", "zap", "https://raw.githubusercontent.com/r4mpage4/LuaCom/refs/heads/main/r4mpage.gay", "ADM")
+	v18(v127, "(NEW) House Cloner", "Clone houses! (NO KEY / KEYLESS)", "copy", "https://api.luarmor.net/files/v3/loaders/051b9ab9e55bc6acf1ead9319bd606ec.lua", "ADM")
+	v18(v127, "(NEW) Pet Duplicator", "Duplicate your high tier pets!", "copy", "https://pastefy.app/giyRS6Jw/raw", "ADM")	
+	v18(v127, "Rampage Hub (Key)", "Autofarm, autominigames and much more", "zap", "", "ADM")
 	v18(v127, "Ragesploit Hub (Key)", "Autofarm, autominigames and much more", "snowflake", "https://raw.githubusercontent.com/Ragesploit-x/Ragesploit/refs/heads/main/MainScript/Loader.lua", "ADM")
 
 	local v128 = v17:Tab({
