@@ -1,213 +1,1067 @@
 -- SeraphisHub.lua
--- WindUI mobile port, house cloner. All original features.
+-- Seraphis Hub house cloner. Custom UI, touch and mouse input. Single file.
 
 setthreadidentity(2)
 
-local RouterClient = require(game:GetService("ReplicatedStorage").ClientModules.Core.RouterClient.RouterClient)
-local ClientData   = require(game:GetService("ReplicatedStorage").ClientModules.Core.ClientData)
-local FurnitureDB  = require(game:GetService("ReplicatedStorage").ClientDB.Housing.FurnitureDB)
-local TexturesDB   = require(game:GetService("ReplicatedStorage").ClientDB.Housing.TexturesDB)
-local Players      = game:GetService("Players")
-local LocalPlayer  = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RouterClient = require(ReplicatedStorage.ClientModules.Core.RouterClient.RouterClient)
+local ClientData   = require(ReplicatedStorage.ClientModules.Core.ClientData)
+local FurnitureDB  = require(ReplicatedStorage.ClientDB.Housing.FurnitureDB)
+local TexturesDB   = require(ReplicatedStorage.ClientDB.Housing.TexturesDB)
+
+local Players          = game:GetService("Players")
+local TweenService     = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer      = Players.LocalPlayer
 
 setthreadidentity(8)
 
 local lib     = loadstring(game:HttpGet("https://pastefy.app/u3DDymPm/raw"))()
-local HouseDB = require(game:GetService("ReplicatedStorage").ClientDB.Housing.HouseDB)
-local WindUI  = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+local HouseDB = require(ReplicatedStorage.ClientDB.Housing.HouseDB)
 
 if not isfolder("Savedhouses") then makefolder("Savedhouses") end
 
 ------------------------------------------------------------------------
--- State
+-- Theme
 ------------------------------------------------------------------------
 
-local loadedHouse    = nil
-local placedCache    = {}
-local pasteTextures  = true
-local selectedPlayer = nil
-local houseNameValue = ""
-local MAX_RETRIES    = 40
-local uiReady        = false
-local EMPTY_LABEL    = "--"
+local C = {
+    BG         = Color3.fromRGB(10, 10, 14),
+    PANEL      = Color3.fromRGB(16, 16, 22),
+    CARD       = Color3.fromRGB(22, 22, 32),
+    BORDER     = Color3.fromRGB(40, 40, 60),
+    ACCENT     = Color3.fromRGB(120, 80, 255),
+    ACCENT2    = Color3.fromRGB(80, 180, 255),
+    TEXT       = Color3.fromRGB(220, 220, 235),
+    SUBTEXT    = Color3.fromRGB(130, 130, 155),
+    SUCCESS    = Color3.fromRGB(80, 220, 130),
+    ERROR      = Color3.fromRGB(255, 80, 100),
+    WARNING    = Color3.fromRGB(255, 180, 60),
+    TOGGLE_OFF = Color3.fromRGB(40, 40, 60),
+    SLIDER_BG  = Color3.fromRGB(30, 30, 45),
+    WHITE      = Color3.fromRGB(255, 255, 255),
+}
 
-local statState = { count = 0, fCost = 0, tCost = 0, prog = 0 }
+local FAST = TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
 ------------------------------------------------------------------------
--- Guards
+-- Instance helpers
 ------------------------------------------------------------------------
 
-local function Notify(title, content, duration)
+local connections = {}
+
+local function keep(conn)
+    table.insert(connections, conn)
+    return conn
+end
+
+local function create(class, props)
+    local inst = Instance.new(class)
+    local parent = props.Parent
+    for k, v in pairs(props) do
+        if k ~= "Parent" then inst[k] = v end
+    end
+    inst.Parent = parent
+    return inst
+end
+
+local function corner(inst, radius)
+    return create("UICorner", { CornerRadius = UDim.new(0, radius), Parent = inst })
+end
+
+local function stroke(inst, color, thickness)
+    return create("UIStroke", {
+        Color           = color or C.BORDER,
+        Thickness       = thickness or 1,
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+        Parent          = inst,
+    })
+end
+
+local function pad(inst, top, bottom, left, right)
+    return create("UIPadding", {
+        PaddingTop    = UDim.new(0, top),
+        PaddingBottom = UDim.new(0, bottom),
+        PaddingLeft   = UDim.new(0, left),
+        PaddingRight  = UDim.new(0, right),
+        Parent        = inst,
+    })
+end
+
+local function listLayout(inst, padding)
+    return create("UIListLayout", {
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding   = UDim.new(0, padding or 0),
+        Parent    = inst,
+    })
+end
+
+local function tween(inst, info, props)
+    TweenService:Create(inst, info, props):Play()
+end
+
+local function nextOrder(page)
+    local n = (page:GetAttribute("order") or 0) + 1
+    page:SetAttribute("order", n)
+    return n
+end
+
+local function isPointer(input)
+    local t = input.UserInputType
+    return t == Enum.UserInputType.MouseButton1 or t == Enum.UserInputType.Touch
+end
+
+local function isMotion(input)
+    local t = input.UserInputType
+    return t == Enum.UserInputType.MouseMovement or t == Enum.UserInputType.Touch
+end
+
+------------------------------------------------------------------------
+-- ScreenGui and notifications
+------------------------------------------------------------------------
+
+local function resolveGuiParent()
+    local ok, hidden = pcall(function()
+        return gethui and gethui()
+    end)
+    if ok and typeof(hidden) == "Instance" then return hidden end
+    return game:GetService("CoreGui")
+end
+
+local guiParent = resolveGuiParent()
+local oldGui = guiParent:FindFirstChild("SeraphisHub")
+if oldGui then oldGui:Destroy() end
+
+local gui = create("ScreenGui", {
+    Name           = "SeraphisHub",
+    ResetOnSpawn   = false,
+    ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+    IgnoreGuiInset = true,
+    DisplayOrder   = 999,
+    Parent         = guiParent,
+})
+
+local notifHolder = create("Frame", {
+    Name                   = "Notifications",
+    Size                   = UDim2.new(0, 250, 1, -60),
+    Position               = UDim2.new(1, -258, 0, 52),
+    BackgroundTransparency = 1,
+    Parent                 = gui,
+})
+listLayout(notifHolder, 6)
+
+local notifQueue = {}
+local notifCounter = 0
+local ACCENTS = {
+    success = C.SUCCESS,
+    error   = C.ERROR,
+    info    = C.ACCENT2,
+    loading = C.WARNING,
+}
+
+local function Notify(title, content, duration, kind)
     pcall(function()
-        WindUI:Notify({
-            Title    = title,
-            Content  = content,
-            Duration = duration or 3,
+        if not notifHolder.Parent then return end
+        local accent = ACCENTS[kind or "info"] or C.ACCENT2
+        duration = duration or 3
+        notifCounter = notifCounter + 1
+
+        local card = create("Frame", {
+            Size             = UDim2.new(1, 0, 0, 0),
+            AutomaticSize    = Enum.AutomaticSize.Y,
+            BackgroundColor3 = C.CARD,
+            ClipsDescendants = true,
+            LayoutOrder      = notifCounter,
+            Parent           = notifHolder,
         })
+        corner(card, 10)
+        stroke(card)
+
+        create("Frame", {
+            Size             = UDim2.new(0, 3, 1, 0),
+            BackgroundColor3 = accent,
+            BorderSizePixel  = 0,
+            Parent           = card,
+        })
+
+        local body = create("Frame", {
+            Size                   = UDim2.new(1, -10, 0, 0),
+            Position               = UDim2.new(0, 10, 0, 0),
+            AutomaticSize          = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1,
+            Parent                 = card,
+        })
+        pad(body, 8, 10, 4, 6)
+        listLayout(body, 2)
+
+        create("TextLabel", {
+            Size                   = UDim2.new(1, 0, 0, 16),
+            BackgroundTransparency = 1,
+            Text                   = tostring(title or ""),
+            TextColor3             = C.TEXT,
+            TextSize               = 13,
+            Font                   = Enum.Font.GothamBold,
+            TextXAlignment         = Enum.TextXAlignment.Left,
+            TextTruncate           = Enum.TextTruncate.AtEnd,
+            LayoutOrder            = 1,
+            Parent                 = body,
+        })
+
+        create("TextLabel", {
+            Size                   = UDim2.new(1, 0, 0, 0),
+            AutomaticSize          = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1,
+            Text                   = tostring(content or ""),
+            TextColor3             = C.SUBTEXT,
+            TextSize               = 12,
+            Font                   = Enum.Font.Gotham,
+            TextXAlignment         = Enum.TextXAlignment.Left,
+            TextYAlignment         = Enum.TextYAlignment.Top,
+            TextWrapped            = true,
+            LayoutOrder            = 2,
+            Parent                 = body,
+        })
+
+        local bar = create("Frame", {
+            Size             = UDim2.new(1, 0, 0, 2),
+            Position         = UDim2.new(0, 0, 1, -2),
+            BackgroundColor3 = accent,
+            BorderSizePixel  = 0,
+            Parent           = card,
+        })
+        tween(bar, TweenInfo.new(duration, Enum.EasingStyle.Linear), { Size = UDim2.new(0, 0, 0, 2) })
+
+        local dismiss = create("TextButton", {
+            Size                   = UDim2.new(1, 0, 1, 0),
+            BackgroundTransparency = 1,
+            Text                   = "",
+            ZIndex                 = 10,
+            Parent                 = card,
+        })
+        dismiss.Activated:Connect(function()
+            if card.Parent then card:Destroy() end
+        end)
+
+        table.insert(notifQueue, card)
+        while #notifQueue > 4 do
+            local old = table.remove(notifQueue, 1)
+            if old and old.Parent then old:Destroy() end
+        end
+
+        task.delay(duration, function()
+            if card.Parent then card:Destroy() end
+        end)
     end)
 end
+
+------------------------------------------------------------------------
+-- Guard: runs a callback in its own thread, reports errors as a notification
+------------------------------------------------------------------------
 
 local function guard(label, fn)
     return function(...)
         local args = table.pack(...)
-        local ok, err = pcall(function()
-            return fn(table.unpack(args, 1, args.n))
+        task.spawn(function()
+            pcall(setthreadidentity, 8)
+            local ok, err = pcall(fn, table.unpack(args, 1, args.n))
+            if not ok then
+                warn("[Seraphis] " .. label .. ": " .. tostring(err))
+                Notify("Error: " .. label, tostring(err), 6, "error")
+            end
         end)
-        if not ok then
-            warn("[Seraphis] " .. label .. ": " .. tostring(err))
-            Notify("Error: " .. label, tostring(err), 6)
+    end
+end
+
+------------------------------------------------------------------------
+-- Drag helper (mouse and touch). Returns a state table, state.moved tells tap from drag.
+------------------------------------------------------------------------
+
+local function makeDraggable(handle, target)
+    local state = { moved = false }
+    local dragging, startPos, origin = false, nil, nil
+
+    keep(handle.InputBegan:Connect(function(input)
+        if not isPointer(input) then return end
+        dragging = true
+        state.moved = false
+        startPos = input.Position
+        origin = target.Position
+        local conn
+        conn = input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+                conn:Disconnect()
+            end
+        end)
+    end))
+
+    keep(UserInputService.InputChanged:Connect(function(input)
+        if not dragging or not isMotion(input) then return end
+        local delta = input.Position - startPos
+        if delta.Magnitude > 6 then state.moved = true end
+        if state.moved then
+            target.Position = UDim2.new(
+                origin.X.Scale, origin.X.Offset + delta.X,
+                origin.Y.Scale, origin.Y.Offset + delta.Y
+            )
+        end
+    end))
+
+    return state
+end
+
+------------------------------------------------------------------------
+-- Window
+------------------------------------------------------------------------
+
+local camera = workspace.CurrentCamera
+local viewport = camera and camera.ViewportSize or Vector2.new(800, 450)
+local WIN_W = math.clamp(viewport.X - 30, 300, 480)
+local WIN_H = math.clamp(viewport.Y - 30, 240, 340)
+local SIDEBAR_W = WIN_W >= 420 and 110 or 92
+
+local window = create("Frame", {
+    Name             = "Window",
+    AnchorPoint      = Vector2.new(0.5, 0.5),
+    Position         = UDim2.new(0.5, 0, 0.5, 0),
+    Size             = UDim2.new(0, WIN_W, 0, WIN_H),
+    BackgroundColor3 = C.BG,
+    ClipsDescendants = true,
+    Active           = true,
+    Parent           = gui,
+})
+corner(window, 14)
+stroke(window)
+
+local topBar = create("Frame", {
+    Size             = UDim2.new(1, 0, 0, 3),
+    BackgroundColor3 = C.ACCENT,
+    BorderSizePixel  = 0,
+    Parent           = window,
+})
+create("UIGradient", {
+    Color  = ColorSequence.new(C.ACCENT, C.ACCENT2),
+    Parent = topBar,
+})
+
+local titleBar = create("Frame", {
+    Size             = UDim2.new(1, 0, 0, 36),
+    Position         = UDim2.new(0, 0, 0, 3),
+    BackgroundColor3 = C.PANEL,
+    BorderSizePixel  = 0,
+    Parent           = window,
+})
+
+create("TextLabel", {
+    Size                   = UDim2.new(1, -150, 1, 0),
+    Position               = UDim2.new(0, 12, 0, 0),
+    BackgroundTransparency = 1,
+    Text                   = "SERAPHIS HUB  ·  House Cloner",
+    TextColor3             = C.TEXT,
+    TextSize               = 12,
+    Font                   = Enum.Font.GothamBold,
+    TextXAlignment         = Enum.TextXAlignment.Left,
+    TextTruncate           = Enum.TextTruncate.AtEnd,
+    Parent                 = titleBar,
+})
+
+if WIN_W >= 440 then
+    create("TextLabel", {
+        Size                   = UDim2.new(0, 90, 1, 0),
+        Position               = UDim2.new(1, -168, 0, 0),
+        BackgroundTransparency = 1,
+        Text                   = "by Seraphis",
+        TextColor3             = C.SUBTEXT,
+        TextSize               = 11,
+        Font                   = Enum.Font.Gotham,
+        TextXAlignment         = Enum.TextXAlignment.Right,
+        Parent                 = titleBar,
+    })
+end
+
+local function titleButton(text, xOffset, color)
+    local btn = create("TextButton", {
+        Size                   = UDim2.new(0, 28, 0, 26),
+        Position               = UDim2.new(1, xOffset, 0.5, -13),
+        BackgroundColor3       = color,
+        BackgroundTransparency = 0.5,
+        Text                   = text,
+        TextColor3             = C.TEXT,
+        TextSize               = 12,
+        Font                   = Enum.Font.GothamBold,
+        AutoButtonColor        = false,
+        Parent                 = titleBar,
+    })
+    corner(btn, 6)
+    return btn
+end
+
+local closeButton = titleButton("✕", -36, C.ERROR)
+local minButton   = titleButton("─", -68, C.BORDER)
+
+makeDraggable(titleBar, window)
+
+local minimized = false
+keep(minButton.Activated:Connect(function()
+    minimized = not minimized
+    tween(window, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, WIN_W, 0, minimized and 39 or WIN_H),
+    })
+end))
+
+keep(closeButton.Activated:Connect(function()
+    window.Visible = false
+end))
+
+local sidebar = create("Frame", {
+    Size             = UDim2.new(0, SIDEBAR_W, 1, -39),
+    Position         = UDim2.new(0, 0, 0, 39),
+    BackgroundColor3 = C.PANEL,
+    BorderSizePixel  = 0,
+    Parent           = window,
+})
+listLayout(sidebar, 2)
+pad(sidebar, 6, 6, 5, 5)
+
+local content = create("Frame", {
+    Size             = UDim2.new(1, -(SIDEBAR_W + 1), 1, -40),
+    Position         = UDim2.new(0, SIDEBAR_W + 1, 0, 40),
+    BackgroundColor3 = C.BG,
+    BorderSizePixel  = 0,
+    ClipsDescendants = true,
+    Parent           = window,
+})
+
+-- Floating toggle button: hides or shows the window. Draggable.
+local floatButton = create("TextButton", {
+    Name             = "Toggle",
+    Size             = UDim2.new(0, 44, 0, 44),
+    Position         = UDim2.new(0, 12, 0.5, -22),
+    BackgroundColor3 = C.ACCENT,
+    Text             = "S",
+    TextColor3       = C.WHITE,
+    TextSize         = 18,
+    Font             = Enum.Font.GothamBold,
+    AutoButtonColor  = false,
+    ZIndex           = 50,
+    Parent           = gui,
+})
+corner(floatButton, 22)
+stroke(floatButton, C.ACCENT2, 2)
+local floatDrag = makeDraggable(floatButton, floatButton)
+keep(floatButton.Activated:Connect(function()
+    if floatDrag.moved then return end
+    window.Visible = not window.Visible
+end))
+
+------------------------------------------------------------------------
+-- Tabs
+------------------------------------------------------------------------
+
+local tabs = {}
+local activeTab = nil
+
+local function selectTab(tab)
+    if activeTab == tab then return end
+    if activeTab then
+        activeTab.page.Visible = false
+        tween(activeTab.btn, FAST, { BackgroundTransparency = 1 })
+        tween(activeTab.indicator, FAST, { BackgroundTransparency = 1 })
+        activeTab.label.TextColor3 = C.SUBTEXT
+    end
+    activeTab = tab
+    tab.page.Visible = true
+    tween(tab.btn, FAST, { BackgroundTransparency = 0.85 })
+    tween(tab.indicator, FAST, { BackgroundTransparency = 0 })
+    tab.label.TextColor3 = C.TEXT
+end
+
+local function createTab(name)
+    local btn = create("TextButton", {
+        Size                   = UDim2.new(1, 0, 0, 34),
+        BackgroundColor3       = C.ACCENT,
+        BackgroundTransparency = 1,
+        Text                   = "",
+        AutoButtonColor        = false,
+        LayoutOrder            = #tabs + 1,
+        Parent                 = sidebar,
+    })
+    corner(btn, 6)
+
+    local indicator = create("Frame", {
+        Size                   = UDim2.new(0, 3, 0.6, 0),
+        Position               = UDim2.new(0, 0, 0.2, 0),
+        BackgroundColor3       = C.ACCENT,
+        BackgroundTransparency = 1,
+        BorderSizePixel        = 0,
+        Parent                 = btn,
+    })
+    corner(indicator, 2)
+
+    local label = create("TextLabel", {
+        Size                   = UDim2.new(1, -12, 1, 0),
+        Position               = UDim2.new(0, 12, 0, 0),
+        BackgroundTransparency = 1,
+        Text                   = name,
+        TextColor3             = C.SUBTEXT,
+        TextSize               = 12,
+        Font                   = Enum.Font.GothamBold,
+        TextXAlignment         = Enum.TextXAlignment.Left,
+        TextTruncate           = Enum.TextTruncate.AtEnd,
+        Parent                 = btn,
+    })
+
+    local page = create("ScrollingFrame", {
+        Size                   = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        BorderSizePixel        = 0,
+        ScrollBarThickness     = 3,
+        ScrollBarImageColor3   = C.ACCENT,
+        CanvasSize             = UDim2.new(),
+        AutomaticCanvasSize    = Enum.AutomaticSize.Y,
+        ScrollingDirection     = Enum.ScrollingDirection.Y,
+        Visible                = false,
+        Parent                 = content,
+    })
+    listLayout(page, 6)
+    pad(page, 8, 12, 8, 10)
+
+    local tab = { btn = btn, indicator = indicator, label = label, page = page }
+    table.insert(tabs, tab)
+    keep(btn.Activated:Connect(function() selectTab(tab) end))
+    return tab
+end
+
+------------------------------------------------------------------------
+-- Elements
+------------------------------------------------------------------------
+
+local function newCard(page, height)
+    local card = create("Frame", {
+        Size             = UDim2.new(1, 0, 0, height),
+        BackgroundColor3 = C.CARD,
+        LayoutOrder      = nextOrder(page),
+        Parent           = page,
+    })
+    corner(card, 8)
+    stroke(card)
+    return card
+end
+
+local function addLabel(page, text)
+    local card = create("Frame", {
+        Size             = UDim2.new(1, 0, 0, 0),
+        AutomaticSize    = Enum.AutomaticSize.Y,
+        BackgroundColor3 = C.CARD,
+        LayoutOrder      = nextOrder(page),
+        Parent           = page,
+    })
+    corner(card, 8)
+    stroke(card)
+    local lbl = create("TextLabel", {
+        Size                   = UDim2.new(1, 0, 0, 0),
+        AutomaticSize          = Enum.AutomaticSize.Y,
+        BackgroundTransparency = 1,
+        Text                   = text,
+        TextColor3             = C.SUBTEXT,
+        TextSize               = 12,
+        Font                   = Enum.Font.Gotham,
+        TextXAlignment         = Enum.TextXAlignment.Left,
+        TextWrapped            = true,
+        Parent                 = card,
+    })
+    pad(lbl, 8, 8, 10, 10)
+    local api = {}
+    function api:Set(newText) lbl.Text = newText end
+    return api
+end
+
+local function addSection(page, text)
+    local row = create("Frame", {
+        Size                   = UDim2.new(1, 0, 0, 22),
+        BackgroundTransparency = 1,
+        LayoutOrder            = nextOrder(page),
+        Parent                 = page,
+    })
+    create("Frame", {
+        Size             = UDim2.new(1, 0, 0, 1),
+        Position         = UDim2.new(0, 0, 0.5, 0),
+        BackgroundColor3 = C.BORDER,
+        BorderSizePixel  = 0,
+        Parent           = row,
+    })
+    local lbl = create("TextLabel", {
+        AnchorPoint      = Vector2.new(0.5, 0.5),
+        Position         = UDim2.new(0.5, 0, 0.5, 0),
+        Size             = UDim2.new(0, 0, 1, 0),
+        AutomaticSize    = Enum.AutomaticSize.X,
+        BackgroundColor3 = C.BG,
+        Text             = "  " .. text .. "  ",
+        TextColor3       = C.SUBTEXT,
+        TextSize         = 10,
+        Font             = Enum.Font.GothamBold,
+        Parent           = row,
+    })
+    stroke(lbl)
+end
+
+local function addButton(page, text, callback)
+    local card = newCard(page, 36)
+    local btn = create("TextButton", {
+        Size                   = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        Text                   = text,
+        TextColor3             = C.TEXT,
+        TextSize               = 12,
+        Font                   = Enum.Font.GothamBold,
+        AutoButtonColor        = false,
+        Parent                 = card,
+    })
+    local accent = create("Frame", {
+        Size             = UDim2.new(0, 3, 0.5, 0),
+        Position         = UDim2.new(0, 0, 0.25, 0),
+        BackgroundColor3 = C.ACCENT,
+        BorderSizePixel  = 0,
+        Parent           = card,
+    })
+    corner(accent, 2)
+    create("UIGradient", {
+        Color    = ColorSequence.new(C.ACCENT, C.ACCENT2),
+        Rotation = 90,
+        Parent   = accent,
+    })
+
+    keep(btn.MouseButton1Down:Connect(function()
+        tween(card, FAST, { BackgroundColor3 = C.BORDER })
+    end))
+    keep(btn.MouseButton1Up:Connect(function()
+        tween(card, FAST, { BackgroundColor3 = C.CARD })
+    end))
+    keep(btn.MouseLeave:Connect(function()
+        tween(card, FAST, { BackgroundColor3 = C.CARD })
+    end))
+
+    local run = guard(text, callback)
+    keep(btn.Activated:Connect(function() run() end))
+end
+
+local function addToggle(page, text, default, callback)
+    local value = default and true or false
+    local card = newCard(page, 36)
+
+    create("TextLabel", {
+        Size                   = UDim2.new(1, -64, 1, 0),
+        Position               = UDim2.new(0, 10, 0, 0),
+        BackgroundTransparency = 1,
+        Text                   = text,
+        TextColor3             = C.TEXT,
+        TextSize               = 12,
+        Font                   = Enum.Font.Gotham,
+        TextXAlignment         = Enum.TextXAlignment.Left,
+        Parent                 = card,
+    })
+
+    local rail = create("Frame", {
+        Size             = UDim2.new(0, 38, 0, 20),
+        Position         = UDim2.new(1, -48, 0.5, -10),
+        BackgroundColor3 = value and C.ACCENT or C.TOGGLE_OFF,
+        Parent           = card,
+    })
+    corner(rail, 10)
+
+    local knob = create("Frame", {
+        Size             = UDim2.new(0, 16, 0, 16),
+        Position         = value and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8),
+        BackgroundColor3 = C.WHITE,
+        Parent           = rail,
+    })
+    corner(knob, 8)
+
+    local hit = create("TextButton", {
+        Size                   = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        Text                   = "",
+        AutoButtonColor        = false,
+        Parent                 = card,
+    })
+
+    local function render()
+        tween(rail, FAST, { BackgroundColor3 = value and C.ACCENT or C.TOGGLE_OFF })
+        tween(knob, FAST, {
+            Position = value and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8),
+        })
+    end
+
+    local run = guard(text, callback)
+    keep(hit.Activated:Connect(function()
+        value = not value
+        render()
+        run(value)
+    end))
+
+    local api = {}
+    function api:Get() return value end
+    function api:Set(v)
+        value = v and true or false
+        render()
+    end
+    return api
+end
+
+local function addSlider(page, text, min, max, default, callback)
+    local value = math.clamp(math.floor((default or min) + 0.5), min, max)
+    local card = newCard(page, 54)
+
+    create("TextLabel", {
+        Size                   = UDim2.new(0.6, 0, 0, 16),
+        Position               = UDim2.new(0, 10, 0, 6),
+        BackgroundTransparency = 1,
+        Text                   = text,
+        TextColor3             = C.TEXT,
+        TextSize               = 12,
+        Font                   = Enum.Font.Gotham,
+        TextXAlignment         = Enum.TextXAlignment.Left,
+        Parent                 = card,
+    })
+    local valLabel = create("TextLabel", {
+        Size                   = UDim2.new(0.4, -10, 0, 16),
+        Position               = UDim2.new(0.6, 0, 0, 6),
+        BackgroundTransparency = 1,
+        Text                   = tostring(value),
+        TextColor3             = C.ACCENT,
+        TextSize               = 12,
+        Font                   = Enum.Font.GothamBold,
+        TextXAlignment         = Enum.TextXAlignment.Right,
+        Parent                 = card,
+    })
+
+    local hit = create("TextButton", {
+        Size                   = UDim2.new(1, -20, 0, 24),
+        Position               = UDim2.new(0, 10, 0, 26),
+        BackgroundTransparency = 1,
+        Text                   = "",
+        AutoButtonColor        = false,
+        Parent                 = card,
+    })
+    local rail = create("Frame", {
+        Size             = UDim2.new(1, 0, 0, 6),
+        Position         = UDim2.new(0, 0, 0.5, -3),
+        BackgroundColor3 = C.SLIDER_BG,
+        Parent           = hit,
+    })
+    corner(rail, 3)
+    local fill = create("Frame", {
+        Size             = UDim2.new(0, 0, 1, 0),
+        BackgroundColor3 = C.ACCENT,
+        BorderSizePixel  = 0,
+        Parent           = rail,
+    })
+    corner(fill, 3)
+    create("UIGradient", {
+        Color  = ColorSequence.new(C.ACCENT, C.ACCENT2),
+        Parent = fill,
+    })
+    local knob = create("Frame", {
+        Size             = UDim2.new(0, 14, 0, 14),
+        Position         = UDim2.new(0, -7, 0.5, -7),
+        BackgroundColor3 = C.WHITE,
+        Parent           = rail,
+    })
+    corner(knob, 7)
+
+    local function render()
+        local ratio = (max > min) and ((value - min) / (max - min)) or 0
+        fill.Size = UDim2.new(ratio, 0, 1, 0)
+        knob.Position = UDim2.new(ratio, -7, 0.5, -7)
+        valLabel.Text = tostring(value)
+    end
+    render()
+
+    local run = guard(text, callback)
+
+    local function setFromX(x)
+        local width = hit.AbsoluteSize.X
+        if width <= 0 then return end
+        local ratio = math.clamp((x - hit.AbsolutePosition.X) / width, 0, 1)
+        local newValue = math.floor(min + (max - min) * ratio + 0.5)
+        if newValue ~= value then
+            value = newValue
+            render()
+            run(value)
         end
     end
-end
 
-local function build(label, fn)
-    local ok, result = pcall(fn)
-    if not ok then
-        warn("[Seraphis] build failed (" .. label .. "): " .. tostring(result))
-        return nil
-    end
-    return result
-end
-
-------------------------------------------------------------------------
--- Element wrappers
-------------------------------------------------------------------------
-
-local function addButton(tab, label, desc, fn)
-    return build("button " .. label, function()
-        return tab:Button({
-            Title       = label,
-            Desc        = desc,
-            Description = desc,
-            Callback    = guard(label, fn),
-        })
-    end)
-end
-
-local function addSection(tab, label)
-    local made = build("section " .. label, function()
-        return tab:Section({ Title = label })
-    end)
-    if not made then
-        build("divider " .. label, function() return tab:Divider() end)
-    end
-end
-
-local function addToggle(tab, label, default, fn)
-    return build("toggle " .. label, function()
-        return tab:Toggle({
-            Title    = label,
-            Value    = default,
-            Default  = default,
-            Callback = guard(label, function(v)
-                if not uiReady then return end
-                fn(v)
-            end),
-        })
-    end)
-end
-
-local function addSlider(tab, label, min, max, default, fn)
-    return build("slider " .. label, function()
-        return tab:Slider({
-            Title    = label,
-            Step     = 1,
-            Value    = { Min = min, Max = max, Default = default },
-            Min      = min,
-            Max      = max,
-            Default  = default,
-            Rounding = 0,
-            Callback = guard(label, function(v)
-                if not uiReady then return end
-                fn(v)
-            end),
-        })
-    end)
-end
-
-local function addInput(tab, label, placeholder, fn)
-    return build("input " .. label, function()
-        return tab:Input({
-            Title       = label,
-            Placeholder = placeholder,
-            Value       = "",
-            Default     = "",
-            Finished    = false,
-            Callback    = guard(label, fn),
-        })
-    end)
-end
-
-local function listOrEmpty(values)
-    if #values == 0 then return { EMPTY_LABEL } end
-    return values
-end
-
--- Dropdown callbacks are ignored until the whole UI is built, WindUI fires them at construction.
-local function addDropdown(tab, label, values, fn)
-    local shown = listOrEmpty(values)
-    local element = build("dropdown " .. label, function()
-        return tab:Dropdown({
-            Title     = label,
-            Values    = shown,
-            Value     = shown[1],
-            Default   = shown[1],
-            Multi     = false,
-            AllowNone = true,
-            Callback  = guard(label, function(val)
-                if not uiReady then return end
-                if type(val) == "table" then val = val[1] end
-                if val == nil or val == EMPTY_LABEL then val = nil end
-                fn(val)
-            end),
-        })
-    end)
-    local handle = {}
-    function handle:SetValues(newValues)
-        if not element then return end
-        local list = listOrEmpty(newValues)
-        pcall(function()
-            if element.Refresh then element:Refresh(list)
-            elseif element.SetValues then element:SetValues(list) end
-        end)
-    end
-    function handle:Set(value)
-        if not element then return end
-        local target = value or EMPTY_LABEL
-        pcall(function()
-            if element.Select then element:Select(target)
-            elseif element.Set then element:Set(target) end
-        end)
-    end
-    return handle
-end
-
-local function addStats(tab, title, content)
-    local element = build("stats", function()
-        return tab:Paragraph({ Title = title, Desc = content, Content = content })
-    end)
-    if not element then
-        element = build("stats fallback", function()
-            return tab:Button({ Title = title, Desc = content, Description = content, Callback = function() end })
-        end)
-    end
-    local handle = {}
-    function handle:Update(newTitle, newContent)
-        if not element then return end
-        local done = false
-        if element.SetTitle then done = pcall(element.SetTitle, element, newTitle) or done end
-        if element.SetDesc then done = pcall(element.SetDesc, element, newContent) or done end
-        if not done and element.SetContent then done = pcall(element.SetContent, element, newContent) or done end
-        if not done and element.Set then
-            pcall(element.Set, element, { Title = newTitle, Content = newContent, Desc = newContent })
+    local dragging = false
+    local function stopDrag()
+        if dragging then
+            dragging = false
+            page.ScrollingEnabled = true
         end
     end
-    return handle
+
+    keep(hit.InputBegan:Connect(function(input)
+        if not isPointer(input) then return end
+        dragging = true
+        page.ScrollingEnabled = false
+        setFromX(input.Position.X)
+        local conn
+        conn = input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                conn:Disconnect()
+                stopDrag()
+            end
+        end)
+    end))
+
+    keep(UserInputService.InputChanged:Connect(function(input)
+        if dragging and isMotion(input) then
+            setFromX(input.Position.X)
+        end
+    end))
+
+    local api = {}
+    function api:Get() return value end
+    return api
+end
+
+local function addInput(page, text, placeholder)
+    local card = newCard(page, 58)
+
+    create("TextLabel", {
+        Size                   = UDim2.new(1, -20, 0, 16),
+        Position               = UDim2.new(0, 10, 0, 5),
+        BackgroundTransparency = 1,
+        Text                   = text,
+        TextColor3             = C.SUBTEXT,
+        TextSize               = 11,
+        Font                   = Enum.Font.Gotham,
+        TextXAlignment         = Enum.TextXAlignment.Left,
+        Parent                 = card,
+    })
+
+    local box = create("TextBox", {
+        Size              = UDim2.new(1, -20, 0, 28),
+        Position          = UDim2.new(0, 10, 0, 24),
+        BackgroundColor3  = C.BG,
+        Text              = "",
+        PlaceholderText   = placeholder or "",
+        PlaceholderColor3 = C.SUBTEXT,
+        TextColor3        = C.TEXT,
+        TextSize          = 12,
+        Font              = Enum.Font.Gotham,
+        TextXAlignment    = Enum.TextXAlignment.Left,
+        ClearTextOnFocus  = false,
+        Parent            = card,
+    })
+    corner(box, 6)
+    pad(box, 0, 0, 8, 8)
+    local boxStroke = stroke(box)
+
+    keep(box.Focused:Connect(function() boxStroke.Color = C.ACCENT end))
+    keep(box.FocusLost:Connect(function() boxStroke.Color = C.BORDER end))
+
+    local api = {}
+    function api:Get() return box.Text end
+    function api:Set(v) box.Text = v or "" end
+    return api
+end
+
+-- Dropdown: expands inline. The callback fires only when the user picks an entry.
+local function addDropdown(page, text, items, initial, onSelect)
+    local ROW, HEAD, MAXROWS = 30, 36, 5
+    local state = { items = items or {}, selected = nil, open = false }
+
+    local holder = create("Frame", {
+        Size             = UDim2.new(1, 0, 0, HEAD),
+        BackgroundColor3 = C.CARD,
+        ClipsDescendants = true,
+        LayoutOrder      = nextOrder(page),
+        Parent           = page,
+    })
+    corner(holder, 8)
+    stroke(holder)
+
+    local header = create("TextButton", {
+        Size                   = UDim2.new(1, 0, 0, HEAD),
+        BackgroundTransparency = 1,
+        Text                   = "",
+        AutoButtonColor        = false,
+        Parent                 = holder,
+    })
+    create("TextLabel", {
+        Size                   = UDim2.new(0.5, -10, 1, 0),
+        Position               = UDim2.new(0, 10, 0, 0),
+        BackgroundTransparency = 1,
+        Text                   = text,
+        TextColor3             = C.SUBTEXT,
+        TextSize               = 12,
+        Font                   = Enum.Font.Gotham,
+        TextXAlignment         = Enum.TextXAlignment.Left,
+        TextTruncate           = Enum.TextTruncate.AtEnd,
+        Parent                 = header,
+    })
+    local valueLabel = create("TextLabel", {
+        Size                   = UDim2.new(0.5, -30, 1, 0),
+        Position               = UDim2.new(0.5, 0, 0, 0),
+        BackgroundTransparency = 1,
+        Text                   = "--",
+        TextColor3             = C.TEXT,
+        TextSize               = 12,
+        Font                   = Enum.Font.GothamBold,
+        TextXAlignment         = Enum.TextXAlignment.Right,
+        TextTruncate           = Enum.TextTruncate.AtEnd,
+        Parent                 = header,
+    })
+    local arrow = create("TextLabel", {
+        Size                   = UDim2.new(0, 16, 1, 0),
+        Position               = UDim2.new(1, -24, 0, 0),
+        BackgroundTransparency = 1,
+        Text                   = "▾",
+        TextColor3             = C.ACCENT,
+        TextSize               = 14,
+        Font                   = Enum.Font.GothamBold,
+        Parent                 = header,
+    })
+
+    local list = create("ScrollingFrame", {
+        Size                 = UDim2.new(1, -12, 0, 0),
+        Position             = UDim2.new(0, 6, 0, HEAD + 4),
+        BackgroundColor3     = C.PANEL,
+        BorderSizePixel      = 0,
+        ScrollBarThickness   = 3,
+        ScrollBarImageColor3 = C.ACCENT,
+        CanvasSize           = UDim2.new(),
+        AutomaticCanvasSize  = Enum.AutomaticSize.Y,
+        ScrollingDirection   = Enum.ScrollingDirection.Y,
+        Visible              = false,
+        Parent               = holder,
+    })
+    corner(list, 6)
+    listLayout(list, 0)
+
+    local api = {}
+    local runSelect = onSelect and guard(text, onSelect) or nil
+
+    local function applySize()
+        if state.open and #state.items > 0 then
+            local listHeight = math.min(#state.items, MAXROWS) * ROW
+            list.Visible = true
+            list.Size = UDim2.new(1, -12, 0, listHeight)
+            tween(holder, FAST, { Size = UDim2.new(1, 0, 0, HEAD + 4 + listHeight + 6) })
+            arrow.Text = "▴"
+        else
+            state.open = false
+            list.Visible = false
+            tween(holder, FAST, { Size = UDim2.new(1, 0, 0, HEAD) })
+            arrow.Text = "▾"
+        end
+    end
+
+    local choose
+
+    local function rebuild()
+        for _, child in ipairs(list:GetChildren()) do
+            if child:IsA("TextButton") then child:Destroy() end
+        end
+        for i, item in ipairs(state.items) do
+            local isSel = item == state.selected
+            local row = create("TextButton", {
+                Size                   = UDim2.new(1, 0, 0, ROW),
+                BackgroundColor3       = C.ACCENT,
+                BackgroundTransparency = isSel and 0.8 or 1,
+                Text                   = item,
+                TextColor3             = isSel and C.ACCENT or C.TEXT,
+                TextSize               = 12,
+                Font                   = isSel and Enum.Font.GothamBold or Enum.Font.Gotham,
+                TextXAlignment         = Enum.TextXAlignment.Left,
+                TextTruncate           = Enum.TextTruncate.AtEnd,
+                AutoButtonColor        = false,
+                LayoutOrder            = i,
+                Parent                 = list,
+            })
+            pad(row, 0, 0, 10, 10)
+            row.Activated:Connect(function() choose(item, false) end)
+        end
+    end
+
+    choose = function(item, silent)
+        state.selected = item
+        valueLabel.Text = item or "--"
+        state.open = false
+        rebuild()
+        applySize()
+        if not silent and runSelect and item ~= nil then
+            runSelect(item)
+        end
+    end
+
+    keep(header.Activated:Connect(function()
+        if #state.items == 0 then return end
+        state.open = not state.open
+        applySize()
+    end))
+
+    function api:Get() return state.selected end
+
+    function api:Set(item)
+        if item ~= nil and table.find(state.items, item) then
+            choose(item, true)
+        end
+    end
+
+    function api:Refresh(newItems)
+        state.items = newItems or {}
+        if not (state.selected and table.find(state.items, state.selected)) then
+            state.selected = state.items[1]
+        end
+        valueLabel.Text = state.selected or "--"
+        state.open = false
+        rebuild()
+        applySize()
+    end
+
+    api:Refresh(state.items)
+    if initial ~= nil then api:Set(initial) end
+    return api
 end
 
 ------------------------------------------------------------------------
--- Helpers
+-- State and forward handles
 ------------------------------------------------------------------------
+
+local loadedHouse   = nil
+local placedCache   = {}
+local pasteTextures = true
+local placing       = false
+local fileMap       = {}
+local MAX_RETRIES   = 40
+local BATCH_SIZE    = 40
+
+local statCount, statFurnCost, statTexCost, statProgress
+local typeDrop, fileDrop, playerDrop
+
+------------------------------------------------------------------------
+-- Stats
+------------------------------------------------------------------------
+
+local function setTotals(count, fCost, tCost)
+    statCount:Set("⌂ Furnitures count: " .. tostring(count))
+    statFurnCost:Set("$ Furnitures cost: " .. tostring(fCost))
+    statTexCost:Set("▦ Textures cost: " .. tostring(tCost))
+    statProgress:Set("% Progress: 0%")
+end
+
+local function setProgress(percent)
+    statProgress:Set("% Progress: " .. tostring(percent) .. "%")
+end
+
+------------------------------------------------------------------------
+-- Files
+------------------------------------------------------------------------
+
+local function baseName(path)
+    return path:match("([^/\\]+)$") or path
+end
 
 local function getHouseTypes()
     local types = {}
@@ -218,20 +1072,24 @@ local function getHouseTypes()
     return types
 end
 
+local function getBuildingType(content)
+    local viaPattern = content:match('building_type["%]%s=]*"([^"]+)"')
+    if viaPattern then return viaPattern end
+    local at = content:find("building_type", 1, true)
+    if not at then return nil end
+    local comma = content:find(",", at + 15, true)
+    if not comma then return nil end
+    return content:sub(at + 15, comma - 2)
+end
+
 local function getFilesForType(houseType)
     local files = {}
     for _, path in ipairs(listfiles("Savedhouses")) do
         local ok, content = pcall(readfile, path)
-        if ok then
+        if ok and type(content) == "string" then
             if content ~= "" then
-                local at = content:find("building_type")
-                if at then
-                    local idx   = at + 15
-                    local comma = content:find(",", idx)
-                    local bt    = content:sub(idx, (comma or 0) - 2)
-                    if bt == houseType then
-                        table.insert(files, path)
-                    end
+                if getBuildingType(content) == houseType then
+                    table.insert(files, path)
                 end
             elseif houseType == "micro_2023" then
                 table.insert(files, path)
@@ -241,26 +1099,97 @@ local function getFilesForType(houseType)
     return files
 end
 
-local function teleportTo(mode, useTP, target)
-    setthreadidentity(2)
-    local enter = require(game:GetService("ReplicatedStorage").Fsys).load("InteriorsM").enter
-    if mode == "interior" then
-        getgenv().teleport = useTP
-        enter(target, "", {})
-    elseif mode == "house" then
-        getgenv().teleport = useTP
-        enter("housing", "MainDoor", { house_owner = target })
+local function currentType()
+    return typeDrop:Get() or "micro_2023"
+end
+
+local function selectedFilePath()
+    local name = fileDrop:Get()
+    return name and fileMap[name] or nil
+end
+
+local function refreshFiles(preferPath)
+    local paths = getFilesForType(currentType())
+    fileMap = {}
+    local names = {}
+    for _, p in ipairs(paths) do
+        local n = baseName(p)
+        fileMap[n] = p
+        table.insert(names, n)
     end
-    setthreadidentity(8)
+    table.sort(names)
+    fileDrop:Refresh(names)
+    if preferPath then fileDrop:Set(baseName(preferPath)) end
+    return #names
 end
 
 ------------------------------------------------------------------------
--- Ownership checks
+-- Game helpers
 ------------------------------------------------------------------------
+
+local function withIdentity(id, fn)
+    setthreadidentity(id)
+    local ok, a, b = pcall(fn)
+    setthreadidentity(8)
+    if not ok then error(a, 0) end
+    return a, b
+end
+
+local function teleportTo(mode, useTP, target)
+    withIdentity(2, function()
+        local enter = require(ReplicatedStorage.Fsys).load("InteriorsM").enter
+        if mode == "interior" then
+            getgenv().teleport = useTP
+            enter(target, "", {})
+        elseif mode == "house" then
+            getgenv().teleport = useTP
+            enter("housing", "MainDoor", { house_owner = target })
+        end
+    end)
+end
+
+local function snapshotHouse()
+    local data = withIdentity(7, function()
+        local interior = ClientData.get("house_interior")
+        if not interior then return nil end
+        local chunk = loadstring("return " .. lib(interior))
+        if not chunk then return nil end
+        return chunk()
+    end)
+    if type(data) ~= "table" or data.player == nil then return nil end
+    if type(data.furniture) == "table" then
+        for _, v in pairs(data.furniture) do
+            if type(v) == "table" and v.creator then v.creator = nil end
+        end
+    end
+    return data
+end
+
+local function calcCosts(data)
+    local fCount, fCost, tCost = 0, 0, 0
+    if type(data.furniture) == "table" then
+        for _, v in pairs(data.furniture) do
+            fCount = fCount + 1
+            local db = FurnitureDB[v.id]
+            if db and db.cost then fCost = fCost + db.cost end
+        end
+    end
+    if type(data.textures) == "table" then
+        for _, tex in pairs(data.textures) do
+            local wall  = tex.walls  and TexturesDB.walls  and TexturesDB.walls[tex.walls]
+            local floor = tex.floors and TexturesDB.floors and TexturesDB.floors[tex.floors]
+            if wall  then tCost = tCost + (wall.cost  or 0) end
+            if floor then tCost = tCost + (floor.cost or 0) end
+        end
+    end
+    return fCount, fCost, tCost
+end
 
 local function furniturePlaced(id, props, key)
     if placedCache[key] then return true end
-    for _, v in pairs(ClientData.get("house_interior").furniture) do
+    local interior = ClientData.get("house_interior")
+    if not (interior and interior.furniture) then return false end
+    for _, v in pairs(interior.furniture) do
         if  v.id       == id
         and v.cframe.X == props.cframe.X
         and v.cframe.Y == props.cframe.Y
@@ -275,22 +1204,20 @@ end
 
 local function textureOwned(room, slot, id)
     if id == "tile" then return true end
-    for k, tex in pairs(ClientData.get("house_interior").textures) do
+    local interior = ClientData.get("house_interior")
+    if not (interior and interior.textures) then return false end
+    for k, tex in pairs(interior.textures) do
         if k == room and tex[slot] == id then return true end
     end
     return false
 end
 
-------------------------------------------------------------------------
--- Buy helpers (bounded retry)
-------------------------------------------------------------------------
-
 local function buyFurniture(id, props, key)
     for attempt = 1, MAX_RETRIES do
-        RouterClient.get("HousingAPI/BuyFurnitures"):InvokeServer({{
+        RouterClient.get("HousingAPI/BuyFurnitures"):InvokeServer({ {
             kind       = id,
             properties = props,
-        }})
+        } })
         task.wait(0.05)
         if furniturePlaced(id, props, key) then
             print("[DEBUG] bought furniture: " .. id)
@@ -316,12 +1243,10 @@ local function buyTexture(room, slot, id)
     return false
 end
 
-------------------------------------------------------------------------
--- Post-paste helpers
-------------------------------------------------------------------------
-
 local function activateSpecialFurniture()
-    for k, v in pairs(ClientData.get("house_interior").furniture) do
+    local interior = ClientData.get("house_interior")
+    if not (interior and interior.furniture) then return end
+    for k, v in pairs(interior.furniture) do
         if v.text then
             RouterClient.get("HousingAPI/ActivateFurniture"):InvokeServer(
                 LocalPlayer, k, "UseBlock", v.text, LocalPlayer.Character
@@ -338,7 +1263,7 @@ local function activateSpecialFurniture()
 end
 
 local function applyTexturesAmbianceMusic()
-    if loadedHouse.textures and pasteTextures then
+    if type(loadedHouse.textures) == "table" and pasteTextures then
         for k, tex in pairs(loadedHouse.textures) do
             if tex.floors and not textureOwned(k, "floors", tex.floors) then
                 buyTexture(k, "floors", tex.floors)
@@ -352,10 +1277,8 @@ local function applyTexturesAmbianceMusic()
     if loadedHouse.ambiance then
         RouterClient.get("AmbianceAPI/UpdateAmbiance"):FireServer(loadedHouse.ambiance)
     end
-    if loadedHouse.music then
-        RouterClient.get("RadioAPI/Play"):FireServer(
-            loadedHouse.music.name, loadedHouse.music.id
-        )
+    if type(loadedHouse.music) == "table" then
+        RouterClient.get("RadioAPI/Play"):FireServer(loadedHouse.music.name, loadedHouse.music.id)
         if not loadedHouse.music.playing then
             RouterClient.get("RadioAPI/Pause"):InvokeServer()
         end
@@ -363,403 +1286,150 @@ local function applyTexturesAmbianceMusic()
 end
 
 ------------------------------------------------------------------------
--- Cost calculator
+-- Placement
 ------------------------------------------------------------------------
 
-local function calcCosts(data)
-    local fCount, fCost, tCost = 0, 0, 0
-    if type(data.furniture) == "table" then
-        for _, v in pairs(data.furniture) do
-            fCount = fCount + 1
-            if FurnitureDB[v.id] and FurnitureDB[v.id].cost then
-                fCost = fCost + FurnitureDB[v.id].cost
-            end
-        end
-    end
-    if type(data.textures) == "table" then
-        for _, tex in pairs(data.textures) do
-            if tex.walls and TexturesDB.walls[tex.walls] then
-                tCost = tCost + (TexturesDB.walls[tex.walls].cost or 0)
-            end
-            if tex.floors and TexturesDB.floors[tex.floors] then
-                tCost = tCost + (TexturesDB.floors[tex.floors].cost or 0)
-            end
-        end
-    end
-    return fCount, fCost, tCost
-end
-
-------------------------------------------------------------------------
--- Window (phone-sized)
-------------------------------------------------------------------------
-
-local Window = WindUI:CreateWindow({
-    Title        = "Seraphis Hub",
-    Author       = "House Cloner",
-    Folder       = "SeraphisHub",
-    Size         = UDim2.fromOffset(470, 290),
-    SideBarWidth = 140,
-    Transparent  = false,
-    Theme        = "Dark",
-})
-
-build("open button", function()
-    Window:EditOpenButton({
-        Title           = "Seraphis Hub",
-        Draggable       = true,
-        OnlyMobile      = false,
-        Enabled         = true,
-        CornerRadius    = UDim.new(0, 12),
-        StrokeThickness = 2,
-    })
-end)
-
-local function makeTab(title, icon)
-    local tab = build("tab " .. title, function()
-        return Window:Tab({ Title = title, Icon = icon })
-    end)
-    if not tab then
-        tab = build("tab " .. title .. " (no icon)", function()
-            return Window:Tab({ Title = title })
-        end)
-    end
-    return tab
-end
-
-local TabMain     = makeTab("Main",        "house")
-local TabCreate   = makeTab("Create File", "file-plus")
-local TabTeleport = makeTab("Teleport",    "map-pin")
-local TabOthers   = makeTab("Others",      "wrench")
-local TabSettings = makeTab("Settings",    "settings")
-
-------------------------------------------------------------------------
--- MAIN: stats (single state table, progress never wipes the totals)
-------------------------------------------------------------------------
-
-local function statsText()
-    return string.format(
-        "Furnitures: %d | Furn. Cost: %d | Tex. Cost: %d | Progress: %d%%",
-        statState.count, statState.fCost, statState.tCost, statState.prog
-    )
-end
-
-local stats = addStats(TabMain, "House Stats", statsText())
-
-local function refreshStats()
-    stats:Update("House Stats", statsText())
-end
-
-local function setTotals(count, fCost, tCost)
-    statState.count = count or 0
-    statState.fCost = fCost or 0
-    statState.tCost = tCost or 0
-    statState.prog  = 0
-    refreshStats()
-end
-
-local function setProgress(prog)
-    statState.prog = prog or 0
-    refreshStats()
-end
-
-------------------------------------------------------------------------
--- MAIN: file selectors
-------------------------------------------------------------------------
-
-local houseTypes   = getHouseTypes()
-local currentType  = houseTypes[1] or "micro_2023"
-local currentFiles = getFilesForType(currentType)
-local selectedFile = currentFiles[1]
-
-local fileDropdown
-
-local typeDropdown = addDropdown(TabMain, "House Type", houseTypes, function(val)
-    if not val or not fileDropdown then return end
-    currentType  = val
-    currentFiles = getFilesForType(currentType)
-    selectedFile = currentFiles[1]
-    fileDropdown:SetValues(currentFiles)
-    fileDropdown:Set(selectedFile)
-end)
-
-fileDropdown = addDropdown(TabMain, "Select House File", currentFiles, function(val)
-    selectedFile = val
-end)
-
-local function refreshFiles()
-    currentFiles = getFilesForType(currentType)
-    if not (selectedFile and table.find(currentFiles, selectedFile)) then
-        selectedFile = currentFiles[1]
-    end
-    fileDropdown:SetValues(currentFiles)
-    fileDropdown:Set(selectedFile)
-end
-
-addButton(TabMain, "Refresh Files", nil, function()
-    refreshFiles()
-    Notify("Files Refreshed", "Updated for: " .. tostring(currentType) .. " (" .. #currentFiles .. " files)", 3)
-end)
-
-addSection(TabMain, "File Operations")
-
-addButton(TabMain, "Save House to File", nil, function()
-    setthreadidentity(7)
-    local data = loadstring("return " .. lib(ClientData.get("house_interior")))()
-    if data.player == nil then
-        return Notify("Error", "You need to enter a house to copy", 3)
-    end
-    if not selectedFile or selectedFile == "" then
-        return Notify("Error", "No file selected. Create one in the Create File tab.", 3)
-    end
-    for _, v in pairs(data.furniture) do
-        if v.creator then v.creator = nil end
-    end
-    data.player = nil
-    writefile(selectedFile, "return " .. lib(data))
-    refreshFiles()
-    Notify("Success", "Saved house to file", 3)
-end)
-
-addButton(TabMain, "Load House from File", nil, function()
-    setthreadidentity(7)
-    if not selectedFile then
-        return Notify("Error", "No file selected", 3)
-    end
-    local raw = readfile(selectedFile)
-    if not raw or raw == "" then
-        return Notify("Error", "The selected file is empty", 3)
-    end
-    local chunk = loadstring(raw)
-    if not chunk then
-        return Notify("Error", "Failed to load house data", 3)
-    end
-    local ok, result = pcall(chunk)
-    if not (ok and type(result) == "table") then
-        return Notify("Error", "Failed to load house data", 3)
-    end
-    loadedHouse = result
-    local fCount, fCost, tCost = calcCosts(loadedHouse)
-    setTotals(fCount, fCost, tCost)
-    Notify("Loaded", string.format("%d furnitures | furn. cost %d | tex. cost %d", fCount, fCost, tCost), 5)
-end)
-
-addSection(TabMain, "Main Functions")
-
-addButton(TabMain, "Scan House", nil, function()
-    setthreadidentity(7)
-    local data = loadstring("return " .. lib(ClientData.get("house_interior")))()
-    if data.player == nil then
-        return Notify("Error", "You need to enter a house to copy", 3)
-    end
-    loadedHouse = data
-    for _, v in pairs(loadedHouse.furniture) do
-        if v.creator then v.creator = nil end
-    end
-    local fCount, fCost, tCost = calcCosts(loadedHouse)
-    setTotals(fCount, fCost, tCost)
-    Notify("Scanned", string.format("%d furnitures | furn. cost %d | tex. cost %d", fCount, fCost, tCost), 5)
-end)
-
-addButton(TabMain, "Show Stats", nil, function()
-    refreshStats()
-    Notify("House Stats", statsText(), 6)
-end)
-
-addButton(TabMain, "Sell All Furnitures", nil, function()
-    local keys = {}
-    for k in pairs(ClientData.get("house_interior").furniture) do
-        table.insert(keys, k)
-    end
-    RouterClient.get("HousingAPI/SellFurniture"):FireServer(false, keys, "sell")
-    Notify("Success", "House cleared successfully!", 3)
-end)
-
-------------------------------------------------------------------------
--- Place logic
-------------------------------------------------------------------------
-
-local function setAnchored(hrp, state)
-    if hrp then hrp.Anchored = state end
-end
-
-local function placeHouseFast()
+local function runPlacement(slow)
+    pcall(setthreadidentity, 8)
     placedCache = {}
+
     local char = LocalPlayer.Character
     local hrp  = char and char:FindFirstChild("HumanoidRootPart")
-
-    Notify("Loading", "Anchoring to prevent falling...", 5)
-    setAnchored(hrp, true)
+    Notify("Loading", "Anchoring to prevent falling...", 3, "loading")
+    if hrp then hrp.Anchored = true end
 
     local ok, err = pcall(function()
-        if not (loadedHouse and loadedHouse.furniture) then
-            return Notify("Error", "No house has been saved", 3)
+        if not (loadedHouse and type(loadedHouse.furniture) == "table") then
+            Notify("Error", "No house has been saved", 3, "error")
+            return
         end
 
-        Notify("Loading", "Pasting furnitures...", 3)
+        Notify("Loading", "Pasting furnitures...", 3, "loading")
 
-        local filtered, total = {}, 0
+        local list = {}
         for k, v in pairs(loadedHouse.furniture) do
-            if not v.id:find("lure") or v.id == "lures_2023_normal_lure" then
-                filtered[k] = v
-                total = total + 1
+            local id = tostring(v.id)
+            local wanted
+            if slow then
+                wanted = id ~= "lures_2023_cozy_home_lure"
+            else
+                wanted = (not id:find("lure")) or id == "lures_2023_normal_lure"
             end
+            if wanted then list[#list + 1] = { key = k, item = v } end
         end
 
-        local batch, placed = {}, 0
+        local total = #list
+        if total == 0 then
+            Notify("Error", "Nothing to place in this house", 3, "error")
+            return
+        end
 
-        for k, v in pairs(filtered) do
-            local db      = FurnitureDB[v.id]
-            local hasData = db ~= nil
-            local canBuy  = hasData and not db.off_sale and db.cost
-                            and db.cost < ClientData.get_data()[LocalPlayer.Name].money
+        local playerData = ClientData.get_data()[LocalPlayer.Name]
+        local budget = playerData and playerData.money or 0
+        local spent, done, failed = 0, 0, 0
+        local batch = {}
 
-            if hasData and not canBuy then
-                return Notify("Error", "Insufficient funds for furniture: " .. v.id, 3)
-            end
+        for _, entry in ipairs(list) do
+            local v, k = entry.item, entry.key
+            local db = FurnitureDB[v.id]
+            local purchasable = db ~= nil and db.cost ~= nil and not db.off_sale
 
-            if canBuy or not hasData then
+            if purchasable then
                 local props = { colors = v.colors, cframe = v.cframe, scale = v.scale }
                 if not furniturePlaced(v.id, props, k) then
-                    table.insert(batch, { kind = v.id, properties = props })
+                    local available
+                    if slow then
+                        local pd = ClientData.get_data()[LocalPlayer.Name]
+                        available = pd and pd.money or 0
+                    else
+                        available = budget - spent
+                    end
+                    if not (db.cost < available) then
+                        Notify("Error", "Insufficient funds for furniture: " .. tostring(v.id), 4, "error")
+                        return
+                    end
+                    if slow then
+                        if not buyFurniture(v.id, props, k) then failed = failed + 1 end
+                    else
+                        spent = spent + db.cost
+                        table.insert(batch, { kind = v.id, properties = props })
+                    end
                 end
             end
 
-            placed = placed + 1
-            setProgress(math.floor(placed / total * 100))
+            done = done + 1
+            setProgress(math.floor(done / total * 100))
         end
 
-        RouterClient.get("HousingAPI/BuyFurnitures"):InvokeServer(batch)
-        activateSpecialFurniture()
-        Notify("Loading", "Finished furnitures! Applying walls and floors...", 3)
-        applyTexturesAmbianceMusic()
-        Notify("Success", "House placed successfully!", 3)
-    end)
-
-    setAnchored(hrp, false)
-    if not ok then
-        warn("[Seraphis] placeHouseFast: " .. tostring(err))
-        Notify("Error", tostring(err), 6)
-    end
-end
-
-local function placeHouseSlow()
-    placedCache = {}
-    local char = LocalPlayer.Character
-    local hrp  = char and char:FindFirstChild("HumanoidRootPart")
-
-    Notify("Loading", "Anchoring to prevent falling...", 5)
-    setAnchored(hrp, true)
-
-    local ok, err = pcall(function()
-        if not (loadedHouse and loadedHouse.furniture) then
-            return Notify("Error", "No house has been saved", 3)
-        end
-
-        Notify("Loading", "Pasting furnitures...", 3)
-
-        local filtered, total = {}, 0
-        for k, v in pairs(loadedHouse.furniture) do
-            if v.id ~= "lures_2023_cozy_home_lure" then
-                filtered[k] = v
-                total = total + 1
-            end
-        end
-
-        local placed = 0
-
-        for k, v in pairs(filtered) do
-            local db      = FurnitureDB[v.id]
-            local hasData = db ~= nil
-            local canBuy  = hasData and not db.off_sale and db.cost
-                            and db.cost < ClientData.get_data()[LocalPlayer.Name].money
-
-            if hasData and not canBuy then
-                return Notify("Error", "Insufficient funds for furniture: " .. v.id, 3)
-            end
-
-            if canBuy or not hasData then
-                local props = { colors = v.colors, cframe = v.cframe, scale = v.scale }
-                if not furniturePlaced(v.id, props, k) then
-                    buyFurniture(v.id, props, k)
+        if not slow and #batch > 0 then
+            for i = 1, #batch, BATCH_SIZE do
+                local chunk = {}
+                for j = i, math.min(i + BATCH_SIZE - 1, #batch) do
+                    chunk[#chunk + 1] = batch[j]
                 end
+                RouterClient.get("HousingAPI/BuyFurnitures"):InvokeServer(chunk)
+                task.wait(0.1)
             end
-
-            placed = placed + 1
-            setProgress(math.floor(placed / total * 100))
+            task.wait(0.5)
         end
 
         activateSpecialFurniture()
-        Notify("Loading", "Finished furnitures! Applying walls and floors...", 3)
+        Notify("Loading", "Finished furnitures! Applying walls and floors...", 3, "loading")
         applyTexturesAmbianceMusic()
-        Notify("Success", "House placed successfully!", 3)
+        setProgress(100)
+
+        if failed > 0 then
+            Notify("Done with errors", tostring(failed) .. " furnitures could not be placed", 6, "error")
+        else
+            Notify("Success", "House placed successfully!", 3, "success")
+        end
     end)
 
-    setAnchored(hrp, false)
+    if hrp then hrp.Anchored = false end
     if not ok then
-        warn("[Seraphis] placeHouseSlow: " .. tostring(err))
-        Notify("Error", tostring(err), 6)
+        warn("[Seraphis] placement: " .. tostring(err))
+        Notify("Error", tostring(err), 6, "error")
     end
 end
 
 local function clearAndPlace(slow)
-    setthreadidentity(8)
+    if placing then
+        Notify("Busy", "A paste is already running", 3, "info")
+        return
+    end
+    pcall(setthreadidentity, 8)
     if not loadedHouse then
-        return Notify("Error", "No house has been saved", 3)
+        Notify("Error", "No house has been saved", 3, "error")
+        return
     end
     local interior = ClientData.get("house_interior")
-    if interior.player == nil or interior.player ~= LocalPlayer then
-        return Notify("Error", "Please enter your house to paste the house", 3)
+    if not interior or interior.player == nil or interior.player ~= LocalPlayer then
+        Notify("Error", "Please enter your house to paste the house", 3, "error")
+        return
     end
-    Notify("Loading", "Clearing house", 3)
-    for k in pairs(interior.furniture) do
-        RouterClient.get("HousingAPI/SellFurniture"):FireServer(true, { k }, "sell")
-    end
-    task.wait(0.1)
-    if slow then
-        task.spawn(placeHouseSlow)
-    else
-        task.spawn(placeHouseFast)
+
+    placing = true
+    local ok, err = pcall(function()
+        Notify("Loading", "Clearing house", 3, "loading")
+        for k in pairs(interior.furniture) do
+            RouterClient.get("HousingAPI/SellFurniture"):FireServer(true, { k }, "sell")
+        end
+        for _ = 1, 60 do
+            local current = ClientData.get("house_interior")
+            if not current or not current.furniture or next(current.furniture) == nil then break end
+            task.wait(0.05)
+        end
+        runPlacement(slow)
+    end)
+    placing = false
+    if not ok then
+        warn("[Seraphis] clearAndPlace: " .. tostring(err))
+        Notify("Error", tostring(err), 6, "error")
     end
 end
 
-addToggle(TabMain, "Paste Textures", true, function(val)
-    pasteTextures = val
-end)
-
-addButton(TabMain, "Place House", nil, function()
-    clearAndPlace(false)
-end)
-
-addButton(TabMain, "Place House (Slow, Low End)", "Use this if you are on a low-end device", function()
-    clearAndPlace(true)
-end)
-
 ------------------------------------------------------------------------
--- CREATE FILE
-------------------------------------------------------------------------
-
-addInput(TabCreate, "House Name", "Type house name here", function(val)
-    houseNameValue = val or ""
-end)
-
-addButton(TabCreate, "Create House File", nil, function()
-    local name = houseNameValue or ""
-    if name == "" then
-        return Notify("Error", "Please enter a valid house name", 3)
-    end
-    if not name:match("%.lua$") then
-        if name:find("%.") then
-            name = string.split(name, ".")[1]
-        end
-        name = name .. ".lua"
-    end
-    writefile("Savedhouses/" .. name, "")
-    refreshFiles()
-    Notify("Success", "Created house file: " .. name, 3)
-end)
-
-------------------------------------------------------------------------
--- TELEPORT
+-- Players
 ------------------------------------------------------------------------
 
 local function getPlayerNames()
@@ -770,176 +1440,321 @@ local function getPlayerNames()
     return names
 end
 
-local playerNames = getPlayerNames()
-selectedPlayer    = playerNames[1]
-
-local playerDropdown = addDropdown(TabTeleport, "Select Player", playerNames, function(val)
-    selectedPlayer = val
-end)
-
-local function refreshPlayerList()
-    playerNames = getPlayerNames()
-    playerDropdown:SetValues(playerNames)
-    if selectedPlayer and table.find(playerNames, selectedPlayer) then
-        playerDropdown:Set(selectedPlayer)
-    elseif #playerNames > 0 then
-        selectedPlayer = playerNames[1]
-        playerDropdown:Set(selectedPlayer)
-    else
-        selectedPlayer = nil
-    end
+local function refreshPlayers()
+    if playerDrop then playerDrop:Refresh(getPlayerNames()) end
 end
 
-Players.PlayerAdded:Connect(function()
-    task.defer(refreshPlayerList)
+------------------------------------------------------------------------
+-- Pages
+------------------------------------------------------------------------
+
+local tabMain     = createTab("Main")
+local tabCreate   = createTab("Create File")
+local tabTeleport = createTab("Teleport")
+local tabOthers   = createTab("Others")
+local tabSettings = createTab("Settings")
+
+-- MAIN ----------------------------------------------------------------
+
+local pMain = tabMain.page
+
+statCount    = addLabel(pMain, "⌂ Furnitures count: 0")
+statFurnCost = addLabel(pMain, "$ Furnitures cost: 0")
+statTexCost  = addLabel(pMain, "▦ Textures cost: 0")
+statProgress = addLabel(pMain, "% Progress: 0%")
+
+addLabel(pMain, "i Pick your House to Load the file")
+
+local houseTypes  = getHouseTypes()
+local defaultType = HouseDB["micro_2023"] ~= nil and "micro_2023" or houseTypes[1]
+
+typeDrop = addDropdown(pMain, "Select house type", houseTypes, defaultType, function()
+    refreshFiles()
 end)
 
-Players.PlayerRemoving:Connect(function(p)
-    if p.Name == selectedPlayer then selectedPlayer = nil end
-    task.defer(refreshPlayerList)
+fileDrop = addDropdown(pMain, "Select house", {}, nil, nil)
+
+addButton(pMain, "Refresh files", function()
+    local count = refreshFiles()
+    Notify("Files Refreshed", "Updated for: " .. tostring(currentType()) .. " (" .. count .. " files)", 3, "success")
 end)
 
-addButton(TabTeleport, "Refresh Players", nil, function()
-    refreshPlayerList()
-    Notify("Players", "Refreshed: " .. #playerNames .. " players", 3)
-end)
-
-addButton(TabTeleport, "Enter House", nil, function()
-    if not selectedPlayer or selectedPlayer == "" then
-        return Notify("Error", "No player selected", 3)
+addButton(pMain, "Save house to file", function()
+    local path = selectedFilePath()
+    if not path then
+        Notify("Error", "No file selected. Create one in the Create File tab.", 4, "error")
+        return
     end
-    local target = Players:FindFirstChild(selectedPlayer)
+    local data = snapshotHouse()
+    if not data then
+        Notify("Error", "You need to enter a house to copy", 3, "error")
+        return
+    end
+    data.player = nil
+    writefile(path, "return " .. lib(data))
+    if data.building_type and table.find(houseTypes, data.building_type) then
+        typeDrop:Set(data.building_type)
+    end
+    refreshFiles(path)
+    Notify("Success", "Saved house to file", 3, "success")
+end)
+
+addButton(pMain, "Load house from file", function()
+    local path = selectedFilePath()
+    if not path then
+        Notify("Error", "No file selected", 3, "error")
+        return
+    end
+    local raw = readfile(path)
+    if not raw or raw == "" then
+        Notify("Error", "The selected file is empty", 3, "error")
+        return
+    end
+    local chunk, compileErr = loadstring(raw)
+    if not chunk then
+        warn("[Seraphis] load: " .. tostring(compileErr))
+        Notify("Error", "Failed to load house data", 3, "error")
+        return
+    end
+    local ok, result = pcall(chunk)
+    if not (ok and type(result) == "table") then
+        Notify("Error", "Failed to load house data", 3, "error")
+        return
+    end
+    loadedHouse = result
+    local fCount, fCost, tCost = calcCosts(loadedHouse)
+    setTotals(fCount, fCost, tCost)
+    Notify("Success", "Loaded: " .. fCount .. " furnitures", 4, "success")
+end)
+
+addLabel(pMain, "i Do not Touch")
+
+addToggle(pMain, "Paste textures", true, function(value)
+    pasteTextures = value
+end)
+
+addSection(pMain, "Main Function")
+
+addButton(pMain, "Scan house", function()
+    local data = snapshotHouse()
+    if not data then
+        Notify("Error", "You need to enter a house to copy", 3, "error")
+        return
+    end
+    loadedHouse = data
+    local fCount, fCost, tCost = calcCosts(loadedHouse)
+    setTotals(fCount, fCost, tCost)
+    Notify("Success", "Scanned house: " .. fCount .. " furnitures", 4, "success")
+end)
+
+addButton(pMain, "Sell All Furnitures", function()
+    local interior = ClientData.get("house_interior")
+    if not (interior and interior.furniture) then
+        Notify("Error", "Enter your house first", 3, "error")
+        return
+    end
+    local keys = {}
+    for k in pairs(interior.furniture) do
+        table.insert(keys, k)
+    end
+    RouterClient.get("HousingAPI/SellFurniture"):FireServer(false, keys, "sell")
+    Notify("Success", "House cleared successfully!", 3, "success")
+end)
+
+addButton(pMain, "Place house", function()
+    clearAndPlace(false)
+end)
+
+addLabel(pMain, "i Use if you're using a Low-end Device")
+
+addButton(pMain, "Place house slow", function()
+    clearAndPlace(true)
+end)
+
+-- CREATE FILE -----------------------------------------------------------
+
+local pCreate = tabCreate.page
+
+local nameInput = addInput(pCreate, "House name", "Type house name here")
+
+addButton(pCreate, "Create House File", function()
+    local name = nameInput:Get() or ""
+    name = name:match("^%s*(.-)%s*$")
+    name = name:gsub('[\\/:*?"<>|]', "_")
+    if name == "" then
+        Notify("Error", "Please enter a valid house name", 3, "error")
+        return
+    end
+    if not name:match("%.lua$") then
+        if name:find("%.") then
+            name = name:split(".")[1]
+        end
+        name = name .. ".lua"
+    end
+    if name == ".lua" then
+        Notify("Error", "Please enter a valid house name", 3, "error")
+        return
+    end
+    local path = "Savedhouses/" .. name
+    if isfile(path) then
+        Notify("Error", "That file already exists: " .. name, 4, "error")
+        return
+    end
+    writefile(path, "")
+    if table.find(houseTypes, "micro_2023") then typeDrop:Set("micro_2023") end
+    refreshFiles(path)
+    Notify("Success", "Created house file: " .. name, 3, "success")
+end)
+
+-- TELEPORT --------------------------------------------------------------
+
+local pTeleport = tabTeleport.page
+
+addLabel(pTeleport, "Select a Player")
+playerDrop = addDropdown(pTeleport, "Player", getPlayerNames(), nil, nil)
+
+addButton(pTeleport, "Refresh Players", function()
+    refreshPlayers()
+    Notify("Players", "Refreshed: " .. #Players:GetPlayers() .. " players", 3, "success")
+end)
+
+addButton(pTeleport, "Enter House", function()
+    local name = playerDrop:Get()
+    if not name then
+        Notify("Error", "No player selected", 3, "error")
+        return
+    end
+    local target = Players:FindFirstChild(name)
     if not target then
-        return Notify("Error", "Player not found: " .. selectedPlayer, 3)
+        Notify("Error", "Player not found: " .. name, 3, "error")
+        return
     end
     teleportTo("house", true, target)
 end)
 
-------------------------------------------------------------------------
--- OTHERS
-------------------------------------------------------------------------
+keep(Players.PlayerAdded:Connect(function()
+    task.defer(refreshPlayers)
+end))
+keep(Players.PlayerRemoving:Connect(function()
+    task.defer(refreshPlayers)
+end))
 
-addSection(TabOthers, "Useful Tools")
+-- OTHERS ----------------------------------------------------------------
 
-addButton(TabOthers, "Get Trading License", nil, function()
-    local load = require(game.ReplicatedStorage:WaitForChild("Fsys")).load
-    local RC   = load("RouterClient")
+local pOthers = tabOthers.page
+
+addSection(pOthers, "Useful Tools")
+
+addButton(pOthers, "Get Trading License", function()
+    local RC, CD = withIdentity(2, function()
+        local load = require(ReplicatedStorage:WaitForChild("Fsys")).load
+        return load("RouterClient"), load("ClientData")
+    end)
     RC.get("SettingsAPI/SetBooleanFlag"):FireServer("has_talked_to_trade_quest_npc", true)
     task.wait(0.5)
     RC.get("TradeAPI/BeginQuiz"):FireServer()
     task.wait(1)
-    for _, q in pairs(load("ClientData").get("trade_license_quiz_manager").quiz) do
+    local manager = CD.get("trade_license_quiz_manager")
+    local quiz = manager and manager.quiz
+    if type(quiz) ~= "table" then
+        Notify("Error", "Quiz did not start", 4, "error")
+        return
+    end
+    for _, q in pairs(quiz) do
         RC.get("TradeAPI/AnswerQuizQuestion"):FireServer(q.answer)
         task.wait(0.1)
     end
-    Notify("Trading License", "Successfully obtained your Trading License!", 5)
+    Notify("Trading License", "Successfully obtained your Trading License!", 5, "success")
 end)
 
-addSection(TabOthers, "You don't need to find it anymore")
+addSection(pOthers, "You don't need to find it anymore")
 
-addButton(TabOthers, "Sell All Lurebox Furniture", nil, function()
-    Notify("Loading", "Attempting to sell all Lurebox furniture...", 4)
-    task.spawn(guard("Sell All Lurebox Furniture", function()
-        pcall(function() setthreadidentity(7) end)
-        repeat task.wait() until game:IsLoaded()
+addButton(pOthers, "Sell All Lurebox Furniture", function()
+    Notify("Loading", "Attempting to sell all Lurebox furniture...", 4, "loading")
+    pcall(setthreadidentity, 7)
 
-        local RS  = game:GetService("ReplicatedStorage")
-        local LP2 = Players.LocalPlayer
-        local RC2, CD2, FDB2
+    local interior
+    for _ = 1, 100 do
+        interior = ClientData.get("house_interior")
+        if interior and interior.furniture then break end
+        task.wait(0.1)
+    end
+    if not (interior and interior.furniture) then
+        Notify("Error", "No house/furniture found. Enter your house first.", 6, "error")
+        return
+    end
+    if interior.player ~= LocalPlayer then
+        Notify("Error", "You are not inside your own house.", 6, "error")
+        return
+    end
 
-        if not pcall(function()
-            RC2 = require(RS.ClientModules.Core.RouterClient.RouterClient)
-        end) then
-            return Notify("Error", "Failed to require RouterClient", 5)
+    local lureboxKeys, lureKeys = {}, {}
+    for k, v in pairs(interior.furniture) do
+        local id   = tostring(v.id or ""):lower()
+        local db   = FurnitureDB[v.id]
+        local name = tostring(db and db.name or ""):lower()
+        if id:find("lurebox") or name:find("lurebox") then
+            table.insert(lureboxKeys, k)
+        elseif id:find("lure") or name:find("lure") then
+            table.insert(lureKeys, k)
         end
-        if not pcall(function()
-            CD2 = require(RS.ClientModules.Core.ClientData)
-        end) then
-            return Notify("Error", "Failed to require ClientData", 5)
-        end
-        if not pcall(function()
-            FDB2 = require(RS.ClientDB.Housing.FurnitureDB)
-        end) then
-            return Notify("Error", "Failed to require FurnitureDB", 5)
-        end
+    end
 
-        local interior
-        for _ = 1, 100 do
-            task.wait(0.1)
-            interior = CD2.get and CD2.get("house_interior")
-            if interior and interior.furniture then break end
-        end
+    local targets = #lureboxKeys > 0 and lureboxKeys or lureKeys
+    if #targets == 0 then
+        Notify("Error", "No Lurebox furniture found.", 5, "error")
+        return
+    end
 
-        if not (interior and interior.furniture) then
-            return Notify("Error", "No house/furniture found. Enter your house first.", 6)
-        end
-        if interior.player ~= LP2 then
-            return Notify("Error", "You are not inside your own house.", 6)
-        end
+    local sellRemote = RouterClient.get("HousingAPI/SellFurniture")
 
-        local lureboxKeys, lureKeys = {}, {}
-        for k, v in pairs(interior.furniture) do
-            local id   = tostring(v.id or ""):lower()
-            local name = (FDB2[v.id] and (FDB2[v.id].name or "") or ""):lower()
-            if id:find("lurebox") or name:find("lurebox") then
-                table.insert(lureboxKeys, k)
-            elseif id:find("lure") or name:find("lure") then
-                table.insert(lureKeys, k)
-            end
-        end
-
-        local targets = #lureboxKeys > 0 and lureboxKeys or lureKeys
-        if #targets == 0 then
-            return Notify("Error", "No Lurebox furniture found.", 5)
-        end
-
-        local batchOk = false
-        for _, flag in ipairs({ true, false }) do
-            if pcall(function()
-                RC2.get("HousingAPI/SellFurniture"):FireServer(flag, targets, "sell")
-            end) then
-                task.wait(0.5)
-                batchOk = true
-                break
-            end
-        end
-
-        if batchOk then
-            return Notify("Success", "Successfully sold all lure furniture!", 5)
-        end
-
-        local sold = 0
+    local function remaining()
+        local left = {}
+        local current = ClientData.get("house_interior")
         for _, k in ipairs(targets) do
-            pcall(function()
-                RC2.get("HousingAPI/SellFurniture"):FireServer(true, { k }, "sell")
-            end)
-            task.wait(0.25)
-            if CD2.get("house_interior").furniture[k] then
-                pcall(function()
-                    RC2.get("HousingAPI/SellFurniture"):FireServer(false, { k }, "sell")
-                end)
-                task.wait(0.25)
-                if not CD2.get("house_interior").furniture[k] then
-                    sold = sold + 1
-                end
-            else
-                sold = sold + 1
+            if current and current.furniture and current.furniture[k] then
+                left[#left + 1] = k
             end
         end
+        return left
+    end
 
-        if sold <= 0 then
-            Notify("Error", "No items sold. Possibly protected or server denied.", 6)
-        else
-            Notify("Success", "Finished! Sold " .. sold .. " lure items.", 6)
+    sellRemote:FireServer(true, targets, "sell")
+    task.wait(0.6)
+    local left = remaining()
+
+    if #left > 0 then
+        sellRemote:FireServer(false, left, "sell")
+        task.wait(0.6)
+        left = remaining()
+    end
+
+    if #left > 0 then
+        for _, k in ipairs(left) do
+            sellRemote:FireServer(true, { k }, "sell")
+            task.wait(0.25)
+            local current = ClientData.get("house_interior")
+            if current and current.furniture and current.furniture[k] then
+                sellRemote:FireServer(false, { k }, "sell")
+                task.wait(0.25)
+            end
         end
-    end))
+        left = remaining()
+    end
+
+    local sold = #targets - #left
+    if sold <= 0 then
+        Notify("Error", "No items sold. Possibly protected or server denied.", 6, "error")
+    else
+        Notify("Success", "Finished! Sold " .. sold .. " lure items.", 6, "success")
+    end
 end)
 
-------------------------------------------------------------------------
--- SETTINGS
-------------------------------------------------------------------------
+-- SETTINGS --------------------------------------------------------------
 
-addSection(TabSettings, "Player Options")
+local pSettings = tabSettings.page
+
+addSection(pSettings, "Player Options")
 
 local function getHumanoid()
     local char = LocalPlayer.Character
@@ -948,27 +1763,34 @@ end
 
 local startHum = getHumanoid()
 
-addSlider(TabSettings, "Player Speed", 0, 100,
-    startHum and startHum.WalkSpeed or 16, function(val)
-        local hum = getHumanoid()
-        if hum then hum.WalkSpeed = val end
-    end)
+addSlider(pSettings, "Player Speed", 0, 100, startHum and startHum.WalkSpeed or 16, function(value)
+    local hum = getHumanoid()
+    if hum then hum.WalkSpeed = value end
+end)
 
-addSlider(TabSettings, "Jump Boost", 0, 100,
-    startHum and startHum.JumpPower or 50, function(val)
-        local hum = getHumanoid()
-        if hum then
-            hum.UseJumpPower = true
-            hum.JumpPower = val
-        end
-    end)
+addSlider(pSettings, "Jump Boost", 0, 100, startHum and startHum.JumpPower or 50, function(value)
+    local hum = getHumanoid()
+    if hum then
+        hum.UseJumpPower = true
+        hum.JumpPower = value
+    end
+end)
+
+addSection(pSettings, "Window")
+
+addButton(pSettings, "Unload Seraphis Hub", function()
+    for _, conn in ipairs(connections) do
+        pcall(function() conn:Disconnect() end)
+    end
+    table.clear(connections)
+    gui:Destroy()
+end)
 
 ------------------------------------------------------------------------
 -- Init
 ------------------------------------------------------------------------
 
-task.delay(0.5, function()
-    uiReady = true
-end)
-
-Notify("Seraphis Hub", "Loaded. House Cloner ready.", 4)
+selectTab(tabs[1])
+refreshFiles()
+refreshPlayers()
+Notify("Seraphis Hub", "Loaded. Tap the S button to hide or show the window.", 4, "success")
