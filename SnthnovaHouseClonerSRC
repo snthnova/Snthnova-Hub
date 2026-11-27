@@ -129,11 +129,11 @@ local function resolveGuiParent()
 end
 
 local guiParent = resolveGuiParent()
-local oldGui = guiParent:FindFirstChild("SeraphisHub")
+local oldGui = guiParent:FindFirstChild("SnthnovaHub")
 if oldGui then oldGui:Destroy() end
 
 local gui = create("ScreenGui", {
-    Name           = "SeraphisHub",
+    Name           = "SnthnovaHub",
     ResetOnSpawn   = false,
     ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
     IgnoreGuiInset = true,
