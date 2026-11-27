@@ -265,7 +265,7 @@ local function guard(label, fn)
             pcall(setthreadidentity, 8)
             local ok, err = pcall(fn, table.unpack(args, 1, args.n))
             if not ok then
-                warn("[Seraphis] " .. label .. ": " .. tostring(err))
+                warn("[Snthnova] " .. label .. ": " .. tostring(err))
                 Notify("Error: " .. label, tostring(err), 6, "error")
             end
         end)
@@ -356,7 +356,7 @@ create("TextLabel", {
     Size                   = UDim2.new(1, -150, 1, 0),
     Position               = UDim2.new(0, 12, 0, 0),
     BackgroundTransparency = 1,
-    Text                   = "SERAPHIS HUB  ·  House Cloner",
+    Text                   = "SNTHNOVA HUB  ·  House Cloner",
     TextColor3             = C.TEXT,
     TextSize               = 12,
     Font                   = Enum.Font.GothamBold,
@@ -370,7 +370,7 @@ if WIN_W >= 440 then
         Size                   = UDim2.new(0, 90, 1, 0),
         Position               = UDim2.new(1, -168, 0, 0),
         BackgroundTransparency = 1,
-        Text                   = "by Seraphis",
+        Text                   = "by @s.nthhh",
         TextColor3             = C.SUBTEXT,
         TextSize               = 11,
         Font                   = Enum.Font.Gotham,
@@ -1424,7 +1424,7 @@ local function runPlacement(slow)
 
     if hrp then hrp.Anchored = false end
     if not ok then
-        warn("[Seraphis] placement: " .. tostring(err))
+        warn("[Snthnova] placement: " .. tostring(err))
         Notify("Error", tostring(err), 6, "error")
     end
 end
@@ -1558,7 +1558,7 @@ addButton(pMain, "Load house from file", function()
     end
     local chunk, compileErr = loadstring(raw)
     if not chunk then
-        warn("[Seraphis] load: " .. tostring(compileErr))
+        warn("[Snthnova] load: " .. tostring(compileErr))
         Notify("Error", "Failed to load house data", 3, "error")
         return
     end
@@ -1824,7 +1824,7 @@ end)
 
 addSection(pSettings, "Window")
 
-addButton(pSettings, "Unload Seraphis Hub", function()
+addButton(pSettings, "Unload Snthnova Hub", function()
     for _, conn in ipairs(connections) do
         pcall(function() conn:Disconnect() end)
     end
@@ -1839,4 +1839,4 @@ end)
 selectTab(tabs[1])
 refreshFiles()
 refreshPlayers()
-Notify("Seraphis Hub", "Loaded. Tap the S button to hide or show the window.", 4, "success")
+Notify("Snthnova Hub", "Loaded. Tap the S button to hide or show the window.", 4, "success")
