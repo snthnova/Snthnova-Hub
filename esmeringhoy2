@@ -18,7 +18,7 @@ if tostring({}):sub(8, 15) ~= tostring({}):sub(8, 15) then
 	local uDimNew = UDim.new
 
 	local v17 = lib.CreateWindow(lib, {
-		Title = "Snthnova Script Hub",
+		Title = "Snthnova Hub",
 		Folder = "ScriptLibrary",
 		Icon = "solar:folder-2-bold-duotone",
 		NewElements = true,
