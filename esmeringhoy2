@@ -81,13 +81,7 @@ if tostring({}):sub(8, 15) ~= tostring({}):sub(8, 15) then
 		TextSize = 18
 	})
 	v18(v22, "Infinite Yield", "Admin commands script", "terminal", "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source", "Universal")
-	v18(v22, "Dex Explorer", "Game explorer", "search", "https://raw.githubusercontent.com/infyiff/backup/main/dex.lua", "Universal")
-	v18(v22, "Universal Aimbot", "Good aimbot for fps games", "crosshair", "https://raw.githubusercontent.com/Sabscripterhahaha/Universal/refs/heads/main/Universal", "Universal")
-	v18(v22, "Hitbox expander", "Expands the hitbox of players, useful for fps games", "plane", "https://pastefy.app/vnXSigC1/raw", "Universal")
-	v18(v22, "Universal ESP", "See through walls, get others\' location", "eye", "https://pastefy.app/KMJTFNsg/raw", "Universal")
-	v18(v22, "Cryonix Hub", "Lots of scripts", "search", "https://raw.githubusercontent.com/idcgj36/CryonixHub/refs/heads/main/Main.lua", "Universal")
-	v18(v22, "Chat Bypasser", "Bypasses the chat filters", "star", "https://raw.githubusercontent.com/2EzMyBoi/Roblox-Scripts/refs/heads/main/UselessBypasser", "Universal")
-
+	
 	local v23 = v17:Tab({
 		Title = "MM2",
 		Icon = "solar:danger-triangle-bold",
@@ -99,7 +93,7 @@ if tostring({}):sub(8, 15) ~= tostring({}):sub(8, 15) then
 		Title = "Murder Mystery 2 Scripts",
 		TextSize = 18
 	})
-	v18(v23, "Vertex (BEST - Keyless)", "The best complete MM2 script", "crosshair", "https://raw.smokingscripts.org/vertex.lua", "MM2")
+	v18(v23, "Snth (BEST - Keyless)", "The best complete MM2 script", "crosshair", "https://raw.smokingscripts.org/vertex.lua", "MM2")
 
 	local v127 = v17:Tab({
 		Title = "ADM",
@@ -114,7 +108,7 @@ if tostring({}):sub(8, 15) ~= tostring({}):sub(8, 15) then
 	})
 	v18(v127, "(NEW) Trade Scam / Trade Freeze", "Freeze trades and scam others by faking trades (OP) — Requires good pets", "snowflake", "https://pastefy.app/BusweVMC/raw", "ADM")
 	v18(v127, "(NEW) House Cloner", "Clone houses! (NO KEY / KEYLESS)", "copy", "https://api.luarmor.net/files/v3/loaders/051b9ab9e55bc6acf1ead9319bd606ec.lua", "ADM")
-	v18(v127, "Ragesploit Hub (Key)", "Autofarm, autominigames and much more", "snowflake", "https://raw.githubusercontent.com/Ragesploit-x/Ragesploit/refs/heads/main/MainScript/Loader.lua", "ADM")
+	v18(v127, "Snthnova Hub (Key)", "Autofarm, autominigames and much more for the NEW UPDATE! UNAVAILABLE RN", "snowflake", "", "ADM")
 
 	local v128 = v17:Tab({
 		Title = "Misc",
