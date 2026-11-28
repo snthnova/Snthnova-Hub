@@ -10,7 +10,6 @@ if tostring({}):sub(8, 15) ~= tostring({}):sub(8, 15) then
 		lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
 	end
 
-	local color35 = Color3.fromHex("#EF4F1D")
 	local color33 = Color3.fromHex("#83889E")
 	local color34 = Color3.fromHex("#257AF7")
 	local color36 = Color3.fromHex("#FF69B4")
@@ -81,19 +80,6 @@ if tostring({}):sub(8, 15) ~= tostring({}):sub(8, 15) then
 		TextSize = 18
 	})
 	v18(v22, "Infinite Yield", "Admin commands script", "terminal", "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source", "Universal")
-	
-	local v23 = v17:Tab({
-		Title = "MM2",
-		Icon = "solar:danger-triangle-bold",
-		IconColor = color35,
-		IconShape = "Square"
-	})
-
-	v23:Section({
-		Title = "Murder Mystery 2 Scripts",
-		TextSize = 18
-	})
-	v18(v23, "Snth (BEST - Keyless)", "The best complete MM2 script", "crosshair", "https://raw.githubusercontent.com/snthnova/Snthnova-gui/refs/heads/main/mm2", "MM2")
 
 	local v127 = v17:Tab({
 		Title = "ADM",
