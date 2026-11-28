@@ -93,7 +93,7 @@ if tostring({}):sub(8, 15) ~= tostring({}):sub(8, 15) then
 		Title = "Murder Mystery 2 Scripts",
 		TextSize = 18
 	})
-	v18(v23, "Snth (BEST - Keyless)", "The best complete MM2 script", "crosshair", "https://raw.smokingscripts.org/vertex.lua", "MM2")
+	v18(v23, "Snth (BEST - Keyless)", "The best complete MM2 script", "crosshair", "https://raw.githubusercontent.com/snthnova/Snthnova-gui/refs/heads/main/mm2", "MM2")
 
 	local v127 = v17:Tab({
 		Title = "ADM",
